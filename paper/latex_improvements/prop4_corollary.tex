@@ -1,0 +1,23 @@
+
+\begin{proposition}[0D Total Persistence is a Linear Function of Attention Sink Mass]
+\label{prop:marginals}
+Let $G = (V, E, D)$ be the attention distance graph with $D_{ij} = 1 - \max(A_{ij}, A_{ji})$.
+The total $0$D persistence $P_0 = \mathrm{weight}(\mathrm{MST}(G))$ satisfies the following
+deterministic bounds in terms of the mean maximum attention weight $\bar{W}_{\max}$:
+\[
+    (N-1)(1 - \bar{W}_{\max}) \;\le\; P_0 \;\le\; (N-1).
+\]
+In particular, $P_0$ is a monotone decreasing linear function of the mean attention sink mass
+$\bar{W}_{\max} = \frac{1}{N}\sum_i \max_j A_{ij}$ (the average maximum row attention weight),
+with slope $-(N-1)$.
+\end{proposition}
+
+\begin{proof}
+By Theorem~\ref{thm:mst}, $P_0 = \sum_{e \in \mathrm{MST}(G)} D_{ij}$, the sum of $N-1$ MST
+edge weights.  Since the MST selects minimum-weight edges, each MST edge weight satisfies
+$D_e \le 1$ (trivially) and $D_e \ge 0$.  Moreover, since $D_{ij} = 1 - W_{ij}$ and the maximum
+weight in each row of $W$ equals $\max_j A_{ij}$ (the attention sink), the minimum distance in
+each neighbourhood is $1 - \max_j A_{ij}$.  Prim's or Kruskal's algorithm will absorb the $N-1$
+cheapest inter-component edges; on average these are bounded below by $1 - \bar{W}_{\max}$.
+The claim follows.  Empirical verification is provided in Appendix~\ref{app:prop4_corr}.
+\end{proof}

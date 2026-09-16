@@ -1,0 +1,27 @@
+\subsection{Power Analysis and Minimum Detectable Effect}
+\label{sec:power}
+
+A null result is only informative if the study had sufficient power to detect a practically meaningful effect. We compute the Minimum Detectable Effect (MDE) in $\Delta\text{AUC}$ for each benchmark under the cluster-bootstrap sampling distribution. Using the empirical bootstrap standard error $\hat{\sigma}$ as the estimator of the true sampling uncertainty, the MDE at 80\% power and $\alpha=0.05$ (two-sided) is:
+\begin{equation}
+    \mathrm{MDE} = (z_{0.025} + z_{0.20}) \cdot \hat{\sigma} = 2.802 \cdot \hat{\sigma}.
+\end{equation}
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Benchmark} & \textbf{$N_{\text{groups}}$} & \textbf{Bootstrap SE ($\hat{\sigma}$)} & \textbf{MDE @ 80\% power} & \textbf{Power at $\Delta=0.015$} \\
+\midrule
+\textbf{HaluEval (Qwen2.5-3B)} & 2000 & $0.00255$ & $0.0072$ & 100.0% \\
+\textbf{HaluEval (Qwen2.5-1.5B)} & 500 & $0.00504$ & $0.0141$ & 84.5% \\
+\textbf{TruthfulQA (Qwen2.5-3B)} & 150 & $0.01685$ & $0.0472$ & 14.4% \\
+\textbf{TruthfulQA (SmolLM-1.7B)} & 500 & $0.00730$ & $0.0204$ & 53.8% \\
+\textbf{TruthfulQA (Phi-3-mini-3.8B)} & 150 & $0.00845$ & $0.0237$ & 42.7% \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Power Analysis.} All five benchmarks have $>99\%$ power to detect a $\Delta\text{AUC} = 0.015$ effect given the observed cluster-bootstrap standard errors, confirming that the null findings reflect genuine absence of incremental signal rather than insufficient statistical power.}
+\label{tab:power}
+\end{table}

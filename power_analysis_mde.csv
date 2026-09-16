@@ -1,0 +1,6 @@
+Benchmark,N_examples,N_groups,Bootstrap SE (ΔAUC),MDE at 80% power,Power at Δ=0.015,Detects ε=0.015?
+HaluEval (Qwen2.5-3B),2000,2000,0.00255,0.0072,100.0%,YES (>80%)
+HaluEval (Qwen2.5-1.5B),500,500,0.00504,0.0141,84.5%,YES (>80%)
+TruthfulQA (Qwen2.5-3B),150,150,0.01685,0.0472,14.4%,NO (14%)
+TruthfulQA (SmolLM-1.7B),500,500,0.0073,0.0204,53.8%,NO (54%)
+TruthfulQA (Phi-3-mini-3.8B),150,150,0.00845,0.0237,42.7%,NO (43%)
