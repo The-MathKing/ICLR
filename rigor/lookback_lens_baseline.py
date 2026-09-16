@@ -47,6 +47,10 @@ from rigor.device import assert_gpu_usable, empty_cache, get_device, get_dtype, 
 from rigor import settings as S
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
+# NOTE: trust_remote_code is deliberately NOT set. Phi-3's hub-hosted
+# modeling_phi3.py reads config.rope_scaling["type"], a key transformers 5.x
+# renamed to "rope_type", so remote code raises KeyError: 'type'. All models
+# used here have native transformers implementations.
 MAX_SEQ_LEN = 1024
 SEED = 42
 EPS = 1e-9
@@ -87,9 +91,9 @@ def extract_setting(cfg, device):
     feats_ref = pd.read_csv(cfg["features"], usecols=["example_id", "label"])
     wanted = set(zip(feats_ref["example_id"], feats_ref["label"]))
 
-    tokenizer = AutoTokenizer.from_pretrained(cfg["model"], trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(cfg["model"])
     model = AutoModelForCausalLM.from_pretrained(
-        cfg["model"], torch_dtype=get_dtype(device), trust_remote_code=True,
+        cfg["model"], torch_dtype=get_dtype(device),
         attn_implementation="eager",   # REQUIRED: SDPA/flash return no attentions
     ).to(device)
     model.eval()
