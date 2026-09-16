@@ -1,0 +1,15 @@
+Benchmark,Comparison,N_groups,Bootstrap_SE,MDE_80pct_power
+HaluEval (Qwen2.5-3B),0D vs 0D+1D (Z/N default),2000,0.002553394518316587,0.0072
+HaluEval (Qwen2.5-3B),0D vs 0D+1D (alpha-hat calibrated),2000,0.0025535602411900504,0.0072
+HaluEval (Qwen2.5-1.5B),0D vs 0D+1D (Z/N default),500,0.005042434108173327,0.0141
+HaluEval (Qwen2.5-1.5B),0D vs 0D+1D (alpha-hat calibrated),500,0.005174628612109416,0.0145
+TruthfulQA (Qwen2.5-3B),0D vs 0D+1D (Z/N default),150,0.016854881207268444,0.0472
+TruthfulQA (Qwen2.5-3B),0D vs 0D+1D (alpha-hat calibrated),150,0.017802546581255668,0.0499
+TruthfulQA (SmolLM-1.7B),0D vs 0D+1D (Z/N default),500,0.007294408473912593,0.0204
+TruthfulQA (SmolLM-1.7B),0D vs 0D+1D (alpha-hat calibrated),500,0.006858945416272808,0.0192
+TruthfulQA (Phi-3-mini-3.8B),0D vs 0D+1D (Z/N default),150,0.008449570242058264,0.0237
+TruthfulQA (Phi-3-mini-3.8B),0D vs 0D+1D (alpha-hat calibrated),150,0.008901964518624217,0.0249
+TruthfulQA (Mistral-7B),0D vs 0D+1D (Z/N default),817,0.0001976841789029333,0.0006
+TruthfulQA (Mistral-7B),0D vs 0D+1D (alpha-hat calibrated),817,0.0001976841789029333,0.0006
+TruthfulQA (TinyLlama-1.1B),0D vs 0D+1D (Z/N default),150,0.012939930975009293,0.0363
+TruthfulQA (TinyLlama-1.1B),0D vs 0D+1D (alpha-hat calibrated),150,0.014599118972209283,0.0409

@@ -1,0 +1,7 @@
+Regime,Description,Length Baseline,Attention Marginals,MST Baseline,0D Persistence,1D Raw Persistence,1D Norm Persistence,0D + 1D (Norm)
+S1,"S1: Pure Length Confound (Identical distribution, different N)",1.000 ± 0.000,1.000 ± 0.000,1.000 ± 0.000,0.984 ± 0.007,0.500 ± 0.000,0.500 ± 0.000,0.984 ± 0.007
+S1b,"S1b: Pure Length Confound, i.i.d. background (Prop. 1's own null model)",1.000 ± 0.000,1.000 ± 0.000,0.998 ± 0.001,1.000 ± 0.001,1.000 ± 0.000,1.000 ± 0.000,1.000 ± 0.000
+S2,"S2: Pure Topology / Positive Control (Marginal-matched, planted 1D cycles)",0.500 ± 0.000,0.997 ± 0.004,0.958 ± 0.029,0.958 ± 0.029,1.000 ± 0.000,1.000 ± 0.000,1.000 ± 0.000
+S3,"S3: Pure Marginals (Matched N, shifted density without cycles)",0.500 ± 0.000,0.990 ± 0.011,1.000 ± 0.001,1.000 ± 0.001,0.500 ± 0.000,0.500 ± 0.000,1.000 ± 0.001
+S4,S4: Topology + Length Confound (Planted cycles + variable N),1.000 ± 0.000,1.000 ± 0.000,0.997 ± 0.006,0.959 ± 0.019,1.000 ± 0.000,1.000 ± 0.000,1.000 ± 0.000
+S5,S5: Negative Control (Pure random noise with permuted labels),0.522 ± 0.050,0.536 ± 0.063,0.508 ± 0.032,0.506 ± 0.022,0.500 ± 0.000,0.500 ± 0.000,0.506 ± 0.022

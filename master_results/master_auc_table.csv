@@ -1,0 +1,66 @@
+Benchmark,Feature Set,Dim,N_full,N_matched,AUC_full,AUC_matched,AUC_full_foldmean,AUC_full_foldstd,AUC_matched_foldmean,AUC_matched_foldstd
+HaluEval (Qwen2.5-3B),0D Only,72,4000,3512,0.8218,0.8188,0.8226,0.0179,0.8205,0.0234
+HaluEval (Qwen2.5-3B),1D Only (Raw),144,4000,3512,0.6948,0.6678,0.6957,0.0143,0.6691,0.0167
+HaluEval (Qwen2.5-3B),"1D Only (Normalized, Z/N)",144,4000,3512,0.7029,0.6834,0.7039,0.0173,0.6846,0.0156
+HaluEval (Qwen2.5-3B),"0D + 1D (Normalized, Z/N)",216,4000,3512,0.8374,0.8313,0.8381,0.0142,0.8323,0.0206
+HaluEval (Qwen2.5-3B),MST Per-Layer Proxy,36,4000,3512,0.7356,0.7228,0.7364,0.0129,0.7251,0.0178
+HaluEval (Qwen2.5-3B),Length Baseline,1,4000,3512,0.5847,0.4951,0.5869,0.0067,0.4942,0.0079
+HaluEval (Qwen2.5-3B),"1D Only (Normalized, alpha-hat)",144,4000,3512,0.6996,0.6793,0.7006,0.0157,0.6818,0.0161
+HaluEval (Qwen2.5-3B),"0D + 1D (Normalized, alpha-hat)",216,4000,3512,0.8376,0.8315,0.8378,0.014,0.8323,0.0213
+HaluEval (Qwen2.5-1.5B),0D Only,56,1000,870,0.9038,0.8872,0.9065,0.0355,0.887,0.0301
+HaluEval (Qwen2.5-1.5B),1D Only (Raw),112,1000,870,0.6523,0.6034,0.6555,0.0175,0.6068,0.0337
+HaluEval (Qwen2.5-1.5B),"1D Only (Normalized, Z/N)",112,1000,870,0.653,0.6334,0.6566,0.0214,0.6401,0.0302
+HaluEval (Qwen2.5-1.5B),"0D + 1D (Normalized, Z/N)",168,1000,870,0.9196,0.9186,0.9212,0.0275,0.9233,0.0184
+HaluEval (Qwen2.5-1.5B),MST Per-Layer Proxy,28,1000,870,0.5833,0.4849,0.5877,0.0107,0.4893,0.0171
+HaluEval (Qwen2.5-1.5B),Length Baseline,1,1000,870,0.5833,0.4838,0.5878,0.0098,0.4842,0.0186
+HaluEval (Qwen2.5-1.5B),"1D Only (Normalized, alpha-hat)",112,1000,870,0.6522,0.6247,0.6561,0.0182,0.6378,0.032
+HaluEval (Qwen2.5-1.5B),"0D + 1D (Normalized, alpha-hat)",168,1000,870,0.9197,0.9182,0.9212,0.0276,0.9215,0.0179
+TruthfulQA (Qwen2.5-3B),0D Only,72,300,282,0.7026,0.6803,0.692,0.0524,0.6897,0.0989
+TruthfulQA (Qwen2.5-3B),1D Only (Raw),144,300,282,0.5672,0.5806,0.5564,0.0871,0.5824,0.0332
+TruthfulQA (Qwen2.5-3B),"1D Only (Normalized, Z/N)",144,300,282,0.589,0.6036,0.5773,0.0881,0.6109,0.036
+TruthfulQA (Qwen2.5-3B),"0D + 1D (Normalized, Z/N)",216,300,282,0.6883,0.6486,0.6884,0.0622,0.6599,0.096
+TruthfulQA (Qwen2.5-3B),MST Per-Layer Proxy,36,300,282,0.7076,0.7014,0.7267,0.076,0.7102,0.0753
+TruthfulQA (Qwen2.5-3B),Length Baseline,1,300,282,0.4591,0.4857,0.452,0.0369,0.5024,0.0388
+TruthfulQA (Qwen2.5-3B),MSP Baseline,1,300,282,0.5181,0.5225,0.5287,0.0399,0.5213,0.0526
+TruthfulQA (Qwen2.5-3B),"TOHA (MTop-Div, summed)",1,300,282,0.4405,0.4767,0.4436,0.0601,0.4891,0.0763
+TruthfulQA (Qwen2.5-3B),"1D Only (Normalized, alpha-hat)",144,300,282,0.5835,0.5914,0.5747,0.0919,0.5898,0.0488
+TruthfulQA (Qwen2.5-3B),"0D + 1D (Normalized, alpha-hat)",216,300,282,0.6797,0.6641,0.6836,0.0509,0.6651,0.1031
+TruthfulQA (SmolLM-1.7B),0D Only,48,1000,958,0.5732,0.5655,0.5745,0.0322,0.5687,0.0304
+TruthfulQA (SmolLM-1.7B),1D Only (Raw),96,1000,958,0.5325,0.5304,0.5362,0.0294,0.5322,0.0293
+TruthfulQA (SmolLM-1.7B),"1D Only (Normalized, Z/N)",96,1000,958,0.5463,0.5397,0.549,0.0456,0.5407,0.0285
+TruthfulQA (SmolLM-1.7B),"0D + 1D (Normalized, Z/N)",144,1000,958,0.5835,0.578,0.5859,0.047,0.5828,0.0416
+TruthfulQA (SmolLM-1.7B),MST Per-Layer Proxy,24,1000,958,0.5815,0.577,0.5845,0.0387,0.5818,0.0277
+TruthfulQA (SmolLM-1.7B),Length Baseline,1,1000,958,0.5246,0.4868,0.5298,0.0324,0.493,0.0217
+TruthfulQA (SmolLM-1.7B),MSP Baseline,1,1000,958,0.5127,0.5084,0.5156,0.0368,0.5136,0.0193
+TruthfulQA (SmolLM-1.7B),"1D Only (Normalized, alpha-hat)",96,1000,958,0.5393,0.5358,0.5462,0.0371,0.5399,0.0264
+TruthfulQA (SmolLM-1.7B),"0D + 1D (Normalized, alpha-hat)",144,1000,958,0.5798,0.5771,0.5811,0.0474,0.581,0.037
+TruthfulQA (Phi-3-mini-3.8B),0D Only,64,300,262,0.6344,0.6281,0.6427,0.0563,0.6262,0.0867
+TruthfulQA (Phi-3-mini-3.8B),1D Only (Raw),128,300,262,0.4982,0.4374,0.5002,0.0348,0.4545,0.0607
+TruthfulQA (Phi-3-mini-3.8B),"1D Only (Normalized, Z/N)",128,300,262,0.5034,0.4491,0.5051,0.0417,0.4644,0.0692
+TruthfulQA (Phi-3-mini-3.8B),"0D + 1D (Normalized, Z/N)",192,300,262,0.6224,0.5959,0.6289,0.0469,0.6069,0.0774
+TruthfulQA (Phi-3-mini-3.8B),MST Per-Layer Proxy,32,300,262,0.6045,0.6196,0.6084,0.0547,0.6225,0.0708
+TruthfulQA (Phi-3-mini-3.8B),Length Baseline,1,300,262,0.4592,0.448,0.4602,0.0331,0.4387,0.0356
+TruthfulQA (Phi-3-mini-3.8B),MSP Baseline,1,300,262,0.5223,0.5227,0.5216,0.0511,0.5199,0.0403
+TruthfulQA (Phi-3-mini-3.8B),"TOHA (MTop-Div, summed)",1,300,262,0.4527,0.4315,0.4396,0.0423,0.4358,0.0606
+TruthfulQA (Phi-3-mini-3.8B),"1D Only (Normalized, alpha-hat)",128,300,262,0.5036,0.4302,0.506,0.0345,0.441,0.0478
+TruthfulQA (Phi-3-mini-3.8B),"0D + 1D (Normalized, alpha-hat)",192,300,262,0.6217,0.5901,0.6298,0.0511,0.6059,0.0822
+TruthfulQA (Mistral-7B),0D Only,64,1634,1580,0.684,0.6838,0.6839,0.0444,0.6843,0.023
+TruthfulQA (Mistral-7B),1D Only (Raw),128,1634,1580,0.5,0.4973,0.5,0.0,0.5,0.0
+TruthfulQA (Mistral-7B),"1D Only (Normalized, Z/N)",128,1634,1580,0.5,0.4973,0.5,0.0,0.5,0.0
+TruthfulQA (Mistral-7B),"0D + 1D (Normalized, Z/N)",192,1634,1580,0.6837,0.6839,0.6839,0.0448,0.6846,0.0228
+TruthfulQA (Mistral-7B),MST Per-Layer Proxy,32,1634,1580,0.6453,0.6488,0.6459,0.0302,0.6502,0.0291
+TruthfulQA (Mistral-7B),Length Baseline,1,1634,1580,0.5162,0.4803,0.5165,0.0228,0.4803,0.0181
+TruthfulQA (Mistral-7B),MSP Baseline,1,1634,1580,0.5203,0.5167,0.5249,0.024,0.5199,0.0273
+TruthfulQA (Mistral-7B),"TOHA (MTop-Div, summed)",1,1634,1580,0.5375,0.5233,0.5383,0.0341,0.528,0.038
+TruthfulQA (Mistral-7B),"1D Only (Normalized, alpha-hat)",128,1634,1580,0.5,0.4973,0.5,0.0,0.5,0.0
+TruthfulQA (Mistral-7B),"0D + 1D (Normalized, alpha-hat)",192,1634,1580,0.6837,0.6839,0.6839,0.0448,0.6846,0.0228
+TruthfulQA (TinyLlama-1.1B),0D Only,44,300,268,0.6557,0.6407,0.658,0.1026,0.6447,0.0745
+TruthfulQA (TinyLlama-1.1B),1D Only (Raw),88,300,268,0.601,0.5917,0.6051,0.0741,0.6118,0.1147
+TruthfulQA (TinyLlama-1.1B),"1D Only (Normalized, Z/N)",88,300,268,0.6059,0.6078,0.606,0.0694,0.6207,0.074
+TruthfulQA (TinyLlama-1.1B),"0D + 1D (Normalized, Z/N)",132,300,268,0.6542,0.6391,0.6673,0.1057,0.6353,0.0793
+TruthfulQA (TinyLlama-1.1B),MST Per-Layer Proxy,22,300,268,0.6414,0.6387,0.644,0.0825,0.6523,0.0699
+TruthfulQA (TinyLlama-1.1B),Length Baseline,1,300,268,0.4618,0.4597,0.462,0.036,0.4531,0.0297
+TruthfulQA (TinyLlama-1.1B),MSP Baseline,1,300,268,0.5492,0.5738,0.5564,0.0583,0.5908,0.0487
+TruthfulQA (TinyLlama-1.1B),"TOHA (MTop-Div, summed)",1,300,268,0.5137,0.4934,0.5258,0.074,0.4922,0.0657
+TruthfulQA (TinyLlama-1.1B),"1D Only (Normalized, alpha-hat)",88,300,268,0.5936,0.5951,0.606,0.0769,0.6067,0.0933
+TruthfulQA (TinyLlama-1.1B),"0D + 1D (Normalized, alpha-hat)",132,300,268,0.6491,0.6523,0.662,0.102,0.6491,0.0839

@@ -1,0 +1,6 @@
+Dataset,N,"Spearman(0D, sink_mass)",p(sink_mass),"Spearman(0D, sink_std)",p(sink_std),Interpretation
+HaluEval (Qwen2.5-3B),4000,0.8425,0.0,-0.718,0.0,0D driven by attention sinks
+HaluEval (Qwen2.5-1.5B),1000,0.2107,1.690224680336651e-11,-0.2107,1.690224680336651e-11,Weak sink correlation
+TruthfulQA (Qwen2.5-3B),300,0.8011,2.1699991311734797e-68,-0.0194,0.7376922060944646,0D driven by attention sinks
+TruthfulQA (SmolLM-1.7B),1000,0.4593,2.490048292317938e-53,-0.3504,2.9641453296899767e-30,Moderate sink correlation
+TruthfulQA (Phi-3-mini-3.8B),300,0.8219,8.085003289850288e-75,-0.1417,0.014050715044326314,0D driven by attention sinks

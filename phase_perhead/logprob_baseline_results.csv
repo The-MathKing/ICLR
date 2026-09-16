@@ -1,0 +1,4 @@
+Baseline,AUC
+Mean log-prob only,0.9509
+Perplexity only,0.9279
+Mean log-prob + min log-prob,0.9839

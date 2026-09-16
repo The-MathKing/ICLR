@@ -1,0 +1,5 @@
+Comparison,delta,ci_lo,ci_hi,verdict
+Per-head 0D vs. per-head max-attn (matched dim),0.03059999999999996,0.0074737499999999015,0.05347625000000004,SIGNIFICANT (CI excludes 0)
+Per-head 0D vs. per-head entropy (matched dim),-0.010325000000000029,-0.030603124999999856,0.009850625000000016,not significant (CI includes 0)
+Per-head 0D vs. per-head max-attn+entropy,0.0038249999999999673,-0.017400000000000082,0.024950625000000018,not significant (CI includes 0)
+Per-head 0D vs. head-averaged 0D,0.2144999999999999,0.18789999999999996,0.23925062499999997,SIGNIFICANT (CI excludes 0)

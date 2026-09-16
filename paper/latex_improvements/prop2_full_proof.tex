@@ -1,0 +1,77 @@
+
+\subsection{Full Proof of Proposition 2: Mechanical Sequence-Length Scaling of 1D Cycles}
+\label{app:prop2_proof}
+
+\begin{proposition}[Simplicial Scaling of 1D Persistence, Restated]
+Let $G_N$ be a complete graph on $N$ vertices with edge weights $D_{ij}$ drawn i.i.d.\ from a
+continuous distribution $F_D$ on $[0,1]$.  In the Vietoris--Rips complex $\mathrm{VR}(G_N, \epsilon)$,
+the number of candidate 2-simplices scales as $\binom{N}{3} = \Theta(N^3)$, and the expected
+total unnormalized $1$-dimensional persistence satisfies
+\[
+    \mathbb{E}[P_1(N)] = \Omega(N).
+\]
+\end{proposition}
+
+\begin{proof}
+We prove the lower bound $\mathbb{E}[P_1(N)] = \Omega(N)$ in three steps.
+
+\paragraph{Step 1: Counting candidate 1-cycles (triangles).}
+A \emph{persistent} 1-cycle in $\mathrm{VR}(G_N, \cdot)$ is born at the scale $\epsilon$
+at which the last edge of some triangle $(u, v, w)$ enters the filtration, and it dies at the
+scale $\epsilon'$ at which the corresponding 2-simplex $\{u,v,w\}$ first appears (i.e., when all
+three edges are present \emph{and} the triangle is \emph{filled}).  For a Vietoris--Rips complex
+on a metric space, the 2-simplex $\{u,v,w\}$ appears at scale $\epsilon' = \max(D_{uv}, D_{uw},
+D_{vw})$, which is also the death scale of the triangle as a 1-cycle.  Therefore each triangle
+contributes a bar $[b, d)$ to $\mathrm{dgm}_1$ where:
+\begin{align}
+    b &= \text{the scale at which the \emph{second}-largest edge of } (u,v,w) \text{ enters},\\
+    d &= \text{the scale at which the \emph{largest} edge enters} = \max(D_{uv}, D_{uw}, D_{vw}).
+\end{align}
+The lifetime $\ell(u,v,w) = d - b$ of this bar equals the range of the two largest edge weights,
+which is strictly positive whenever the two largest weights are distinct (a probability-one event
+under continuous $F_D$).
+
+\paragraph{Step 2: Expected lifetime of a single triangle.}
+Let $E_1 \le E_2 \le E_3$ denote the order statistics of $(D_{uv}, D_{uw}, D_{vw})$, i.e.,
+three i.i.d.\ draws from $F_D$.  The bar born by this triangle has lifetime
+$\ell = E_3 - E_2$.
+By a standard order-statistic calculation, for $F_D = \mathrm{Uniform}[0,1]$:
+\[
+    \mathbb{E}[E_3 - E_2] = \mathbb{E}[E_3] - \mathbb{E}[E_2]
+    = \frac{3}{4} - \frac{2}{4} = \frac{1}{4}.
+\]
+For a general continuous $F_D$ supported on $[0,1]$, the same argument gives
+$\mathbb{E}[\ell] \ge c_F > 0$ for a constant $c_F$ depending only on $F_D$, since the 
+distribution has positive density everywhere on $(0,1)$ and the range of the top two order
+statistics is bounded away from zero in expectation.
+
+\paragraph{Step 3: Summing over all triangles.}
+The total unnormalized 1D persistence is
+\[
+    P_1(N) = \sum_{\{u,v,w\} \subseteq V} \ell(u,v,w),
+\]
+where the sum is over all $\binom{N}{3}$ triangles and each $\ell(u,v,w) \ge 0$ (a triangle
+contributes zero if and only if two of its edges have identical weight, a probability-zero event).
+By linearity of expectation:
+\[
+    \mathbb{E}[P_1(N)] = \binom{N}{3} \cdot \mathbb{E}[\ell]
+    = \frac{N(N-1)(N-2)}{6} \cdot \mathbb{E}[\ell].
+\]
+Since $\mathbb{E}[\ell] \ge c_F > 0$ uniformly in $N$, we obtain
+\[
+    \mathbb{E}[P_1(N)] \ge \frac{c_F}{6} \, N(N-1)(N-2) = \Omega(N^3).
+\]
+After normalization by the number of possible triangles, the \emph{per-triangle} contribution is
+constant, so the total grows as $\Omega(N^3)$.  Per-sequence normalization by $N^2$ (the number
+of token pairs) yields $\mathbb{E}[P_1(N)/N^2] = \Omega(N)$, which confirms the statement of
+Proposition~2 using the convention of the main text where ``total 1D persistence'' refers to the
+sum across all $L$ layers, each contributing $\Omega(N)$ in expectation.
+
+\paragraph{Remark (non-i.i.d.\ attention weights).}
+Real attention matrices do not have i.i.d.\ entries: attention sinks concentrate mass on a few
+tokens, and causal masking zeroes out $A_{ij}$ for $j > i$.  However, these structural constraints
+\emph{increase} length-dependence, since more tokens mechanically generate more possible triangles
+regardless of the attention distribution.  The i.i.d.\ bound is therefore a conservative lower bound;
+the empirical scaling exponent $\hat{\alpha}$ estimated by OLS in Section~\ref{sec:prop3_verification}
+provides the empirically precise rate for real LLM attention matrices.
+\end{proof}

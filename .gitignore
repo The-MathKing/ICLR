@@ -1,9 +1,28 @@
 .venv/
-paper/
-phase3_results/
-*.csv
-*.txt
-*.pdf
-*.png
 __pycache__/
+*.py[cod]
+*$py.class
 .DS_Store
+.cache/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+
+# Logs & temp files
+*.log
+*.tmp
+*.bak
+
+# Cache and raw large feature vector dumps (>100MB)
+phase_hs_results/*_hidden_states.csv*
+hf_cache/
+.hf_cache/
+scratch/

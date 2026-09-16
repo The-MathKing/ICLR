@@ -1,19 +1,19 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score
 import xgboost as xgb
 import warnings
 warnings.filterwarnings('ignore')
 
-def train_and_evaluate(X, y, name=""):
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+def train_and_evaluate(X, y, groups, name=""):
+    skf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
     
     metrics = {'lr_roc_auc': [], 'lr_pr_auc': [], 'lr_f1': [],
                'xgb_roc_auc': [], 'xgb_pr_auc': [], 'xgb_f1': []}
                
-    for train_idx, test_idx in skf.split(X, y):
+    for train_idx, test_idx in skf.split(X, y, groups=groups):
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
         
@@ -65,9 +65,11 @@ def run_phase4():
     X_Combined = df[h0_cols + h1_cols]
     y = df['target']
     
-    train_and_evaluate(X_0D, y, "0D Features Only (Baseline)")
-    train_and_evaluate(X_1D, y, "1D Features Only")
-    metrics = train_and_evaluate(X_Combined, y, "Combined (0D + 1D)")
+    groups = df['example_id']
+    
+    train_and_evaluate(X_0D, y, groups, "0D Features Only (Baseline)")
+    train_and_evaluate(X_1D, y, groups, "1D Features Only")
+    metrics = train_and_evaluate(X_Combined, y, groups, "Combined (0D + 1D)")
     
     # Save a little report for latex parsing if needed
     with open("phase4_results.txt", "w") as f:
