@@ -31,21 +31,21 @@ SETTINGS = [
         benchmark="truthfulqa",
         model="Qwen/Qwen2.5-3B-Instruct",
         features="phase10_results/qwen3b_truthfulqa_4stat.csv",
-        n_questions=150,          # -> FULL_TRUTHFULQA for item 7
+        n_questions=FULL_TRUTHFULQA,
     ),
     dict(
         name="TruthfulQA (SmolLM-1.7B)",
         benchmark="truthfulqa",
         model="HuggingFaceTB/SmolLM-1.7B-Instruct",
         features="phase7_results/truthfulqa_smollm_features.csv",
-        n_questions=500,          # -> FULL_TRUTHFULQA
+        n_questions=FULL_TRUTHFULQA,
     ),
     dict(
         name="TruthfulQA (Phi-3-mini-3.8B)",
         benchmark="truthfulqa",
         model="microsoft/Phi-3-mini-4k-instruct",
         features="phase10_results/phi3_truthfulqa_4stat.csv",
-        n_questions=150,          # -> FULL_TRUTHFULQA
+        n_questions=FULL_TRUTHFULQA,
     ),
     dict(
         name="TruthfulQA (Mistral-7B)",
@@ -59,7 +59,7 @@ SETTINGS = [
         benchmark="truthfulqa",
         model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         features="phase10_results/tinyllama_truthfulqa_4stat.csv",
-        n_questions=150,          # -> FULL_TRUTHFULQA
+        n_questions=FULL_TRUTHFULQA,
     ),
 ]
 
