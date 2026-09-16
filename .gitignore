@@ -28,3 +28,7 @@ hf_cache/
 scratch/
 
 *.old150
+
+# editor/agent backups
+*.bak2
+*.old150
