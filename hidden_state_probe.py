@@ -14,7 +14,9 @@ Outputs:
 """
 
 import os, gc, time
-os.environ["HF_HOME"] = "/Volumes/2TB/hf_cache"
+# HF_HOME intentionally not set here: honour the environment.
+# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+#  authors' Mac, which does not exist on other machines.)
 
 import numpy as np
 import pandas as pd
@@ -31,7 +33,9 @@ warnings.filterwarnings("ignore")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 import os
-os.environ["HF_HOME"] = "/Volumes/2TB/hf_cache"
+# HF_HOME intentionally not set here: honour the environment.
+# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+#  authors' Mac, which does not exist on other machines.)
 
 MODEL_NAME   = "Qwen/Qwen2.5-3B-Instruct"
 HS_CSV       = "phase_hs_results/halueval_qwen3b_hidden_states.csv"
@@ -43,7 +47,8 @@ PCA_DIMS     = 64
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── Device: prefer MPS on Apple Silicon, else CPU ─────────────────────────────
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = ("cuda" if torch.cuda.is_available()
+          else "mps" if torch.backends.mps.is_available() else "cpu")
 print(f"Using device: {device}")
 
 
@@ -173,6 +178,8 @@ def extract_all_hidden_states():
         if (idx + 1) % 50 == 0:
             if device == "mps":
                 torch.mps.empty_cache()
+            elif device == "cuda":
+                torch.cuda.empty_cache()
             gc.collect()
 
     df_out = pd.DataFrame(rows)
@@ -184,6 +191,8 @@ def extract_all_hidden_states():
     gc.collect()
     if device == "mps":
         torch.mps.empty_cache()
+    elif device == "cuda":
+        torch.cuda.empty_cache()
 
     return df_out
 

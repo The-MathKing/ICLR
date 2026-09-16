@@ -111,10 +111,16 @@ def fit_alpha_hat(seq_len_train, p1_train):
 
 
 def cluster_bootstrap_tost(y, predsA, predsB, groups, epsilons=EPSILONS, n_boot=N_BOOT, seed=SEED):
-    """Correct cluster (group-level) bootstrap for Delta AUC = AUC(B) - AUC(A).
-    Equivalence at margin eps is CONFIRMED iff TOST p < 0.05 (equivalently, iff
-    the (1-2*0.05)=90% -- here we use the standard convention of reading the
-    two-sided 95% CI against the margin, i.e. equivalent iff CI subset (-eps,+eps))."""
+    """Cluster (group-level) percentile bootstrap for Delta AUC = AUC(B) - AUC(A).
+
+    Equivalence at margin eps is CONFIRMED iff TOST p < 0.05, which is equivalent to
+    the 90% CI -- NOT the 95% CI -- lying entirely within (-eps, +eps). The 95% CI is
+    reported alongside for reference only; a 95% CI that straddles the margin while
+    the verdict is CONFIRMED is expected, not a contradiction.
+
+    The one-sided p-values below are percentile-bootstrap tail masses, which coincide
+    with the exact TOST p-values only when the bootstrap distribution of Delta is
+    symmetric. At small group counts (n_groups ~ 150) that assumption is not free."""
     rng = np.random.RandomState(seed)
     unique_groups, inv = np.unique(groups, return_inverse=True)
     n_groups = len(unique_groups)
@@ -148,8 +154,8 @@ def cluster_bootstrap_tost(y, predsA, predsB, groups, epsilons=EPSILONS, n_boot=
         # CORRECT TOST semantics: equivalence confirmed iff tost_p < 0.05
         # (both one-sided tests reject the "non-equivalence" null at alpha=0.05),
         # equivalently iff the 90% CI (not 95%!) lies entirely within (-eps,+eps).
-        # We report using the conservative/standard convention: equivalent iff
-        # the two-sided 95% CI already lies within (-eps, +eps) AND tost_p<0.05.
+        # The ci95 fields above are reported for reference and are NOT part of this
+        # decision rule; see the docstring.
         equivalent = bool(tost_p < 0.05)
         out[f"tost_p_eps{eps}"] = tost_p
         out[f"equivalent_eps{eps}"] = "CONFIRMED" if equivalent else "REJECTED"
@@ -159,9 +165,15 @@ def cluster_bootstrap_tost(y, predsA, predsB, groups, epsilons=EPSILONS, n_boot=
 def predictive_info_gain(y, groups, X_base, X_extra, n_splits=N_SPLITS, seed=SEED, n_perm=200):
     """Cross-validated log-loss information gain (nats) from adding X_extra to X_base.
     I_hat = CV_logloss(Y | X_base) - CV_logloss(Y | X_base + X_extra), in nats.
-    Non-negative in expectation only asymptotically; we report the permutation-null
-    band (shuffle Y within group-preserving permutation) so a small positive number
-    can be judged against sampling noise rather than presented as a bare point estimate."""
+    Non-negative in expectation only asymptotically; we report a permutation-null
+    band so a small positive number can be judged against sampling noise rather than
+    presented as a bare point estimate.
+
+    CAVEAT: the null below shuffles Y GLOBALLY (see the comment at the permutation
+    loop), NOT within question groups. It therefore does not preserve the paired
+    one-positive-per-group structure the observed statistic is computed under, and
+    should be read as a conservative "overfitting-cost" band rather than a
+    design-exact null. A within-group label swap is the design-exact version."""
     Xb = X_base.values if hasattr(X_base, "values") else np.asarray(X_base)
     Xc = np.concatenate([Xb, X_extra.values if hasattr(X_extra, "values") else np.asarray(X_extra)], axis=1)
 

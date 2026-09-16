@@ -1,5 +1,7 @@
 import os
-os.environ["HF_HOME"] = "/Volumes/2TB/hf_cache"
+# HF_HOME intentionally not set here: honour the environment.
+# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+#  authors' Mac, which does not exist on other machines.)
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
@@ -16,7 +18,8 @@ def extract_control_features():
     if os.path.exists(out_csv):
         return pd.read_csv(out_csv)
         
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = ("cuda" if torch.cuda.is_available()
+              else "mps" if torch.backends.mps.is_available() else "cpu")
     model_name = "Qwen/Qwen2.5-1.5B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(

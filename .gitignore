@@ -26,3 +26,5 @@ phase_hs_results/*_hidden_states.csv*
 hf_cache/
 .hf_cache/
 scratch/
+
+*.old150
