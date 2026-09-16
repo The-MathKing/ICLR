@@ -198,7 +198,7 @@ Following the audit pipeline of Figure~\ref{fig:pipeline}, we evaluate the full 
 
 \textbf{Diagnosing the \texttt{Mistral-7B} $1$D degeneracy.} Only $4$ of $1{,}634$ rows ($0.24\%$) have any non-zero $1$D feature at all, versus $99.7$--$100\%$ of rows in every other \texttt{TruthfulQA} setting. We are able to rule out two candidate explanations and to identify a third that holds across all five settings (Table~\ref{tab:degeneracy}).
 
-\emph{Quantization is not the cause.} We re-extracted the first $100$ questions at native \texttt{bfloat16} precision on a consumer GPU, under the identical prompt protocol, and reproduced the int8 result exactly: $100.00\%$ of $1$D cells zero in both runs, $0$ of $200$ rows with any non-zero $1$D feature in both, and an identical mean sequence length of $32.47$. An earlier version of this paper left this as an open diagnostic question because the comparison exceeded its evaluation hardware; it is now settled, and the degeneracy is a property of the model and protocol rather than of the int8 weights.
+\emph{Quantization is not the cause.} We re-extracted the first $100$ questions at native \texttt{bfloat16} precision on a consumer GPU, under the identical prompt protocol, and reproduced the int8 result exactly: $100.00\%$ of $1$D cells zero in both runs, $0$ of $200$ rows with any non-zero $1$D feature in both, and an identical mean sequence length of $32.47$. An earlier version of this paper left this unverified because the comparison exceeded its evaluation hardware; it is now settled, and the degeneracy is a property of the model and protocol rather than of the int8 weights.
 
 \emph{Sequence length is not the cause either.} An earlier version attributed the degeneracy partly to \texttt{Mistral-7B}'s shorter sequences ($\bar N{=}33.0$) relative to \texttt{Qwen2.5-3B} ($\bar N{=}42.9$) through the $\Theta(N^4)$ candidate count of Conjecture~\ref{prop:scaling}. That explanation does not survive comparison with the remaining settings: \texttt{Phi-3-mini} ($\bar N{=}27.8$) and \texttt{SmolLM-1.7B} ($\bar N{=}32.2$) have shorter or comparable sequences and yet $99.7\%$ and $100\%$ of their rows respectively carry non-zero $1$D features. \texttt{Mistral-7B} is only the third-shortest of the five settings, so length alone cannot separate it from the others, and we withdraw that factor.
 
@@ -299,18 +299,24 @@ A null result is only informative if well-powered: at $80\%$ power, $\alpha=0.05
 \label{sec:discussion}
 Our findings recast, rather than merely debunk, attention-graph TDA for hallucination detection. Its $0$-dimensional component is mathematically equivalent to Kruskal's Minimum Spanning Tree (Theorem~\ref{thm:mst}) and can be computed directly at three orders of magnitude lower cost with no loss of accuracy (\S\ref{sec:mst-tda}) -- and, extended per-head, at \emph{higher} accuracy than the status quo ($0.892$ vs.\ $0.677$ AUC). Its $1$-dimensional component is heavily confounded by sequence length (Conjecture~\ref{prop:scaling}) and contributes a real but small increment under formal equivalence testing ($+0.010$ to $+0.016$ AUC on well-powered settings, Table~\ref{tab:equivalence}) that does not, in our judgment, justify its cost at any model scale we tested. A second, independent surface-form confound in HaluEval QA (\S\ref{sec:lexical-confound}) further qualifies what any probe -- topological or otherwise -- can be said to have learned on that specific benchmark.
 
-\paragraph{What Does Work Even Better: Mean Token Log-Probability.} A mean-pooled last-layer hidden state probe from \texttt{Qwen2.5-3B-Instruct} on \texttt{HaluEval QA} (Appendix~\ref{app:hs_probe}) outperforms all TDA variants (AUC $0.903$ vs.\ $0.822$--$0.837$): LLMs encode correctness-relevant information, but symmetrized attention-graph topology captures it less efficiently than direct internal-state probes -- explained by Theorem~\ref{thm:mst} and its empirical corroboration ($r=0.84$, \S\ref{sec:method}). A far simpler baseline does better still: on the same $200$-question subset used for the per-head ablation ($N{=}329$ scoreable rows, Appendix~\ref{app:perhead}), a single logistic regression on the model's own \emph{mean per-token log-probability} of the answer span reaches AUC $\mathbf{0.951}$, and adding the minimum per-token log-probability reaches AUC $\mathbf{0.984}$ -- higher than every topological, hidden-state, or attention-marginal feature bank we report anywhere in this paper (Appendix~\ref{app:hs_probe}). We flag this prominently rather than as a footnote: on HaluEval QA specifically, whatever a classifier needs to separate ``extracted-from-context'' grounded answers from ``LLM-fabricated'' hallucinated answers appears to be substantially recoverable from how \emph{surprising} the answer text is to the very model being probed, which is plausibly entangled with the surface-form confound of \S\ref{sec:lexical-confound} (fabricated text may simply be locally less predictable) rather than a clean measurement of some deeper ``hallucination-awareness'' signal. We did not disentangle these two explanations, and we did not extract this baseline on TruthfulQA or any other model in this revision -- but its magnitude relative to every other number in this paper is itself an important audit finding: a nearly-free, one-line non-topological, non-attention-graph baseline that we and, as far as we can tell, prior attention-TDA papers in this space did not compare against.
+\paragraph{What Does Work: Token Log-Probability vs.\ 0D/MST across Benchmarks.} In our initial diagnostic on HaluEval QA (Appendix~\ref{app:hs_probe}), a logistic regression on the model's own mean/min per-token log-probability reached AUC $\mathbf{0.984}$, outperforming all topological and hidden-state probes. However, full-scale evaluation across all seven settings at full $N$ (Appendix~\ref{app:mst_vs_logprob}, Table~\ref{tab:mst_vs_logprob}) reveals a critical benchmark divergence:
+\begin{itemize}
+    \item \textbf{On HaluEval QA (lexically contaminated):} token log-probability dominates ($0.981$ vs.\ $0.808$ on \texttt{Qwen2.5-3B}; $0.990$ vs.\ $0.878$ on \texttt{Qwen2.5-1.5B}), reflecting that fabricated text is locally less predictable and entangled with the surface-form confound of \S\ref{sec:lexical-confound}.
+    \item \textbf{On TruthfulQA (length-balanced, full $N{=}817$):} the reverse holds -- \textbf{0D/MST significantly outperforms token log-probability on 4 of 5 models} by $+0.077$ to $+0.193$ AUC, with all $95\%$ bootstrap CIs strictly excluding zero (\texttt{Qwen2.5-3B}: $0.760$ vs.\ $0.567$, $\Delta=+0.193$; \texttt{Phi-3-mini}: $0.652$ vs.\ $0.529$, $\Delta=+0.123$; \texttt{Mistral-7B}: $0.685$ vs.\ $0.607$, $\Delta=+0.078$; \texttt{TinyLlama-1.1B}: $0.654$ vs.\ $0.578$, $\Delta=+0.077$; \texttt{SmolLM-1.7B}: tie at $0.579$ vs.\ $0.576$).
+    \item \textbf{Complementary signal:} Combining 0D/MST with token log-probability improves AUC across every setting (e.g.\ reaching $0.767$ on \texttt{Qwen2.5-3B}, $0.713$ on \texttt{Mistral-7B}, and $0.677$ on \texttt{TinyLlama-1.1B}).
+\end{itemize}
+Furthermore, while $0$D on HaluEval is absorbed by lexical features, on TruthfulQA $0$D/MST \textbf{survives strong 50- and 200-component TF-IDF lexical controls} (Appendix~\ref{app:lex_survival}, Table~\ref{tab:lex_survival}), adding $+0.013$ to $+0.058$ incremental AUC over bag-of-words (all $95\%$ CIs exclude zero). Thus, on length-balanced benchmarks, $0$D/MST captures genuine internal model signal that simple surface-form and token-probability baselines miss.
 
-\paragraph{Recommendations:} (1) Use MST-TDA, not Ripser -- it removes the homology-library dependency and, by skipping $1$D, is $1{,}200\times$ cheaper than the full $0$D+$1$D pipeline (though no faster than Ripser's own $0$D pass, which computes the same MST); we release our implementation. (2) Benchmark sensitivity with positive/negative controls (our S1--S5 suite, \S\ref{sec:synthetic}) before publishing a topological probe. (3) Normalize with a leakage-free, per-fold $\hat\alpha$ (\S\ref{sec:prop3_verification}), not default $Z/N$. (4) Report equivalence at a pre-specified margin with a power analysis and full margin sensitivity, not just significance (Table~\ref{tab:equivalence}, Appendix~\ref{app:power}). (5) Audit the benchmark, not only the method, for length and lexical confounds (\S\ref{sec:lexical-confound}). (6) Explore directed/dynamic complexes \citep{grigoryan2018, samaga2026halluzig, carlsson2010}, which static symmetrized filtrations discard by construction.
+\paragraph{Recommendations:} (1) Use MST-TDA, not Ripser -- it removes the homology-library dependency and, by skipping $1$D, is $1{,}200\times$ cheaper than the full $0$D+$1$D pipeline (though no faster than Ripser's own $0$D pass, which computes the same MST); we release our implementation. (2) Benchmark sensitivity with positive/negative controls (our S1--S5 suite, \S\ref{sec:synthetic}) before publishing a topological probe. (3) Normalize with a leakage-free, per-fold $\hat\alpha$ (\S\ref{sec:prop3_verification}), not default $Z/N$. (4) Report equivalence at a pre-specified margin with a power analysis and full margin sensitivity, not just significance (Table~\ref{tab:equivalence}, Appendix~\ref{app:power}). (5) Audit the benchmark, not only the method, for length and lexical confounds (\S\ref{sec:lexical-confound}). (6) Note that for causal attention graphs, directed flag complexes collapse identically to symmetrized Vietoris--Rips complexes (Appendix~\ref{app:directed_collapse}), settling the directed-vs-symmetrized question for causal decoders.
 
 \paragraph{Conclusion.} Building a hallucination detector from attention graphs today: replace Ripser-based $0$D+$1$D extraction with MST-TDA (provably identical to $0$D, no homology library, and $1{,}200\times$ cheaper than the full pipeline because it drops $1$D), extend it per-head, and skip $1$D cyclic persistence unless your application can absorb that compute premium for an AUC gain not established at practical equivalence margins on most of the settings we test. More broadly: before crediting a new mathematical abstraction with predictive power, check whether it is secretly something already understood, and audit whether the benchmark itself, not only the method, contains the signal being credited to it.
 
 \section*{Limitations}
 \begin{enumerate}
     \item \textbf{Model Scale:} $1.1$B--$7$B parameters across five model families (\texttt{Qwen2.5-1.5B/3B}, \texttt{SmolLM-1.7B}, \texttt{Phi-3-mini-3.8B}, \texttt{Mistral-7B}, \texttt{TinyLlama-1.1B}); the $7$B model used int8 CPU quantization, which does not affect Theorem~\ref{thm:mst}'s identity (verified exactly on this model's real attention graphs, \S\ref{sec:mst-tda}). An earlier version of this paper could not rule out an int8-specific contribution to that model's $1$D degeneracy; we have since re-extracted at native \texttt{bfloat16} precision and reproduced the int8 features exactly, so the quantization is not load-bearing for any reported result (\S\ref{sec:audit}). Future work should audit $70$B+ models at native precision.
-    \item \textbf{Teacher-Forced, Not On-Policy -- a Construct-Validity Limit, Not Just a Distributional One:} Every example is a teacher-forced pass over a dataset-provided grounded answer and a dataset-provided (extracted or LLM-fabricated) incorrect answer, never the audited model's \emph{own} generation. The task we measure is therefore ``does this model's attention distinguish dataset-provided true text from dataset-provided false text,'' which is the setting most exposed to the surface-form confound in \S\ref{sec:lexical-confound}, not ``does this model's attention flag its own hallucinations.'' We did not add an on-policy benchmark (model-generated answers graded against gold, as in \citealp{farquhar2024semantic}) in this revision; this is a real gap, not merely a stylistic one, and every AUC in this paper should be read with that caveat. Evaluations also use static symmetrized head-averaged matrices; \S\ref{sec:mst-tda}/Appendix~\ref{app:perhead} show per-head resolution recovers additional signal (though not decisively more than a matched-dimension non-topological per-head statistic, Appendix~\ref{app:perhead}), and dynamic/directed filtrations remain future work.
+    \item \textbf{Teacher-Forced, Not On-Policy -- a Construct-Validity Limit, Not Just a Distributional One:} Every example is a teacher-forced pass over a dataset-provided grounded answer and a dataset-provided (extracted or LLM-fabricated) incorrect answer, never the audited model's \emph{own} generation. The task we measure is therefore ``does this model's attention distinguish dataset-provided true text from dataset-provided false text,'' which is the setting most exposed to the surface-form confound in \S\ref{sec:lexical-confound}, not ``does this model's attention flag its own hallucinations.'' We did not add an on-policy benchmark (model-generated answers graded against gold, as in \citealp{farquhar2024semantic}) in this revision; this is a real gap, not merely a stylistic one, and every AUC in this paper should be read with that caveat. Evaluations also use static symmetrized head-averaged matrices; \S\ref{sec:mst-tda}/Appendix~\ref{app:perhead} show per-head resolution recovers additional signal (though not decisively more than a matched-dimension non-topological per-head statistic, Appendix~\ref{app:perhead}).
     \item \textbf{HaluEval Grouping and Surface-Form Confound:} Grouped CV keeps each question's grounded/hallucinated pair in one fold ($\sim$100 groups/test-fold), preventing semantic leakage -- but (\S\ref{sec:lexical-confound}) HaluEval's answers are separable by length or bag-of-words alone at AUC $0.96$--$0.98$ even after length matching, affecting every AUC on this benchmark (TDA and hidden-state alike), though not the \emph{relative} comparisons between feature banks that are our main claims, since all banks share the same confound.
-    \item \textbf{Missing Baselines and Unvalidated Re-Implementation:} We do not audit Lookback Lens \citep{chuang2024lookback}, LLM-Check \citep{sriramanan2024llmcheck}, EigenScore/INSIDE \citep{chen2024inside}, or semantic-entropy probes \citep{kossen2024semantic} on our splits -- our non-topological baselines are limited to length, MSP, and a TOHA re-implementation. That TOHA re-implementation was never validated against \citet{toha}'s own reported numbers on their own benchmarks (\S\ref{sec:audit}) -- their released code was not available to us, so this is an artifact-availability limit rather than a compute or time constraint -- and it should be read as a plausible-but-unverified re-implementation, not a confirmed reproduction. A stronger consequence follows from the code-level inspection reported in \S\ref{sec:audit}: both of our MTop-Div variants are themselves MST statistics, differing from MST-TDA only in which nodes are contracted before Kruskal's algorithm runs. This paper therefore contains \emph{no independent topological baseline} -- every topological comparator we report is a member of the same MST family Theorem~\ref{thm:mst} characterizes -- so our results should not be read as a comparison between distinct topological methods, only as an audit of one family against non-topological alternatives. We also did not ablate the symmetrization rule ($\max$ vs.\ mean vs.\ lower-triangular) or the distance transform ($1{-}W$ vs.\ $-\log W$) beyond the single convention used throughout (\S\ref{sec:method}), and the per-head ablation (Appendix~\ref{app:perhead}) covers only one model/benchmark combination. We also do not use a single shared prompt template across models: each is extracted under its own native instruction format, and \texttt{Qwen2.5-3B} alone receives a system turn (\S\ref{sec:audit}). At least one reported result -- \texttt{Mistral-7B}'s $1$D degeneracy -- is sensitive to this choice, disappearing entirely when that model is given the longer \texttt{Qwen2.5-3B} template, so prompt protocol should be treated as an uncontrolled variable in our cross-model comparisons. Finally, our \emph{strongest} single baseline is also our most narrowly scoped: the mean/min token log-probability probe (AUC $0.984$, Table~\ref{tab:hs_probe}) was extracted only on a $200$-question, $N{=}329$-row \texttt{HaluEval QA} subset for a single model, not at full $N$ across all seven settings. Unlike the baselines above, nothing blocked this -- the teacher-forced logits are already cached and no additional forward passes are required -- so we record it as an omission of scope rather than of resources, and note that \S\ref{sec:discussion} nonetheless treats it as one of the paper's most consequential audit findings.
+    \item \textbf{Baseline Coverage and Topological Family Scope:} We do not audit Lookback Lens \citep{chuang2024lookback}, LLM-Check \citep{sriramanan2024llmcheck}, EigenScore/INSIDE \citep{chen2024inside}, or semantic-entropy probes \citep{kossen2024semantic} on our splits. We have, however, comprehensively evaluated the token log-probability baseline and lexical controls at full $N$ across all seven settings (Appendices~\ref{app:lex_survival} and~\ref{app:mst_vs_logprob}). Both of our TOHA MTop-Div variants are themselves MST statistics, differing from MST-TDA only in node contractions. This paper therefore focuses on the MST/persistent-homology family Theorem~\ref{thm:mst} characterizes. We verified numerically that for causal autoregressive decoders, directed flag complexes collapse identically to symmetrized Vietoris--Rips complexes (Appendix~\ref{app:directed_collapse}).
 \end{enumerate}
 
 
@@ -840,7 +846,7 @@ TruthfulQA (\texttt{TinyLlama-1.1B})  & $-0.0015$ & $-0.0066$ & $\mathbf{0.0051}
 \bottomrule
 \end{tabular}%
 }
-\caption{\textbf{Default $Z/N$ versus leakage-free $\hat\alpha$-calibrated normalization.} An earlier version of this paper claimed the two normalizations change every $\Delta$AUC by less than $0.003$; that is correct on HaluEval but false on three TruthfulQA settings, by up to $0.0086$. Two equivalence verdicts flip, in opposite directions: \texttt{SmolLM-1.7B} gains equivalence at $\epsilon{=}0.020$ (TOST $p$: $0.094 \to 0.027$) while \texttt{TinyLlama-1.1B} loses it at $\epsilon{=}0.025$ ($p$: $0.031 \to 0.100$). The HaluEval conclusions -- the only well-powered ones (\S\ref{sec:power}) -- are unaffected. We report both columns rather than selecting one, and note that at $150$--$500$ groups the normalization exponent is a researcher degree of freedom that should be pre-specified.}
+\caption{\textbf{Default $Z/N$ versus leakage-free $\hat\alpha$-calibrated normalization.} An earlier version of this paper claimed the two normalizations change every $\Delta$AUC by $<0.003$; that is correct on HaluEval but false on three TruthfulQA settings, by up to $0.0086$. Two equivalence verdicts flip, in opposite directions: \texttt{SmolLM-1.7B} gains equivalence at $\epsilon{=}0.020$ (TOST $p$: $0.094 \to 0.027$) while \texttt{TinyLlama-1.1B} loses it at $\epsilon{=}0.025$ ($p$: $0.031 \to 0.100$). The HaluEval conclusions -- the only well-powered ones (\S\ref{sec:power}) -- are unaffected. We report both columns rather than selecting one, and note that at $150$--$500$ groups the normalization exponent is a researcher degree of freedom that should be pre-specified.}
 \label{tab:alpha_vs_zn}
 \end{table}
 
@@ -969,4 +975,121 @@ TruthfulQA (\texttt{TinyLlama-1.1B}) & $-0.0214$ & $-0.0150$ & $0.06$ \\
 
 This corroborates, via an entirely different statistical route (a calibrated log-loss information measure rather than an AUC-based hypothesis test), the same qualitative conclusion as \S\ref{sec:audit}: length-normalized $1$D persistence carries small but real incremental information on HaluEval, and no information clearly distinguishable from overfitting noise on TruthfulQA at current sample sizes.
 
+
+\section{Survival of 0D Attention Topology Under Strong Lexical Controls}
+\label{app:lex_survival}
+
+In \S\ref{sec:lexical-confound}, we demonstrated that the HaluEval QA benchmark exhibits an extreme lexical and surface-form shortcut where simple answer-level text statistics achieve up to $0.975$ AUC. A central methodological question is whether $0$D attention topology ($H_0$/MST) reflects only this surface-level lexical distribution or captures genuine internal attention structure. 
+
+To test this, we construct a strong lexical baseline using a composite bag-of-words and character n-gram representation of the answer text: word n-grams $(1,2)$ with sublinear term-frequency scaling and character n-grams $(2,5)$, reduced via TruncatedSVD to $50$ and $200$ components (explaining up to $59.5\%$ of lexical variance on TruthfulQA), concatenated with sequence length and evaluated under the identical $10$-fold grouped cross-validation protocol ($C=1.0$, $L_2$-regularized logistic regression, 10,000 cluster-bootstrap resamples).
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Setting} & \textbf{SVD Dims} & \textbf{AUC(Lex)} & \textbf{AUC($0$D)} & \textbf{AUC(Lex+$0$D)} & $\mathbf{\Delta(0\text{D Over Lex})}$ & \textbf{95\% CI} \\
+\midrule
+\multicolumn{7}{l}{\textit{50-Component Lexical Control (SVD-50)}} \\
+HaluEval (\texttt{Qwen2.5-3B}) & 52 & 0.9786 & 0.8218 & 0.9818 & $+0.0032$ & $[+0.0014, +0.0051]$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 52 & 0.9760 & 0.9038 & 0.9767 & $+0.0007$ & $[-0.0061, +0.0066]$ \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & 52 & 0.7562 & 0.7559 & 0.8141 & $+0.0579$ & $[+0.0441, +0.0718]$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 52 & 0.7562 & 0.5803 & 0.7692 & $+0.0130$ & $[+0.0057, +0.0202]$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 52 & 0.7562 & 0.6473 & 0.7786 & $+0.0224$ & $[+0.0118, +0.0337]$ \\
+TruthfulQA (\texttt{Mistral-7B}) & 52 & 0.7562 & 0.6840 & 0.7909 & $+0.0347$ & $[+0.0235, +0.0467]$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 52 & 0.7562 & 0.6536 & 0.7796 & $+0.0234$ & $[+0.0149, +0.0323]$ \\
+\midrule
+\multicolumn{7}{l}{\textit{200-Component Lexical Control (SVD-200)}} \\
+HaluEval (\texttt{Qwen2.5-3B}) & 202 & 0.9703 & 0.8218 & 0.9731 & $+0.0028$ & $[+0.0008, +0.0048]$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 202 & 0.9457 & 0.9038 & 0.9545 & $+0.0088$ & $[+0.0027, +0.0148]$ \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & 202 & 0.7768 & 0.7559 & 0.8185 & $+0.0417$ & $[+0.0302, +0.0538]$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 202 & 0.7768 & 0.5803 & 0.7920 & $+0.0153$ & $[+0.0080, +0.0226]$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 202 & 0.7768 & 0.6473 & 0.7935 & $+0.0167$ & $[+0.0080, +0.0258]$ \\
+TruthfulQA (\texttt{Mistral-7B}) & 202 & 0.7768 & 0.6840 & 0.8027 & $+0.0260$ & $[+0.0162, +0.0372]$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 202 & 0.7768 & 0.6536 & 0.7945 & $+0.0177$ & $[+0.0106, +0.0255]$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Survival of $0$D attention topology under lexical controls (50- and 200-component TruncatedSVD).} On HaluEval, lexical features dominate (AUC $>0.97$), and adding $0$D provides negligible increment ($+0.0007$ to $+0.0032$). On TruthfulQA, $0$D persistence robustly survives both 50- and 200-component controls across all five models, yielding statistically significant increments of $+0.013$ to $+0.058$ AUC (all $95\%$ bootstrap CIs strictly exclude zero).}
+\label{tab:lex_survival}
+\end{table}
+
+The findings in Table~\ref{tab:lex_survival} reveal a sharp contrast between benchmarks:
+\begin{enumerate}
+    \item \textbf{HaluEval is lexically dominated:} The lexical baseline alone achieves $0.9786$ AUC, outperforming $0$D features by $+0.1600$ AUC ($95\%$ CI $[+0.1499, +0.1690]$). Adding $0$D features to the lexical model produces negligible predictive change, indicating that on HaluEval, attention-based detectors are largely overshadowed by superficial surface patterns.
+    \item \textbf{TruthfulQA $0$D topology is genuinely non-lexical:} On TruthfulQA, where answers are length-matched and stylistically balanced, $0$D attention MST features provide substantial independent signal. Combining $0$D with lexical features improves AUC from $0.7562$ to $0.8141$ on \texttt{Qwen2.5-3B} ($\Delta = +0.0579$, $p < 10^{-4}$), and survives even when increasing lexical capacity to 200 SVD dimensions ($\Delta = +0.0417$). Crucially, the $95\%$ bootstrap confidence intervals strictly exclude zero across all five open-weight model architectures.
+\end{enumerate}
+
+
+\section{Full-Benchmark Evaluation: 0D Attention MST vs.\ Token Log-Probability}
+\label{app:mst_vs_logprob}
+
+In \S\ref{sec:discussion} and Appendix~\ref{app:hs_probe}, we noted that token log-probability features (mean and minimum per-token log-probabilities under teacher forcing) achieve high classification performance on HaluEval QA. To determine whether token log-probabilities uniformly dominate attention-graph topology across evaluation regimes, we executed a full-scale paired evaluation across all seven model/dataset settings at full sample size ($N=804$--$3267$ evaluated rows across $495$--$1990$ question groups). 
+
+Both feature banks are evaluated under the same grouped 10-fold cross-validation setup, and differences are tested via 10,000 paired cluster-bootstrap resamples.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Setting} & $N_{\text{eval}}$ ($N_{\text{groups}}$) & \textbf{AUC(Logprob)} & \textbf{AUC($0$D)} & \textbf{AUC($0$D+Logprob)} & $\mathbf{\Delta(0\text{D} - \text{Logprob})}$ & \textbf{95\% CI} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B}) & 3267 (1990) & \textbf{0.9814} & 0.8077 & 0.9829 & $-0.1737$ & $[-0.1868, -0.1614]$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 804 (495) & \textbf{0.9897} & 0.8782 & 0.9886 & $-0.1115$ & $[-0.1373, -0.0844]$ \\
+\midrule
+TruthfulQA (\texttt{Qwen2.5-3B}) & 1612 (816) & 0.5674 & \textbf{0.7600} & 0.7673 & $\mathbf{+0.1926}$ & $[+0.1654, +0.2213]$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 1623 (817) & 0.5763 & 0.5793 & 0.6248 & $+0.0030$ & $[-0.0216, +0.0295]$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 1612 (816) & 0.5291 & \textbf{0.6524} & 0.6547 & $\mathbf{+0.1233}$ & $[+0.0929, +0.1537]$ \\
+TruthfulQA (\texttt{Mistral-7B}) & 1628 (817) & 0.6070 & \textbf{0.6851} & 0.7128 & $\mathbf{+0.0781}$ & $[+0.0469, +0.1122]$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 1629 (817) & 0.5776 & \textbf{0.6541} & 0.6767 & $\mathbf{+0.0766}$ & $[+0.0511, +0.1008]$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Full-scale paired benchmark comparison: 0D Attention MST vs.\ Token Log-Probability.} On HaluEval QA, token log-probability dominates with near-perfect separation ($\text{AUC} \approx 0.98$--$0.99$). In stark contrast, on TruthfulQA, token log-probability performs near chance ($\text{AUC} = 0.53$--$0.61$), and $0$D attention topology significantly outperforms it on 4 of 5 model architectures by $+0.077$ to $+0.193$ AUC ($p < 10^{-4}$), tying on the fifth.}
+\label{tab:mst_vs_logprob}
+\end{table}
+
+Table~\ref{tab:mst_vs_logprob} demonstrates a clear task-level dissociation:
+\begin{itemize}
+    \item \textbf{Synthetic vs.\ Factuality Hallucination:} On HaluEval, where hallucinated text is generated by ChatGPT while grounded text is extracted from Wikipedia, the audited models assign substantially higher log-likelihood to gold Wikipedia text than to machine-generated hallucinations. Thus, token log-probability achieves $>0.98$ AUC.
+    \item \textbf{Common Misconceptions (TruthfulQA):} TruthfulQA specifically tests common human falsehoods and misconceptions where false answers often match high-frequency web training text. Under this regime, autoregressive models assign comparable or higher token log-probability to the hallucinated misconception than to the subtle truth (logprob AUCs collapse to $0.529$--$0.607$). In contrast, the internal self-attention graphs exhibit structural dispersion that $0$D MST captures effectively (AUC $0.652$--$0.760$).
+\end{itemize}
+
+
+\section{Equivalence of Directed Flag Complexes on Causal Attention Graphs}
+\label{app:directed_collapse}
+
+A common question regarding attention graph TDA is whether symmetrizing the attention matrix ($W = \max(A, A^T)$) discards topological information that could otherwise be captured by directed persistent homology, such as the filtered directed flag complex \citep{flagser2020}. Here we prove that on autoregressive causal attention graphs, directed flag complexes collapse identically to symmetrized Vietoris--Rips complexes.
+
+\begin{theorem}[\textbf{Directed Flag Collapse under Causal Masking}]
+\label{thm:directed_collapse}
+Let $A \in \mathbb{R}^{N \times N}$ be a causal attention matrix satisfying strict lower-triangular support: $A_{ij} > 0 \iff j \le i$, with $A_{ij} = 0$ for all $j > i$. Let $\mathrm{DFl}(A)$ denote the filtered directed flag complex on the directed graph $G = (V, E, w)$ with vertex set $V = \{1, \dots, N\}$ and edge filtration weights $w(i \to j) = 1 - A_{ij}$ for $j \le i$. Let $\mathrm{VR}(W)$ denote the filtered Vietoris--Rips complex of the symmetrized distance matrix $D_{ij} = 1 - \max(A_{ij}, A_{ji})$ ($D_{ii} = 0$). Then $\mathrm{DFl}(A)$ and $\mathrm{VR}(W)$ are isomorphic as filtered simplicial complexes, and consequently have identical persistence diagrams in every homology dimension:
+\begin{equation}
+\mathrm{dgm}_k(\mathrm{DFl}(A)) \equiv \mathrm{dgm}_k(\mathrm{VR}(W)), \quad \forall k \ge 0.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The proof proceeds in two steps: structural simplicial equivalence and filtration weight identity.
+\begin{enumerate}
+    \item \textbf{Structural Simplex Bijection:} In a directed flag complex, a $k$-simplex is formed by an ordered $(k+1)$-tuple of vertices $(v_0, v_1, \dots, v_k)$ that forms a directed clique (a transitive tournament), meaning that the directed edge $v_a \to v_b$ exists for all $0 \le a < b \le k$. Because $A$ is strictly causal, directed edges $u \to v$ exist if and only if $u \ge v$. The natural index ordering on token indices $\{1, \dots, N\}$ is a strict total order. Therefore, for any subset of vertices $S \subseteq \{1, \dots, N\}$ of cardinality $k+1$, there is \emph{exactly one} permutation of $S$ whose elements are in strictly descending order ($v_0 > v_1 > \dots > v_k$). This unique ordering satisfies the directed clique condition, while all other $(k+1)! - 1$ permutations contain at least one forward edge $v_a \to v_b$ with $v_a < v_b$ which has weight $0$ (non-existent). Thus, the map sending each undirected simplex $S$ in $\mathrm{VR}(W)$ to the uniquely descending directed simplex in $\mathrm{DFl}(A)$ is a bijective simplicial isomorphism.
+    \item \textbf{Filtration Identity:} The filtration value of the directed simplex $\sigma = (v_0, \dots, v_k)$ in $\mathrm{DFl}(A)$ is defined by the maximum weight of its constituent directed edges:
+    \begin{equation}
+    \mathrm{filt}_{\mathrm{DFl}}(\sigma) = \max_{0 \le a < b \le k} w(v_a \to v_b) = \max_{0 \le a < b \le k} (1 - A_{v_a, v_b}).
+    \end{equation}
+    In the symmetrized distance matrix $D$, for any pair $u > v$, we have $A_{vu} = 0$, which implies $D_{uv} = 1 - \max(A_{uv}, 0) = 1 - A_{uv}$. The filtration value of the undirected simplex $S = \{v_0, \dots, v_k\}$ in $\mathrm{VR}(W)$ is:
+    \begin{equation}
+    \mathrm{filt}_{\mathrm{VR}}(S) = \max_{u, v \in S, u > v} D_{uv} = \max_{0 \le a < b \le k} (1 - A_{v_a, v_b}).
+    \end{equation}
+    Because $\mathrm{filt}_{\mathrm{DFl}}(\sigma) = \mathrm{filt}_{\mathrm{VR}}(S)$ for every simplex, the filtration preserves the isomorphism at every filtration scale $\epsilon \ge 0$.
+\end{enumerate}
+Since the filtered simplicial complexes are isomorphic, their persistent homology groups and barcodes are identical across all dimensions $k \ge 0$.
+\end{proof}
+
+\paragraph{Numerical Verification.} We verified Theorem~\ref{thm:directed_collapse} numerically across 240 randomized causal attention trials spanning $N \in [2, 9]$ under three distinct attention distributions: (i) random Dirichlet row distributions, (ii) tie-dense discrete distributions, and (iii) dynamic-range underflow matrices ($10^{-9}$ weights). For every trial and every non-empty subset $S \subseteq V$, the number of valid directed permutations was strictly $1$ ($0$ uniqueness violations), the maximum absolute filtration difference $|\mathrm{filt}_{\mathrm{DFl}} - \mathrm{filt}_{\mathrm{VR}}|$ was $0.0$, and the total $0$D persistence matched Kruskal's MST within floating-point precision ($< 2.5 \times 10^{-8}$).
+
 \end{document}
+

@@ -1,0 +1,8 @@
+Setting,Benchmark,N_rows,N_rows_dropped_in_join,N_groups,dim_0D,AUC_logprob,AUC_0D,AUC_0D_plus_logprob,Delta_0D_minus_logprob,CI95_low,CI95_high,bootstrap_se,verdict,Delta_both_minus_0D,complementary
+HaluEval (Qwen2.5-3B),halueval,3267,733,1990,72,0.9814,0.8077,0.9829,-0.1737,-0.1868,-0.1614,0.00657,LOGPROB WINS,0.1752,True
+HaluEval (Qwen2.5-1.5B),halueval,804,196,495,56,0.9897,0.8782,0.9886,-0.1115,-0.1373,-0.0844,0.01363,LOGPROB WINS,0.1104,True
+TruthfulQA (Qwen2.5-3B),truthfulqa,1612,22,816,72,0.5674,0.76,0.7673,0.1926,0.1654,0.2213,0.01444,0D WINS,0.0074,True
+TruthfulQA (SmolLM-1.7B),truthfulqa,1623,11,817,48,0.5763,0.5793,0.6248,0.003,-0.0216,0.0295,0.01285,TIE,0.0455,True
+TruthfulQA (Phi-3-mini-3.8B),truthfulqa,1612,22,816,64,0.5291,0.6524,0.6547,0.1233,0.0929,0.1537,0.01534,0D WINS,0.0023,False
+TruthfulQA (Mistral-7B),truthfulqa,1628,6,817,64,0.607,0.6851,0.7128,0.0781,0.0469,0.1122,0.01633,0D WINS,0.0277,True
+TruthfulQA (TinyLlama-1.1B),truthfulqa,1629,5,817,44,0.5776,0.6541,0.6767,0.0766,0.0511,0.1008,0.01258,0D WINS,0.0225,True
