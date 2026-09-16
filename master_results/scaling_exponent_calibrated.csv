@@ -1,8 +1,8 @@
 Benchmark,alpha_hat_mean_across_folds
 HaluEval (Qwen2.5-3B),0.453
 HaluEval (Qwen2.5-1.5B),0.2131
-TruthfulQA (Qwen2.5-3B),0.1194
-TruthfulQA (SmolLM-1.7B),0.1486
-TruthfulQA (Phi-3-mini-3.8B),0.3928
+TruthfulQA (Qwen2.5-3B),0.102
+TruthfulQA (SmolLM-1.7B),0.1637
+TruthfulQA (Phi-3-mini-3.8B),0.3126
 TruthfulQA (Mistral-7B),1.0
-TruthfulQA (TinyLlama-1.1B),0.0935
+TruthfulQA (TinyLlama-1.1B),0.5625
