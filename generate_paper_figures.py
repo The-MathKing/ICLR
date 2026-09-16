@@ -1,3 +1,9 @@
+import os
+
+# Figure output directory. Override with the PAPER_DIR env var; defaults to ./paper
+PAPER_DIR = os.environ.get("PAPER_DIR",
+                           os.path.join(os.path.dirname(os.path.abspath(__file__)), "paper"))
+os.makedirs(PAPER_DIR, exist_ok=True)
 """
 generate_paper_figures.py
 Generates high-resolution publication-quality figures for the ICLR manuscript:
@@ -97,7 +103,7 @@ def create_fig1_teaser():
                 fontsize=8, fontweight='bold', color='#c0392b')
 
     plt.tight_layout()
-    plt.savefig('/Volumes/2TB/iclr/paper/fig1_teaser_audit.png', dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(PAPER_DIR, 'fig1_teaser_audit.png'), dpi=300, bbox_inches='tight')
     plt.close()
     print("Created fig1_teaser_audit.png")
 
@@ -141,7 +147,7 @@ def create_fig2_pipeline():
     ax.text(9.8, 2.5, "• Grouped 10-Fold CV\n• Exact Length Match\n• Token Normalization\n• Cluster Bootstrap\n  (Holm-Bonferroni)", ha='center', fontsize=8.5)
 
     plt.tight_layout()
-    plt.savefig('/Volumes/2TB/iclr/paper/fig2_pipeline_scaffolding.png', dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(PAPER_DIR, 'fig2_pipeline_scaffolding.png'), dpi=300, bbox_inches='tight')
     plt.close()
     print("Created fig2_pipeline_scaffolding.png")
 
@@ -167,7 +173,7 @@ def create_fig4_heatmap():
     ax.set_title('Comprehensive Audited ROC-AUC Performance Matrix Across Architectures & Feature Banks', fontweight='bold', pad=12, fontsize=10.5)
     
     plt.tight_layout()
-    plt.savefig('/Volumes/2TB/iclr/paper/fig4_cross_model_heatmap.png', dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(PAPER_DIR, 'fig4_cross_model_heatmap.png'), dpi=300, bbox_inches='tight')
     plt.close()
     print("Created fig4_cross_model_heatmap.png")
 

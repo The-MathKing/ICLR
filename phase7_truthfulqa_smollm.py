@@ -11,10 +11,17 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from xgboost import XGBClassifier
 
+# Roadmap item 7: TruthfulQA has 817 questions; earlier runs capped this at
+# 150/500, leaving those settings at 14-54% power and confounding cross-model
+# comparisons with sample size. Set FULL_TRUTHFULQA=150 to reproduce the old run.
+FULL_TRUTHFULQA = 817
+
+
 def load_smollm():
     model_name = "HuggingFaceTB/SmolLM-1.7B-Instruct"
     print(f"Loading {model_name}...")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = ("cuda" if torch.cuda.is_available()
+              else "mps" if torch.backends.mps.is_available() else "cpu")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
@@ -69,7 +76,7 @@ def run_extraction():
     dataset = load_dataset("truthfulqa/truthful_qa", "generation", split="validation")
     df = pd.DataFrame(dataset)
     
-    df = df.head(500)
+    df = df.head(FULL_TRUTHFULQA)
     
     results = []
     

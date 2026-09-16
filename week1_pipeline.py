@@ -61,7 +61,8 @@ def load_model_and_tokenizer(model_name="Qwen/Qwen2.5-3B-Instruct"):
     Loads the model on MPS (if available) with eager attention for weight extraction.
     """
     print(f"--- Loading Model: {model_name} ---")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = ("cuda" if torch.cuda.is_available()
+              else "mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Using device: {device}")
     
     tokenizer = AutoTokenizer.from_pretrained(model_name)

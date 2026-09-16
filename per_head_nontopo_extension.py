@@ -13,7 +13,9 @@ Extends per_head_tda_ablation.py's per-head audit (review item B10) with:
 Outputs: phase_perhead/per_head_nontopo_features.csv, phase_perhead/per_head_full_comparison.csv
 """
 import os, gc
-os.environ["HF_HOME"] = "/Volumes/2TB/hf_cache"
+# HF_HOME intentionally not set here: honour the environment.
+# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+#  authors' Mac, which does not exist on other machines.)
 import numpy as np
 import pandas as pd
 import torch
@@ -33,7 +35,8 @@ MAX_SEQ_LEN = 256
 LAYER_START = 18
 LAYER_END = 27
 N_BOOT = 5000
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = ("cuda" if torch.cuda.is_available()
+          else "mps" if torch.backends.mps.is_available() else "cpu")
 
 
 def extract_nontopo():
@@ -80,6 +83,8 @@ def extract_nontopo():
             del outputs
             if device == "mps":
                 torch.mps.empty_cache()
+            elif device == "cuda":
+                torch.cuda.empty_cache()
         if (idx + 1) % 25 == 0:
             print(f"  {idx+1}/{SUBSET_SIZE}")
             pd.DataFrame(rows).to_csv(out_csv + ".tmp", index=False)

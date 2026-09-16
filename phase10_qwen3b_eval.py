@@ -1,5 +1,7 @@
 import os
-os.environ["HF_HOME"] = "/Volumes/2TB/hf_cache"
+# HF_HOME intentionally not set here: honour the environment.
+# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+#  authors' Mac, which does not exist on other machines.)
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import numpy as np
@@ -11,6 +13,12 @@ from tqdm import tqdm
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
+
+# Roadmap item 7: TruthfulQA has 817 questions; earlier runs capped this at
+# 150/500, leaving those settings at 14-54% power and confounding cross-model
+# comparisons with sample size. Set FULL_TRUTHFULQA=150 to reproduce the old run.
+FULL_TRUTHFULQA = 817
+
 
 def compute_mtop_div(D, prompt_len):
     N = D.shape[0]
@@ -65,7 +73,8 @@ def run_extraction():
         return pd.read_csv(out_csv)
         
     os.makedirs("phase10_results", exist_ok=True)
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = ("cuda" if torch.cuda.is_available()
+              else "mps" if torch.backends.mps.is_available() else "cpu")
     model_name = "Qwen/Qwen2.5-3B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -75,7 +84,7 @@ def run_extraction():
     
     dataset = load_dataset("truthfulqa/truthful_qa", "generation", split="validation")
     df = pd.DataFrame(dataset)
-    df = df.head(150)
+    df = df.head(FULL_TRUTHFULQA)
     
     results = []
     

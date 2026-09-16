@@ -14,7 +14,9 @@ token log-probability" baselines in the hallucination-detection literature
 use (e.g. as a component of MSP-style baselines).
 """
 import os, gc
-os.environ["HF_HOME"] = "/Volumes/2TB/hf_cache"
+# HF_HOME intentionally not set here: honour the environment.
+# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+#  authors' Mac, which does not exist on other machines.)
 import numpy as np
 import pandas as pd
 import torch
@@ -32,7 +34,8 @@ MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
 OUT_CSV = "phase_perhead/logprob_baseline_features.csv"
 SUBSET_SIZE = 200
 MAX_SEQ_LEN = 256
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = ("cuda" if torch.cuda.is_available()
+          else "mps" if torch.backends.mps.is_available() else "cpu")
 
 
 def extract():
@@ -78,6 +81,8 @@ def extract():
             del logits, logprobs, tok_logprobs, ans_logprobs
             if device == "mps":
                 torch.mps.empty_cache()
+            elif device == "cuda":
+                torch.cuda.empty_cache()
         if (idx + 1) % 50 == 0:
             print(f"  {idx+1}/{SUBSET_SIZE}")
 
