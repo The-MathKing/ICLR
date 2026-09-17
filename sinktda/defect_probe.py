@@ -60,8 +60,9 @@ def main():
     names = sys.argv[1:] or sorted(d for d in os.listdir(ROOT)
                                    if os.path.exists(os.path.join(ROOT, d, "layers.parquet")))
     out = Parallel(n_jobs=N_JOBS)(delayed(_one)(s) for s in names)
-    df = pd.DataFrame([r for rows in out for r in rows])
-    df.to_csv(os.path.join(RES, "defect_probe.csv"), index=False)
+    from sinktda.evaluate import merge_csv
+    df = merge_csv(os.path.join(RES, "defect_probe.csv"),
+                   [r for rows in out for r in rows])
     show = ["setting", "test", "auc_A", "auc_B", "delta", "ci95_lo", "ci95_hi", "equiv_0.015"]
     print(df.reindex(columns=show).to_string(index=False))
 

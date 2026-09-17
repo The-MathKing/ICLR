@@ -1,0 +1,16 @@
+\newcommand{\PrecPlatformMax}{0.005}
+\newcommand{\PrecFp32Max}{0.007}
+\newcommand{\PrecFp32TopoMax}{0.007}
+\newcommand{\PrecSettings}{2}
+\newcommand{\SinkTablePrecision}{%
+\begin{tabular}{llrrrrrrrrr}
+\toprule
+Setting & Contrast & Sink & 0D & 1D & Defl. & 0D$_h$ & LogP & Lookb. & Hidden & Non-topo. \\
+\midrule
+TQA Qw1.5B & bf16 CUDA $-$ bf16 MPS & $+0.001$ & $+0.005$ & $+0.003$ & $+0.003$ & $-0.002$ & $0.000$ & $+0.001$ & $0.000$ & $0.000$ \\
+TQA Qw1.5B & fp32 $-$ bf16 (CUDA) & $+0.002$ & $+0.004$ & $+0.001$ & $-0.007$ & $+0.005$ & $+0.003$ & $+0.001$ & $-0.001$ & $0.000$ \\
+TQA TinyLl. & bf16 CUDA $-$ bf16 MPS & $0.000$ & $-0.001$ & $+0.001$ & $-0.001$ & $+0.001$ & $0.000$ & $0.000$ & $0.000$ & $0.000$ \\
+TQA TinyLl. & fp32 $-$ bf16 (CUDA) & $0.000$ & $+0.001$ & $+0.002$ & $+0.003$ & $-0.001$ & $0.000$ & $0.000$ & $0.000$ & $0.000$ \\
+\bottomrule
+\end{tabular}
+}

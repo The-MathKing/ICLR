@@ -33,10 +33,15 @@ items S1–S12) and `REVITALIZE_PLAN.md` §8.
 
 ## Two blockers, both on you
 
-1. **Llama-3.1-8B never ran.** It is gated and there is no HF token on the box
-   (`huggingface-cli login` cannot run non-interactively). Everything else for it is
-   ready: the offload path is smoke-tested, and the BOS fix it *needs* — it uses
-   `generic_chat`, which double-counted BOS — is in. One block in `sinktda/RUN_ON_5080.md`.
+1. **Llama-3.1-8B: dropped from the submission (decision, 2026-09-17).** Logging in was
+   not enough — Meta's licence is granted per account and manual, and this account is not
+   on the authorized list, so the weights 403 even with a valid token. Community mirrors
+   (NousResearch, unsloth) are downloadable, but they were declined: their bit-identity to
+   Meta's weights cannot be verified precisely because the official repo is blocked, and a
+   third 7--8B model is not what moves the score. The paper ships with two 7B models, and
+   `\ModelSizeRange{}` resolves to `1.1B--7B` automatically. Everything needed to run it
+   later is in place (offload smoke-tested, BOS fix in), so it is a camera-ready option
+   once Meta approves.
 2. **`sinktda_out/` for the 11 small-model settings was never on the box**, so Steps 2–3
    could not be finished. `toha evaluate` and `defect_probe` glob that directory and
    rewrite their CSVs *wholesale*; running them with only the new settings present would
