@@ -137,7 +137,7 @@ def extract(args):
         with torch.no_grad():
             out = model(**enc, output_attentions=True)
         # rows of the response tokens only: (L, H, T, N)
-        att = torch.stack([a[0, :, p:, :] for a in out.attentions]).float().cpu().numpy().astype(np.float64)
+        att = torch.stack([a[0, :, p:, :].float().cpu() for a in out.attentions]).numpy().astype(np.float64)
         att = np.nan_to_num(att)
         L, H, T, _ = att.shape
         if np.abs(np.triu(att[:, :, :, p:], 1)).max() > 1e-6:

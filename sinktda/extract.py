@@ -164,7 +164,7 @@ def main():
             nonfinite += 1
             if i < 5 or nonfinite > 0.01 * (i + 1):
                 raise RuntimeError(f"non-finite logits at row {i} under {dtype}; rerun with --dtype bfloat16")
-        attn = torch.stack(out.attentions)[:, 0].float().cpu().numpy()  # (L,H,N,N)
+        attn = torch.stack([a[0].float().cpu() for a in out.attentions]).numpy()  # (L,H,N,N); per-layer .cpu() for offloaded models
         attn = np.nan_to_num(attn, nan=0.0)
         L = attn.shape[0]
         pending.append(pool.submit(_worker, (i, attn.mean(1), p)))
