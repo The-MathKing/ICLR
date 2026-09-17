@@ -17,7 +17,10 @@ RES = "sinktda_results"
 PAPER = "paper"
 
 # reference categorical order (dataviz palette, light mode)
-SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948",
+          # appended for the 7--8B settings; indices 0--7 are unchanged, so every existing
+          # figure keeps its colours
+          "#00838f", "#8d6e00"]
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 BLUES = "Blues"
 
@@ -42,6 +45,18 @@ PRETTY = {
     "triviaqa_llama8b": ("TriviaQA (on-policy)", "Llama-3.1-8B"),
 }
 ORDER = list(PRETTY)
+
+# Nominal parameter counts (B) for the model labels in PRETTY, used for the
+# model-size range macro so the abstract/limitations never hardcode a range.
+PARAMS_B = {
+    "TinyLlama-1.1B": 1.1, "Qwen2.5-1.5B": 1.5, "SmolLM-1.7B": 1.7,
+    "Qwen2.5-3B": 3.0, "Phi-3-mini": 3.8,
+    "Mistral-7B": 7.0, "Qwen2.5-7B": 7.0, "Llama-3.1-8B": 8.0,
+}
+
+
+def _size(x):
+    return f"{x:g}B"
 
 
 def style():
@@ -198,9 +213,13 @@ def fig_layers(lay):
     if lay.empty:
         return
     tq = [s for s in ORDER if s in set(lay["setting"]) and s.startswith("truthfulqa")]
+    if len(tq) > len(SERIES):
+        # never drop a model from the figure without saying so
+        print(f"[fig_layers] WARNING: {len(tq)} TruthfulQA settings but only {len(SERIES)} "
+              f"series colours; dropping {tq[len(SERIES):]}")
     fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.1))
     fig.subplots_adjust(wspace=0.3)
-    for i, s in enumerate(tq[:8]):
+    for i, s in enumerate(tq[:len(SERIES)]):
         g = lay[lay["setting"] == s]
         c = SERIES[i % len(SERIES)]
         axes[0].plot(g["depth"], g["frac_coned"], color=c, label=label(s))
@@ -329,10 +348,22 @@ def _rng(x, fmt="{:+.3f}"):
     return f(lo) if f(lo) == f(hi) else f"{f(lo)} to {f(hi)}"
 
 
+def _model_size_range(models):
+    """Range of nominal parameter counts over the models actually evaluated.
+    Raises rather than guessing, so a new model cannot silently yield a wrong range."""
+    missing = [m for m in models if m not in PARAMS_B]
+    if missing:
+        raise KeyError(f"PARAMS_B has no parameter count for {missing}")
+    sizes = sorted(PARAMS_B[m] for m in models)
+    if not sizes:
+        return "--"
+    return _size(sizes[0]) if sizes[0] == sizes[-1] else f"{_size(sizes[0])}--{_size(sizes[-1])}"
+
+
 def write_numbers(th, auc, comp):
     models = sorted({PRETTY.get(s, (s, s))[1].replace(" (chat)", "") for s in th["setting"]})
-    sink = th[th["mean_sink_mass"] > 0.2]
-    nosink = th[th["mean_sink_mass"] <= 0.2]
+    sink = th[th["mean_sink_mass"] > SINK_MASS_MIN]
+    nosink = th[th["mean_sink_mass"] <= SINK_MASS_MIN]
     pc = sink["frac_cells_coned"] * 100
     ss = set(sink["setting"])
     c = comp[comp["setting"].isin(ss)]
@@ -352,6 +383,7 @@ def write_numbers(th, auc, comp):
     m = {
         "NSettings": str(len(th)),
         "NModels": str(len(models)),
+        "ModelSizeRange": _model_size_range(models),
         "NCellsTotal": f"{int(th['cells'].sum()):,}",
         "NSinkSettings": str(len(sink)),
         "PctConedRange": f"{pc.min():.0f}--{pc.max():.0f}\\%" if len(pc) else "--",
@@ -456,6 +488,9 @@ def write_numbers(th, auc, comp):
         m["PlantNone"] = f"{pc[pc.b == 0]['auc_h1'].max():.2f}"
     m.update(numbers_defect())
     m.update(numbers_toha())
+    m.update(numbers_mistral())
+    m.update(numbers_native())
+    m.update(numbers_audit())
     m.update(table_toha_causal()[1])
     # largest |delta| of any topological bank (0D, deflated, per-head defect, TOHA) beyond
     # NONTOPO, early or late fusion, on TruthfulQA and on-policy TriviaQA
@@ -470,6 +505,79 @@ def write_numbers(th, auc, comp):
     with open(f"{PAPER}/sink_numbers.tex", "w") as fh:
         for k, v in m.items():
             fh.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
+
+
+def numbers_audit():
+    """Macros for the LLM-judge label audit (sinktda/label_audit.py). Empty if not run."""
+    f = f"{RES}/label_audit.csv"
+    if not os.path.exists(f):
+        return {}
+    d = pd.read_csv(f)
+    d = d[d["judge"] >= 0]
+    if not len(d):
+        return {}
+    rate = d.groupby("setting").apply(
+        lambda x: (x["judge"] != x["string_match"]).mean(), include_groups=False)
+    m = {
+        "AuditSettings": str(d["setting"].nunique()),
+        "AuditN": str(int(d.groupby("setting").size().min())),
+        "AuditDisagreeRange": _rng(rate * 100, "{:.0f}\\%"),
+        "AuditDisagreeMax": f"{rate.max() * 100:.0f}\\%",
+    }
+    s = f"{RES}/label_audit_sensitivity.csv"
+    if os.path.exists(s):
+        sn = pd.read_csv(s)
+        m["AuditMaxAucShift"] = f"{sn['delta'].abs().max():.3f}"
+    return m
+
+
+def numbers_native():
+    """Macros for the check of our TOHA score against the authors' released MTop-Div code
+    (sinktda/toha_native.py). Empty when that check has not been run."""
+    f = f"{RES}/toha_native.csv"
+    if not os.path.exists(f):
+        return {}
+    d = pd.read_csv(f)
+    mx = float(d["abs_diff"].max())
+    if mx <= 0:
+        s = "0"
+    else:
+        e = int(np.floor(np.log10(mx)))
+        s = f"{mx / 10 ** e:.1f}\\times10^{{{e}}}"
+    return {
+        "NativeCells": f"{len(d):,}",
+        "NativeSettings": str(d["setting"].nunique()),
+        "NativeMaxDiff": f"${s}$",
+    }
+
+
+def numbers_mistral():
+    """Macros for the Mistral-7B appendix, from the generated theory/TOHA CSVs.
+    Returns {} when the setting has not been run, so the appendix degrades gracefully."""
+    f = f"{RES}/theory_truthfulqa_mistral.csv"
+    if not os.path.exists(f):
+        return {}
+    t = pd.read_csv(f).iloc[0]
+    viol = int(t["bound_violations_h1"] + t["bound_violations_p0"] + t["bound_violations_maxdeath"])
+    m = {
+        "MistralCells": f"{int(t['cells']):,}",
+        "MistralViol": str(viol),
+        "MistralSinkMass": f"{t['mean_sink_mass']:.2f}",
+        "MistralConed": f"{t['frac_cells_coned'] * 100:.1f}\\%",
+        "MistralHOneZero": f"{t['frac_cells_h1_zero'] * 100:.2f}\\%",
+        "MistralRhoNorm": f"{t['median_layer_spearman_P0_star_norm']:.3f}",
+        "MistralRhoNormMin": f"{t['min_layer_spearman_P0_star_norm']:.3f}",
+    }
+    ck = f"{RES}/toha_checks.csv"
+    if os.path.exists(ck):
+        c = pd.read_csv(ck)
+        c = c[c["setting"] == "truthfulqa_mistral"]
+        if len(c):
+            r = c.iloc[0]
+            m["MistralTohaConed"] = f"{r['frac_coned_P'] * 100:.0f}\\%"
+            m["MistralTohaRho"] = f"{r['median_head_rho_maxp']:.3f}"
+            m["MistralTohaViol"] = str(int(r["viol_upper"] + r["viol_lower"]))
+    return m
 
 
 def numbers_defect():
@@ -494,6 +602,24 @@ def numbers_defect():
 TOHA_BANKS = [("TOHA_toha", "TOHA"), ("TOHA_maxp", r"TOHA$[\bar\pi]$"), ("TOHA_sinkr", r"TOHA$[\bar a_0]$"),
               ("SUP_toha", "TOHA$_{\\text{sup}}$"), ("SUP_maxp", r"$\bar\pi_{\text{sup}}$"),
               ("SUP_sinkr", r"$\bar a_{0,\text{sup}}$"), ("NONTOPO", "Non-topo.")]
+
+
+SINK_MASS_MIN = 0.2  # a setting counts as sink-dominated above this mean attention to token 0
+
+
+def _sink_settings():
+    """Settings whose model actually puts attention on token 0, measured from the theory
+    tables rather than hardcoded by model name.
+
+    SmolLM-1.7B used to be the only model without a first-token sink, so excluding it by
+    name was equivalent to thresholding. Qwen2.5-7B-Instruct is a second one (its sink sits
+    on token 2), so the name-based test would silently count it as sink-dominated and
+    corrupt every "in the sink models" range. Returns None when no theory table is present.
+    """
+    th = load("theory")
+    if not len(th) or "mean_sink_mass" not in th.columns:
+        return None
+    return set(th[th["mean_sink_mass"] > SINK_MASS_MIN]["setting"])
 
 
 def _toha_frames():
@@ -581,7 +707,8 @@ def numbers_toha():
     if fr is None:
         return {}
     ck, auc, comp = fr
-    sink = ck[ck["setting"] != "truthfulqa_smollm"]
+    ss = _sink_settings()
+    sink = ck[ck["setting"].isin(ss)] if ss is not None else ck[ck["setting"] != "truthfulqa_smollm"]
     ab = lambda k, sub=None: auc[(auc["bank"] == k) & (auc["setting"].str.startswith(sub) if sub else True)]["auc"]
     m = {
         "TohaSettings": str(len(ck)),
@@ -610,8 +737,13 @@ def numbers_toha():
     tn = comp[comp["test"] == "LF_toha_beyond_nontopo"]
     m["TohaLFNTMax"] = f"{np.ceil(tn['delta'].abs().max() * 1000) / 1000:.3f}"
     ts = comp[comp["test"] == "TOHA_sinkr_vs_toha"]
-    m["TohaSinkLossSink"] = f"{-ts[ts['setting'] != 'truthfulqa_smollm']['delta'].min():.3f}"
-    m["TohaSinkLossNoSink"] = f"{-ts[ts['setting'] == 'truthfulqa_smollm']['delta'].min():.3f}"
+    # split by measured sink mass, not by model name: SmolLM is no longer the only model
+    # without a first-token sink (Qwen2.5-7B's sink sits on token 2)
+    in_sink = ts["setting"].isin(ss) if ss is not None else ts["setting"] != "truthfulqa_smollm"
+    m["TohaSinkLossSink"] = f"{-ts[in_sink]['delta'].min():.3f}"
+    m["TohaSinkLossNoSink"] = _rng(-ts[~in_sink]["delta"], "{:.3f}") if (~in_sink).any() else "--"
+    m["TohaNoSinkModels"] = ", ".join(sorted(
+        {PRETTY.get(s, (s, s))[1] for s in ts.loc[~in_sink, "setting"]})) or "--"
     for tag, test in (("TohaMaxp", "TOHA_maxp_vs_toha"), ("TohaSink", "TOHA_sinkr_vs_toha"),
                       ("TohaSupMaxp", "SUP_maxp_vs_toha"), ("TohaSupSink", "SUP_sinkr_vs_toha"),
                       ("TohaLFMaxp", "LF_toha_beyond_maxp"), ("TohaLFNT", "LF_toha_beyond_nontopo")):

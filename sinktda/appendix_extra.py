@@ -38,6 +38,7 @@ MODEL_SPECS = {  # parameters from the model cards
     "Qwen/Qwen2.5-3B-Instruct": "3.09B", "Qwen/Qwen2.5-1.5B-Instruct": "1.54B",
     "microsoft/Phi-3-mini-4k-instruct": "3.82B", "TinyLlama/TinyLlama-1.1B-Chat-v1.0": "1.10B",
     "HuggingFaceTB/SmolLM-1.7B-Instruct": "1.71B", "mistralai/Mistral-7B-Instruct-v0.2": "7.24B",
+    "Qwen/Qwen2.5-7B-Instruct": "7.62B",
 }
 
 

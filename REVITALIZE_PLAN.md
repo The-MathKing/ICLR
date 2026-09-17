@@ -105,3 +105,17 @@ This runs inside the same grouped 10-fold × 3-seed CV as everything else, and t
 **Framing decision.** The title keeps the brand and states the new headline: *The Topology Is the Sink: Topological Hallucination Detectors Reduce to First-Order Attention Statistics*. "Measure attention sinks" was rejected as an over-claim: TOHA reduces to *max-prompt* attention, which equals the sink only when the sink is the top prompt token.
 
 **Space.** Proposition (i.i.d.) and §5.3 (1D) moved to App. A/D, and the forest figure to App. E. The artifacts subsection became a paragraph. The main text ends on p. 9.
+
+## 8. 5080 outcomes (2026-09-17)
+
+| Direction | Status | Result |
+|---|---|---|
+| 6: >=7B | **done for 2 of 3** | Mistral-7B (5 runs, 21 min) and Qwen2.5-7B (4 runs, 30 min) on TruthfulQA and on-policy TriviaQA, bf16, Qwen offloaded. 6,570,272 new head graphs, **0 sandwich violations**; combined with the 11 earlier settings, 18,906,944 graphs and 0 violations. Theorem 1: 16 settings, 838,356 layer graphs, 0 bound violations. On-policy accuracy 0.665 (Mistral), 0.514 (Qwen2.5-7B). Llama-3.1-8B is gated and no HF token exists on the box. |
+| A, at scale | **holds** | rho(d, pi-bar) 0.980-0.998; exactly prompt-coned 57-81%; `d` = pi-bar score to <=6e-8 on coned graphs. Mistral under `[INST]` is the most sink-dominated model tested (sink mass 0.75, 98.2% coned, 99.99% empty H1), and 0D vs Sink differ by +0.00005. |
+| A, reimplementation | **closed** | The authors' released MTop-Div routine (transcribed verbatim from github.com/sb-ai-lab/TOHA, ripser-based) agrees with our dense-Prim score on 21,696 head graphs to 1.2e-8, exactly 0 on Mistral. `sinktda/toha_native.py`. |
+| **new: the sink moves** | **finding** | Qwen2.5-7B-Instruct puts 0.008 of its attention on token 0 (Qwen2.5-1.5B: 0.53, 3B: 0.50, same template). Its sink is token 2, the newline after `system`, with 0.56 mass in 30/30 real rows. TOHA's rho with the *sink* score is negative there, while rho with pi-bar stays 0.98+. With apex 2 and tokens 0-1 dropped, 80% of graphs are exactly coned (median delta 0.0000) versus 0% at apex 0. Tokens preceding the sink cannot attend to it, so they structurally break the cone: Theorem 1 is untouched, Corollary 1's s=0 is model-specific. |
+| bug | **fixed** | `apply_chat_template` emits BOS for Mistral/Llama-3.1 and extraction added a second, splitting the sink. Fixed in `sinktda.data.encode`; token-for-token identical on all 11 pre-existing settings, so no published number changes. Would have corrupted Llama-3.1-8B. |
+| 4: fp32/int8 | still deferred | not attempted |
+| 2: TOHA's own benchmarks | **blocked** | their pipeline needs a Comet API key (third-party upload), their generated dataset CSVs, and the gated Llama-3.1-8B. Only the equivalence check above was done. |
+
+**Blocked on the author.** `sinktda_out/` for the 11 small-model settings is not on this machine, and `toha evaluate` / `defect_probe` rewrite their CSVs from whatever that directory contains. They were deliberately not run, so the committed 11-setting results are intact. `report.py` and `appendix_extra.py` therefore also could not be regenerated, and the paper was not recompiled.

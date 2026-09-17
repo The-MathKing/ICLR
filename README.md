@@ -11,19 +11,23 @@ python -m venv .venv && source .venv/bin/activate
 pip install torch transformers datasets ripser scikit-learn scipy numpy pandas pyarrow joblib matplotlib
 ```
 
-Versions used for the paper: torch 2.13.0, transformers 5.16.1, ripser 0.6.15, scikit-learn 1.9.0, numpy 2.5.2, scipy 1.18.1, pandas 3.0.5, Python 3.13. The models were run in bfloat16 on Apple-silicon MPS with eager attention.
+Versions used for the paper: torch 2.13.0, transformers 5.16.1, ripser 0.6.15, scikit-learn 1.9.0, numpy 2.5.2, scipy 1.18.1, pandas 3.0.5, Python 3.13. The models of at most 3.8B parameters were run in bfloat16 on Apple-silicon MPS with eager attention.
+
+The 7--8B settings were extracted on an RTX 5080 (16 GB, CUDA) with torch 2.11.0+cu128, transformers 5.17.0, ripser 0.6.15, scikit-learn 1.9.1, numpy 2.5.2, scipy 1.18.1, pandas 3.0.5, Python 3.14.7, also in bfloat16 with eager attention. Qwen2.5-7B uses `SINKTDA_OFFLOAD=1` (some layers on the CPU, dtype unchanged); Mistral-7B fits on the GPU. Nothing is quantized.
 
 ## Pipeline
 
 | step | command | output |
 |---|---|---|
-| features (one forward pass per example) | `python -m sinktda.extract --bench {truthfulqa,halueval,triviaqa} --model {qwen3b,qwen1.5b,phi3,tinyllama,smollm,mistral} [--n N]` | `sinktda_out/<bench>_<model>/` |
+| features (one forward pass per example) | `python -m sinktda.extract --bench {truthfulqa,halueval,triviaqa} --model {qwen3b,qwen1.5b,phi3,tinyllama,smollm,mistral,qwen7b,llama8b} [--n N]` | `sinktda_out/<bench>_<model>/` |
 | evaluation (AUCs, bootstrap/TOST, theory checks) | `python -m sinktda.evaluate [setting ...]` | `sinktda_results/{auc,comp,theory,theory_layers}_*.csv`, `oof/*.npz` |
 | late-fusion incremental tests | `python -m sinktda.late_fusion` | `sinktda_results/late_fusion.csv` |
 | coning defect as a detector | `python -m sinktda.defect_probe` | `sinktda_results/defect_probe.csv` |
 | TOHA reduction (Prop. 1): per-head MTop-Div and first-order counterparts | `python -m sinktda.toha extract --bench ... --model ... [--n N]` then `python -m sinktda.toha evaluate` | `sinktda_out/<setting>/toha.npz`, `sinktda_results/toha_{checks,auc,comp}.csv` |
 | causal sink-bias probe | `bash sinktda/run_toha_causal.sh` | `sinktda_results/toha_*_causal.csv` |
 | numerical checks of Prop. 1 and Cor. 2 | `python -m sinktda.check_theory` | `sinktda_results/check_theory.csv` |
+| TOHA vs the authors' released MTop-Div code | `python -m sinktda.toha_native --model mistral --n 8` | `sinktda_results/toha_native.csv` |
+| LLM-judge audit of the on-policy labels | `python -m sinktda.label_audit --n 200` | `sinktda_results/label_audit{,_sensitivity}.csv` |
 | fp16 vs bf16 sensitivity | `python -m sinktda.dtype_sensitivity` | `sinktda_results/dtype_sensitivity.csv`, `paper/sink_dtype.tex` |
 | label-free layer split | `python -m sinktda.layer_split` | `sinktda_results/layer_split.csv` |
 | synthetic checks (Prop. 1, dose-response, planted cycle) | `python -m sinktda.synthetic` | `sinktda_results/synthetic_*.csv` |
@@ -37,6 +41,19 @@ The exact settings are listed in `sinktda/run_all.sh`, `sinktda/run_seq.sh`, `si
 - TriviaQA on-policy: `--n 2000`.
 
 Mistral-7B, Qwen2.5-7B and Llama-3.1-8B need a 16 GB GPU (the latter two with CPU offload); see `sinktda/RUN_ON_5080.md`.
+
+## Prompt tokenization
+
+Feature extraction tokenizes through `sinktda.data.encode`, which suppresses the tokenizer's
+automatic BOS when the prompt string already begins with one. Some chat templates
+(Mistral-7B-Instruct, Llama-3.1) emit BOS themselves, so calling the tokenizer with the default
+`add_special_tokens=True` would prepend a second one. A repeated BOS splits the attention sink
+across two tokens and changes every sink and coning statistic: on `triviaqa_mistral` it moved the
+exactly-prompt-coned share from 0.75 to 0.69, the share of head graphs whose top prompt token is
+the sink from 0.68 to 0.18, and the median per-head rank correlation with the sink score from 0.97
+to 0.81. `encode` is a no-op for every other template used here (Qwen has no BOS; Phi-3 adds none;
+TinyLlama and Mistral's manual `[INST]` string add exactly one), so no result for a model of at
+most 3.8B parameters is affected.
 
 ## Seeds and protocol
 

@@ -1,4 +1,106 @@
-# Handoff — MST-TDA audit paper
+# Handoff — "The Topology Is the Sink"
+
+**As of:** 2026-09-17 (RTX 5080 session) · **Deadline:** Saturday 2026-09-19
+
+> The section "Handoff (2026-09-16)" below is the **previous** handoff, kept for history.
+> Read this one first.
+
+## THE ONE THING THAT MATTERS
+
+**`sinktda_out/` is gitignored, so the 7–8B features are NOT in this push.** They exist
+only on the Windows box, under `ICLR/sinktda_out/`, in these directories:
+
+    triviaqa_mistral   triviaqa_qwen7b   truthfulqa_mistral
+    truthfulqa_mistral_chat   truthfulqa_qwen7b
+    truthfulqa_tinyllama_cuda   truthfulqa_tinyllama_fp32
+    truthfulqa_qwen1.5b_cuda    truthfulqa_qwen1.5b_fp32
+
+That is roughly 350 MB and it is the only copy. **Copy it off that machine before wiping
+it.** Everything else — code, result CSVs, docs — is in this push.
+
+## What is in this push
+
+| | |
+|---|---|
+| 7–8B extractions | Mistral-7B and Qwen2.5-7B, TruthfulQA + on-policy TriviaQA, bf16, ~72 min GPU |
+| Results | 28 new CSVs in `sinktda_results/` plus 5 `oof/*.npz`, all per-setting and additive |
+| Headline | **18,906,944 head graphs, 0 violations.** Theorem 1: 16 settings, 838,356 layer graphs, 0 violations |
+| New code | `sinktda/toha_native.py`, `sinktda/label_audit.py` |
+| Bug fixes | double-BOS in extraction (S8), sink-group hardcoding in `report.py` (S11), figure truncation (S12) |
+
+Full detail with evidence and a re-scored review is in `REVIEW_AC.md` §9 ("5080 results",
+items S1–S12) and `REVITALIZE_PLAN.md` §8.
+
+## Two blockers, both on you
+
+1. **Llama-3.1-8B never ran.** It is gated and there is no HF token on the box
+   (`huggingface-cli login` cannot run non-interactively). Everything else for it is
+   ready: the offload path is smoke-tested, and the BOS fix it *needs* — it uses
+   `generic_chat`, which double-counted BOS — is in. One block in `sinktda/RUN_ON_5080.md`.
+2. **`sinktda_out/` for the 11 small-model settings was never on the box**, so Steps 2–3
+   could not be finished. `toha evaluate` and `defect_probe` glob that directory and
+   rewrite their CSVs *wholesale*; running them with only the new settings present would
+   have replaced 11-setting results with 4-setting ones. **They were deliberately not
+   run.** The committed CSVs are verified intact at 11 settings.
+
+## Resume here
+
+1. Get every setting's `sinktda_out/` into one place (copy the new dirs to the Mac, or the
+   11 old ones to the PC).
+2. In that one place:
+
+       python -m sinktda.evaluate <settings not yet evaluated>
+       python -m sinktda.late_fusion && python -m sinktda.defect_probe
+       python -m sinktda.toha evaluate
+       python -m sinktda.report && python -m sinktda.appendix_extra
+
+3. Then the paper edits, which I deliberately did **not** make: editing prose to use macros
+   before `report.py` regenerates `sink_numbers.tex` would leave undefined macros and a
+   document that does not compile.
+   - abstract and Limitations: replace `1.1B--3.8B` with `\ModelSizeRange{}` (already
+     implemented, yields `1.1B--8B`) and drop "7B in the appendix when available";
+   - `\MISTRALAPPENDIX` in `paper/sink_results.tex`: rewrite from `\MistralConed{}`,
+     `\MistralHOneZero{}`, `\MistralSinkMass{}`. The old "99.99% zeros" audit is
+     **verified** (0.999924), and δ₀ = 0 is now directly checked on 98.2% of graphs, which
+     the old text said had not been done — that hedge must go;
+   - §5.4 and the abstract: add Qwen2.5-7B (S6/S7). Its sink sits on **token 2**, not token
+     0, so ρ(d, sink score) is negative there while ρ(d, π̄) stays 0.98+. Theorem 1 is
+     untouched; it is Corollary 1's choice of s=0 that is model-specific;
+   - the "model without a first-token sink as a contrast" paragraph now has **two** such
+     models, and they behave differently: SmolLM cones at no apex at all, Qwen2.5-7B at
+     about 10%;
+   - report the label-audit disagreement (14% on Mistral). Conclusions are unchanged — all
+     four dominance claims survive — but the number belongs in the paper.
+4. Compile. **There is no TeX on the Windows box** (no tectonic, pdflatex, xelatex or
+   latexmk), so the 9-page check was never done this session.
+
+## Half-finished, deliberately
+
+- **Precision study (Step 5.2).** All four extractions finished
+  (`truthfulqa_{tinyllama,qwen1.5b}_{cuda,fp32}`) but were **not evaluated**. Do not simply
+  run `evaluate` on them: `report.load()` globs `sinktda_results/auc_*.csv`, so tagged
+  settings get swept into the **main** AUC table as extra models. Evaluate them, then move
+  their CSVs into `archive/fp32_cuda/sinktda_results/`, mirroring `archive/fp16_backup/`.
+  `sinktda/dtype_sensitivity.py` already has a `precision()` function that reads from there
+  and is a no-op while they are absent. `_cuda` is bf16 on CUDA and `_fp32` is float32 on
+  the same box, so `fp32 − cuda` isolates precision while `cuda − paper` is the platform
+  gap; comparing fp32 straight against the paper's MPS numbers would confound the two.
+- **TOHA on its own benchmarks (Step 4)** was not run: their pipeline needs a Comet API key
+  (a third-party upload), their pre-generated dataset CSVs, and defaults to the gated
+  Llama-3.1-8B. Only the implementation-equivalence check was done, and it is clean —
+  21,696 head graphs, max difference 1.2e-8 against their own released code.
+
+## Caution when you regenerate
+
+The Windows box has scikit-learn 1.9.1 against the paper's 1.9.0, and torch 2.11.0+cu128
+against 2.13.0. Whether the published numbers reproduce bit-for-bit could **not** be
+tested, because that test needs the missing `sinktda_out/`. If you regenerate on a
+different machine from the one that produced the paper, diff `summary_auc.csv` before
+trusting the tables.
+
+---
+
+# Handoff (2026-09-16)
 
 **As of:** 2026-09-16 · **Deadline:** Saturday 2026-09-19 · **Branch:** `main`
 
