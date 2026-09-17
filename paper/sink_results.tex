@@ -42,13 +42,7 @@ A TF-IDF model on the answer text alone reaches \LexTQA{} AUC on TruthfulQA and 
 }
 
 \newcommand{\RESULTSDISCUSSION}{%
-\paragraph{What attention-graph topology measures.} In decoder-only models, Vietoris--Rips persistence of an attention graph, and every stable summary of it, is controlled by one scalar per graph: the coning defect of the first token. The same is true of TOHA's prompt--response divergence, with the prompt playing the role of the apex. Where it is zero, as in most middle-layer graphs of every sink-dominated model we tested, $0$D total persistence equals $(N{-}1)(1-\bar m)$, a function of length and sink attention alone, and higher homology is empty. Where it is positive, Theorem~\ref{thm:cone} bounds how far topology can depart from the sink; in our data this happens mainly in the first layers.
-
-\paragraph{Recommendations.}
-(i) Report sink attention and $\defect_0$ (or the relevant defect, such as $\defect_P$ for TOHA) next to any attention-graph topological feature, and compare the detector with the first-order statistic that the reduction names.
-(ii) Compare topological detectors against per-head non-topological statistics (sink mass, entropy, Lookback ratios) at the same resolution, and against a hidden-state probe.
-(iii) Evaluate on the model's own generations; teacher-forced benchmarks mix detection with recognition of dataset authorship.
-(iv) If structure beyond the sink is the goal, remove the sink first (deflation) or restrict to answer tokens. Both expose real non-sink geometry, but in our settings it was not new information.
+\paragraph{What attention-graph topology measures.} In decoder-only models, Vietoris--Rips persistence of an attention graph, and every stable summary of it, is controlled by one scalar per graph: the coning defect of the first token. The same is true of TOHA's prompt--response divergence, with the prompt playing the role of the apex. Where it is zero, as in most middle-layer graphs of every sink-dominated model we tested, $0$D total persistence equals $(N{-}1)(1-\bar m)$, a function of length and sink attention alone, and higher homology is empty. Where it is positive, Theorem~\ref{thm:cone} bounds how far topology can depart from the sink; in our data this happens mainly in the first layers. Practical recommendations follow from this in Appendix~\ref{app:recs}.
 }
 
 \newcommand{\MISTRALAPPENDIX}{%
@@ -74,4 +68,11 @@ We test Proposition~\ref{prop:toha} on every head of every example: \TohaCells{}
 \newcommand{\CAUSALTEXT}{The intervention leaves the identity intact (no violations in any run). It moves the structure the proposition says matters. Suppressing the sink ($b{=}{-2}$) lowers the share of prompt-coned head graphs from \CausalQwConedZero{} to \CausalQwConedLo{} (Qwen) and from \CausalTlConedZero{} to \CausalTlConedLo{} (TinyLlama). It lowers the share where the sink is every response token's top prompt token from \CausalQwArgZero{} to \CausalQwArgLo{} and from \CausalTlArgZero{} to \CausalTlArgLo{}, and the median rank correlation between $d$ and the response sink score from \CausalQwRhoZero{} to \CausalQwRhoLo{} and from \CausalTlRhoZero{} to \CausalTlRhoLo{}. Strengthening it ($b{=}4$) raises the correlation to \CausalQwRhoHi{} and \CausalTlRhoHi{}. In TinyLlama all three quantities increase monotonically with $b$. In Qwen they peak at $b{=}2$ and fall slightly at $b{=}4$. TOHA's own AUC barely moves (\CausalQwTohaRange{} and \CausalTlTohaRange{}). Its gap to the sink-score version is not monotone in $b$, so the intervention supports the mechanism at the level of the attention graph, not a dose-response in detection accuracy.}
 \newcommand{\RESULTSCAUSAL}{%
 Proposition~\ref{prop:toha} predicts that TOHA should track the response sink score more closely as the sink strengthens. We test this by intervening on the sink directly. For Qwen2.5-1.5B and TinyLlama on TruthfulQA, we add a constant $b\in\{-2,0,2,4\}$ to the first token's attention logit in every head and recompute all per-head quantities (Table~\ref{tab:causal}). \CAUSALTEXT
+}
+
+\newcommand{\RESULTSRECOMMENDATIONS}{%
+(i) Report sink attention and $\defect_0$ (or the relevant defect, such as $\defect_P$ for TOHA) next to any attention-graph topological feature, and compare the detector with the first-order statistic that the reduction names.
+(ii) Compare topological detectors against per-head non-topological statistics (sink mass, entropy, Lookback ratios) at the same resolution, and against a hidden-state probe.
+(iii) Evaluate on the model's own generations; teacher-forced benchmarks mix detection with recognition of dataset authorship.
+(iv) If structure beyond the sink is the goal, remove the sink first (deflation) or restrict to answer tokens. Both expose real non-sink geometry, but in our settings it was not new information.
 }
