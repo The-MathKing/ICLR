@@ -93,6 +93,23 @@ We verified the bijection and the filtration identity by explicit enumeration on
 \resizebox{\linewidth}{!}{\SinkTableDtype}
 \end{table}
 
+\paragraph{float32 against bfloat16.} The fp16/bf16 comparison above varies precision at
+fixed hardware. To separate precision from platform we re-extracted \PrecSettings{} settings
+twice on one CUDA machine, in bfloat16 and in float32, and compare both with the bfloat16
+numbers the paper reports, which were extracted on Apple-silicon MPS. The platform gap
+(bf16 CUDA against bf16 MPS, and so also torch and scikit-learn versions) is at most
+\PrecPlatformMax{} AUC, and the precision gap (float32 against bfloat16 on the same machine)
+at most \PrecFpMax{}, \PrecFpTopoMax{} on the topological banks. Both are well inside the
+$\pm0.015$ equivalence margin, so the reported numbers reproduce on other hardware and
+float32 does not change a conclusion (Table~\ref{tab:precision}).
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Platform and precision sensitivity} ($\Delta$AUC). ``bf16 CUDA $-$ bf16 MPS'' isolates hardware and library versions at fixed precision; ``fp32 $-$ bf16 (CUDA)'' isolates precision at fixed hardware.}
+\label{tab:precision}
+\resizebox{\linewidth}{!}{\SinkTablePrecision}
+\end{table}
+
 \paragraph{On-policy benchmark.} Table~\ref{tab:onpolicy} summarizes the generations each model produced and how they were graded.
 \begin{table}[h]
 \centering
@@ -120,6 +137,44 @@ We verified the bijection and the filtration identity by explicit enumeration on
 \section{Recommendations for reporting attention-graph topology}
 \label{app:recs}
 \RESULTSRECOMMENDATIONS
+
+\section{Validation of the TOHA implementation and the on-policy labels}
+\label{app:validation}
+
+\paragraph{Against the authors' released code.} Our per-head score $d$ is our own
+implementation, so we check it against the routine the TOHA authors release
+(\citealp{toha}; \texttt{src/methods/mtopdiv/utils.py}), which builds the same distance matrix
+and calls ripser rather than our dense Prim's algorithm. Over \NativeCells{} head graphs from
+\NativeSettings{} settings the two agree to \NativeMaxDiff{} (Table~\ref{tab:native}), so the
+reduction in Proposition~\ref{prop:toha} is not an artefact of how we compute $d$.
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Our $d$ against the authors' MTop-Div code.} $\Delta$ is the per-head
+difference; both are divided by $|R|$.}
+\label{tab:native}
+\SinkTableNative
+\end{table}
+
+\paragraph{LLM-judge audit of the on-policy labels.} The on-policy label is an alias string
+match, which mislabels paraphrases and hedged answers. We sampled \AuditN{} answers per setting
+(seed 0) in \AuditSettings{} settings and had Qwen2.5-7B-Instruct grade them from the question,
+the gold aliases and the answer. Disagreement is \AuditDisagreeRange{} (Table~\ref{tab:audit}),
+and is mostly the string match being too lax. Re-scoring the same out-of-fold predictions on
+those rows under the judge's labels shifts every bank by at most \AuditMaxAucShift{} AUC and
+leaves the dominance orderings intact, so the conclusions do not rest on the labelling. The
+judge is itself a language model, not a human annotator, and one of the audited settings is
+graded by the same model that produced its answers, so \AuditDisagreeMax{} should be read as a
+floor rather than an estimate.
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{LLM-judge audit of the on-policy labels.} ``match 0/judge 1'': the string
+match calls it hallucinated and the judge does not. Last column: largest change in any bank's
+AUC on the audited rows when the judge's labels replace the string match.}
+\label{tab:audit}
+\SinkTableAudit
+\end{table}
 
 \section{Full results}
 \label{app:tables}
