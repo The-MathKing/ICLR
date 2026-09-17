@@ -1,8 +1,8 @@
 #!/bin/bash
 # Memory-safe sequential runner for a 16 GB machine: one heavy job at a time.
 # Each step waits until at least MINFREE% of RAM is free (macOS memory_pressure).
-export HF_HOME=${HF_HOME:-/Volumes/2TB/hf_cache}
-export TOKENIZERS_PARALLELISM=false TMPDIR=/Volumes/2TB/iclr/.tmp JOBLIB_TEMP_FOLDER=/Volumes/2TB/iclr/.tmp
+export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
+export TOKENIZERS_PARALLELISM=false TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 export SINKTDA_JOBS=2 OMP_NUM_THREADS=4
 PY=${PY:-.venv/bin/python}
 MINFREE=${MINFREE:-35}

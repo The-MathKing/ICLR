@@ -99,7 +99,7 @@ def report(device: str) -> None:
 
 
 def hf_cache_note() -> None:
-    """The original scripts hardcode HF_HOME=/Volumes/2TB/hf_cache (an external
+    """The original scripts hardcode HF_HOME=<an external drive> (an external
     drive on the authors' Mac). Respect the environment instead."""
     if "HF_HOME" not in os.environ:
         print(

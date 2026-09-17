@@ -15,7 +15,7 @@ over 4,000 randomized group layouts.
 NVIDIA box — **15 scripts select `"mps" if torch.backends.mps.is_available()
 else "cpu"` and none contains a CUDA code path**, so on an RTX 5080 every
 extraction silently runs on CPU. 13 also hardcode
-`HF_HOME = "/Volumes/2TB/hf_cache"`, an external drive on the authors' Mac.
+`HF_HOME` to a fixed absolute path on an external drive.
 
 ```bash
 pip install --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio
