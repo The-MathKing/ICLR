@@ -29,12 +29,17 @@ PRETTY = {
     "truthfulqa_smollm": ("TruthfulQA", "SmolLM-1.7B"),
     "truthfulqa_mistral": ("TruthfulQA", "Mistral-7B"),
     "truthfulqa_mistral_chat": ("TruthfulQA", "Mistral-7B (chat)"),
+    "truthfulqa_qwen7b": ("TruthfulQA", "Qwen2.5-7B"),
+    "truthfulqa_llama8b": ("TruthfulQA", "Llama-3.1-8B"),
     "halueval_qwen3b": ("HaluEval", "Qwen2.5-3B"),
     "halueval_qwen1.5b": ("HaluEval", "Qwen2.5-1.5B"),
     "triviaqa_qwen3b": ("TriviaQA (on-policy)", "Qwen2.5-3B"),
     "triviaqa_qwen1.5b": ("TriviaQA (on-policy)", "Qwen2.5-1.5B"),
     "triviaqa_phi3": ("TriviaQA (on-policy)", "Phi-3-mini"),
     "triviaqa_tinyllama": ("TriviaQA (on-policy)", "TinyLlama-1.1B"),
+    "triviaqa_mistral": ("TriviaQA (on-policy)", "Mistral-7B"),
+    "triviaqa_qwen7b": ("TriviaQA (on-policy)", "Qwen2.5-7B"),
+    "triviaqa_llama8b": ("TriviaQA (on-policy)", "Llama-3.1-8B"),
 }
 ORDER = list(PRETTY)
 
@@ -73,16 +78,16 @@ def fdelta(r):
 
 # ---------------------------------------------------------------------------
 def table_theory(th):
-    lines = [r"\begin{tabular}{llrrrrrrr}", r"\toprule",
-             r"Benchmark & Model & $\bar N$ & graphs & viol. & sink attn. & coned & $H_1{=}\emptyset\,|\,$coned & $\rho(P_0,\stw_0)$ \\",
+    lines = [r"\begin{tabular}{llrrrrrrrr}", r"\toprule",
+             r"Benchmark & Model & $\bar N$ & graphs & viol. & sink attn. & coned & $H_1{=}\emptyset\,|\,$coned & $\rho_{\text{raw}}$ & $\rho_{/N}$ \\",
              r"\midrule"]
     for _, r in th.iterrows():
         b, m = PRETTY.get(r["setting"], (r["setting"], ""))
         hz = "--" if pd.isna(r["frac_h1zero_given_coned"]) else f"{100 * r['frac_h1zero_given_coned']:.1f}\\%"
         lines.append(f"{b} & {m} & {r['mean_N']:.1f} & {int(r['cells']):,} & "
-                     f"{int(r['bound_violations_h1'] + r['bound_violations_p0'])} & "
+                     f"{int(r['bound_violations_h1'] + r['bound_violations_p0'] + r.get('bound_violations_maxdeath', 0))} & "
                      f"{r['mean_sink_mass']:.2f} & {100 * r['frac_cells_coned']:.1f}\\% & {hz} & "
-                     f"{r['median_layer_spearman_P0_star']:.3f} \\\\")
+                     f"{r['median_layer_spearman_P0_star']:.3f} & {r['median_layer_spearman_P0_star_norm']:.3f} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines)
 
@@ -111,17 +116,19 @@ def table_auc(auc):
         d = dict(zip(g["bank"], g["auc"]))
         vals = [d.get(k, np.nan) for k, _ in MAIN_BANKS]
         best = np.nanmax(vals)
-        cells = [("\\textbf{" + f3(v)[1:] + "}") if v == best else f3(v)[1:] for v in vals]
+        fmt = lambda v: "--" if pd.isna(v) else (f"{v:.3f}"[1:] if f"{v:.3f}".startswith("0") else f"{v:.2f}")
+        cells = [("\\textbf{" + fmt(v) + "}") if v == best else fmt(v) for v in vals]
         lines.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines)
 
 
 KEY_TESTS = [("T1_reduction", r"Sink$-$0D"), ("T2_topo_beyond_sink", r"0D$\mid$Sink"),
-             ("PH_topo_beyond_sink", r"0D$_h\mid$Sink$_h$"),
+             ("PH_topo_beyond_sink", r"$P_{0,h}\mid$Sink$_h$"),
              ("T3_deflated_beyond_sink", r"Defl.$\mid$Sink"),
              ("T4_1D_beyond_0D", r"1D$\mid$0D"),
              ("I_0D_beyond_nontopo", r"0D$\mid$NT"),
+             ("LF_0D_beyond_NONTOPO", r"0D$\oplus$NT"),
              ("I_defl_beyond_nontopo", r"Defl.$\mid$NT")]
 
 
@@ -150,13 +157,17 @@ SHORT_B = {"TruthfulQA": "TQA", "HaluEval": "HE", "TriviaQA (on-policy)": "TrQA"
 
 def short(s):
     b, m = PRETTY.get(s, (s, ""))
-    return f"{SHORT_B.get(b, b)} {m.replace('Qwen2.5-', 'Qw').replace('-mini', '').replace('TinyLlama-1.1B', 'TinyLl.').replace('SmolLM-1.7B', 'SmolLM')}"
+    return f"{SHORT_B.get(b, b)} {m.replace('Qwen2.5-', 'Qw').replace('-mini', '').replace('TinyLlama-1.1B', 'TinyLl.').replace('SmolLM-1.7B', 'SmolLM').replace('Mistral-7B', 'Mis7B').replace('Llama-3.1-8B', 'Ll8B')}"
 
 
 def table_tests_full(comp):
     lines = [r"\begin{longtable}{llrrrrcc}", r"\toprule",
              r"Setting & Test (A $\to$ B) & AUC$_A$ & AUC$_B$ & $\Delta$ & 90\% CI & $\equiv_{.015}$ & power \\",
              r"\midrule\endhead"]
+    torder = [t for t, *_ in __import__("sinktda.evaluate", fromlist=["COMPARISONS"]).COMPARISONS]
+    comp = comp.assign(_s=comp["setting"].map({x: i for i, x in enumerate(ORDER)}),
+                       _t=comp["test"].map(lambda t: torder.index(t) if t in torder else len(torder)))
+    comp = comp.sort_values(["_s", "_t"])
     for _, r in comp.iterrows():
         t = f"{r['A']}$\\to${r['B']}".replace("_", r"\_")
         lines.append(f"{short(r['setting'])} & {t} & {r['auc_A']:.3f} & {r['auc_B']:.3f} & "
@@ -169,6 +180,11 @@ def table_tests_full(comp):
 def table_auc_full(auc):
     lines = [r"\begin{longtable}{llrrrr}", r"\toprule",
              r"Setting & Bank & dim & AUC & seed SD & pair acc. \\", r"\midrule\endhead"]
+    order = ["LEN", "LEX", "LOGPROB", "LLMCHECK", "ROWSTAT", "SINK", "0D", "LEGACY_MSTPROXY", "1D", "DEFL", "ANS",
+             "PH_SINK", "PH_0DTOT", "PH_0D", "PH_ENT", "LOOKBACK", "HIDDEN", "NONTOPO"]
+    auc = auc.assign(_s=auc["setting"].map({x: i for i, x in enumerate(ORDER)}),
+                     _b=auc["bank"].map(lambda b: order.index(b) if b in order else len(order)))
+    auc = auc.sort_values(["_s", "_b", "bank"])
     for _, r in auc.iterrows():
         dim = "--" if pd.isna(r["dim"]) else f"{int(r['dim'])}"
         lines.append(f"{short(r['setting'])} & {r['bank'].replace('_', ' ')} & {dim} & {r['auc']:.3f} & "
@@ -189,14 +205,14 @@ def fig_layers(lay):
         c = SERIES[i % len(SERIES)]
         axes[0].plot(g["depth"], g["frac_coned"], color=c, label=label(s))
         axes[1].plot(g["depth"], g["mean_sink_mass"], color=c)
-        axes[2].plot(g["depth"], g["spearman_P0_star"], color=c)
+        axes[2].plot(g["depth"], g["spearman_P0_star_norm"], color=c)
     axes[0].set_title("fraction exactly coned ($\\delta_0{=}0$)", fontsize=8)
     axes[1].set_title("mean attention to token 0", fontsize=8)
-    axes[2].set_title("Spearman($P_0$, star weight)", fontsize=8)
+    axes[2].set_title("Spearman($P_0/(N{-}1)$, $1-\\bar m$)", fontsize=8)
     for a in axes:
         a.set_xlabel("relative layer depth")
-    axes[2].set_ylim(0.0, 1.02)
-    fig.legend(*axes[0].get_legend_handles_labels(), loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.22), fontsize=6.5)
+    axes[2].set_ylim(-0.1, 1.02)
+    fig.legend(*axes[0].get_legend_handles_labels(), loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.30), fontsize=7.5)
     fig.savefig(f"{PAPER}/fig_sink_layers.pdf")
     plt.close(fig)
 
@@ -212,11 +228,11 @@ def fig_synthetic():
     fig.subplots_adjust(wspace=0.35)
     a = axes[0]
     a.plot(m["N"], m["mean_P1"], color=SERIES[0], marker="o", ms=3, label="simulated $\\mathbb{E}[P_1]$")
-    a.plot(m["N"], m["morse_lower_bound"], color=SERIES[1], marker="s", ms=3, label="Prop. 2 lower bound")
+    a.plot(m["N"], m["morse_lower_bound"], color=SERIES[1], marker="s", ms=3, label="Morse lower bound (Prop. 2)")
     a.set_xscale("log"); a.set_yscale("log")
     a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     a.set_xticks([16, 32, 64, 128, 256], ["16", "32", "64", "128", "256"])
-    a.set_xlabel("$N$ (i.i.d. weights)"); a.set_title("total 1D persistence", fontsize=8)
+    a.set_xlabel("$N$ (i.i.d. uniform weights)"); a.set_title("total 1D persistence", fontsize=8)
     a.legend(fontsize=6.5)
     a = axes[1]
     a.plot(d["b"], d["frac_coned"], color=SERIES[0], marker="o", ms=3, label="fraction coned")
@@ -341,10 +357,15 @@ def write_numbers(th, auc, comp):
         "PctConedRange": f"{pc.min():.0f}--{pc.max():.0f}\\%" if len(pc) else "--",
         "SinkMassRange": _rng(sink["mean_sink_mass"], "{:.2f}"),
         "NoSinkMass": _rng(nosink["mean_sink_mass"], "{:.2f}"),
-        "RhoMin": f"{np.floor(sink['median_layer_spearman_P0_star'].min() * 1000) / 1000:.3f}" if len(sink) else "--",
-        "RhoNoSink": _rng(nosink["median_layer_spearman_P0_star"], "{:.3f}"),
+        "RhoMin": f"{np.floor(sink['median_layer_spearman_P0_star_norm'].min() * 100) / 100:.2f}" if len(sink) else "--",
+        "RhoRawMin": f"{np.floor(sink['median_layer_spearman_P0_star'].min() * 1000) / 1000:.3f}" if len(sink) else "--",
+        "RhoNoSink": _rng(nosink["median_layer_spearman_P0_star_norm"], "{:.2f}"),
+        "RhoNoSinkRaw": _rng(nosink["median_layer_spearman_P0_star"], "{:.3f}"),
+        "RhoLayerMinRange": _rng(sink["min_layer_spearman_P0_star_norm"], "{:.2f}"),
+        "NoSinkHOneNonempty": _rng((1 - nosink["frac_cells_h1_zero"]) * 100, "{:.0f}\\%"),
         "RhoDeltaHone": _rng(sink["cell_spearman_delta0_h1"], "{:.2f}"),
-        "NViolations": str(int((th["bound_violations_h1"] + th["bound_violations_p0"]).sum())),
+        "NViolations": str(int((th["bound_violations_h1"] + th["bound_violations_p0"] + th.get("bound_violations_maxdeath", 0)).sum())),
+        "NSeedSDAbove": str(int((auc["auc_seed_sd"] > 0.004).sum())),
         "MaxSeedSD": f"{auc['auc_seed_sd'].max():.3f}" if len(auc) else "--",
         "NComp": str(c["setting"].nunique()),
         "NTOneEquiv": str(int(T("T1_reduction")["equiv_0.015"].sum())),
@@ -356,6 +377,7 @@ def write_numbers(th, auc, comp):
         "TThreeHE": _rng(T("T3_deflated_beyond_sink", "halueval")["delta"]),
         "NTFourEquiv": str(int(T("T4_1D_beyond_0D")["equiv_0.015"].sum())),
         "TFourRange": _rng(T("T4_1D_beyond_0D")["delta"]),
+        "TFourExceptions": (lambda L: ", ".join(L[:-1]) + " and " + L[-1] if len(L) > 1 else (L[0] if L else "none"))([short(x) for x in T("T4_1D_beyond_0D").query("not `equiv_0.015`")["setting"]]),
         "PHTopoRange": _rng(T("PH_topo_beyond_sink")["delta"]),
         "NPHTopoEquiv": str(int(T("PH_topo_beyond_sink")["equiv_0.015"].sum())),
         "NPHTopoTotal": str(len(T("PH_topo_beyond_sink"))),
@@ -363,6 +385,16 @@ def write_numbers(th, auc, comp):
         "NIZeroEquiv": str(int(comp[comp["test"] == "I_0D_beyond_nontopo"]["equiv_0.015"].sum())),
         "NIZeroTotal": str(int((comp["test"] == "I_0D_beyond_nontopo").sum())),
         "IZeroRange": _rng(comp[comp["test"] == "I_0D_beyond_nontopo"]["delta"]),
+        "NSettingsNT": str(int((comp["test"] == "I_0D_beyond_nontopo").sum())),
+        "NLogpZeroDTQA": str(int(((c0 := comp[(comp["test"] == "B_logprob") & comp["setting"].str.startswith("truthfulqa")])["ci95_hi"] < 0).sum())),
+        "NLogpZeroDTQATotal": str(len(c0)),
+        "NLogpBeatsZeroDTQA": str(int((c0["delta"] < 0).sum())),
+        "NLogpOnpSig": str(int(((c1 := comp[(comp["test"] == "B_logprob") & comp["setting"].str.startswith("triviaqa")])["ci95_lo"] > 0).sum())),
+        "NLogpOnpTotal": str(len(c1)),
+        "NDeflOnpSig": str(int((T("T3_deflated_beyond_sink", "triviaqa")["ci95_lo"] > 0).sum())),
+        "NDeflOnpTotal": str(len(T("T3_deflated_beyond_sink", "triviaqa"))),
+        "NDeflTQASig": str(int((T("T3_deflated_beyond_sink", "truthfulqa")["ci95_lo"] > 0).sum())),
+        "NDeflTQATotal": str(len(T("T3_deflated_beyond_sink", "truthfulqa"))),
         "NIDeflEquiv": str(int(comp[comp["test"] == "I_defl_beyond_nontopo"]["equiv_0.015"].sum())),
         "IDeflRange": _rng(comp[comp["test"] == "I_defl_beyond_nontopo"]["delta"]),
         "LexTQA": _rng(a("LEX", "truthfulqa"), "{:.2f}"),
@@ -380,17 +412,217 @@ def write_numbers(th, auc, comp):
         "SplitConed": _rng(ls[ls["subset"] == "coned"]["delta"]) if len(ls) else "--",
         "SplitOpen": _rng(ls[ls["subset"] == "open"]["delta"]) if len(ls) else "--",
     }
-    for s_ in ORDER:
-        g = f"sinktda_out/{s_}/generations.csv"
-        if s_.startswith("triviaqa") and os.path.exists(g):
-            pass
+    lf = pd.read_csv(f"{RES}/late_fusion.csv") if os.path.exists(f"{RES}/late_fusion.csv") else pd.DataFrame()
+    # largest |delta| of 0D / deflated PH beyond NONTOPO (early and late fusion), TruthfulQA + on-policy
+    inc = comp[comp["test"].isin(["I_0D_beyond_nontopo", "I_defl_beyond_nontopo",
+                                  "LF_0D_beyond_NONTOPO", "LF_DEFL_beyond_NONTOPO"])]
+    inc = inc[~inc["setting"].str.startswith("halueval")]
+    m["IZeroMaxAbs"] = f"{np.ceil(inc['delta'].abs().max() * 1000) / 1000:.3f}" if len(inc) else "--"
+    m["IZeroAllEquiv"] = "yes" if len(inc) and inc["equiv_0.015"].all() else "no"
+    mb = f"{RES}/synthetic_morse_bound.csv"
+    if os.path.exists(mb):
+        mm = pd.read_csv(mb).set_index("N")
+        ns = [n for n in (16, 32, 64, 128, 256) if n in mm.index]
+        sl = lambda col: np.polyfit(np.log(mm.index.values), np.log(mm[col].values), 1)[0]
+        m["MorseNumbersText"] = (
+            "Numerically, the integral equals " + ", ".join(f"{mm.loc[n, 'morse_lower_bound']:.3g}" for n in ns)
+            + " at $N=" + ",".join(str(n) for n in ns) + "$, against simulated means "
+            + ", ".join(f"{mm.loc[n, 'mean_P1']:.3g}" for n in ns)
+            + r" under i.i.d.\ Uniform$[0,1]$ weights (Figure~\ref{fig:synthetic}, left). Over $N\in[16,256]$ both grow faster than "
+            + f"linearly (log-log slopes {sl('morse_lower_bound'):.2f} and {sl('mean_P1'):.2f}), a pre-asymptotic effect of the "
+            + r"$-\sqrt{3N}$ term; both are $\Theta(N)$ as $N\to\infty$.")
+    for tag, test in (("LFZeroNT", "LF_0D_beyond_NONTOPO"), ("LFDeflNT", "LF_DEFL_beyond_NONTOPO"),
+                      ("LFSinkNT", "LF_SINK_beyond_NONTOPO"), ("LFZeroHid", "LF_0D_beyond_HIDDEN"),
+                      ("LFZeroLogp", "LF_0D_beyond_LOGPROB")):
+        d = lf[lf["test"] == test] if len(lf) else lf
+        m[tag + "Range"] = _rng(d["delta"]) if len(d) else "--"
+        m[tag + "Equiv"] = str(int(d["equiv_0.015"].sum())) if len(d) else "--"
+        m[tag + "Sig"] = str(int((d["ci95_lo"] > 0).sum())) if len(d) else "--"
+        m[tag + "Total"] = str(len(d))
     gens = [pd.read_csv(f"sinktda_out/{s_}/generations.csv", keep_default_na=False)["correct"].mean()
             for s_ in ORDER if s_.startswith("triviaqa") and os.path.exists(f"sinktda_out/{s_}/generations.csv")]
     m["OnpAccRange"] = _rng(pd.Series(gens) * 100, "{:.0f}\\%")
+    if os.path.exists(f"{RES}/check_theory.csv"):
+        ct = pd.read_csv(f"{RES}/check_theory.csv").iloc[0]
+        m["CheckTohaN"], m["CheckDiagN"] = f"{int(ct['toha_n'])}", f"{int(ct['diag_n'])}"
+        e = f"{ct['toha_err']:.0e}".split("e")
+        m["CheckTohaErr"] = f"{e[0]}\\cdot10^{{{int(e[1])}}}"
+        m["CheckViol"] = str(int(ct["toha_viol"] + ct["diag_viol0"] + ct["diag_violk"]))
+    pc = f"{RES}/synthetic_planted_cycle.csv"
+    if os.path.exists(pc):
+        pc = pd.read_csv(pc)
+        m["PlantModerate"] = f"{pc[(pc.b == 6) & (pc.gamma == 8)]['auc_h1'].iloc[0]:.2f}"
+        m["PlantStrong"] = f"{pc[(pc.b == 8) & (pc.gamma <= 4)]['auc_h1'].max():.2f}"
+        m["PlantNone"] = f"{pc[pc.b == 0]['auc_h1'].max():.2f}"
+    m.update(numbers_defect())
+    m.update(numbers_toha())
+    m.update(table_toha_causal()[1])
+    # largest |delta| of any topological bank (0D, deflated, per-head defect, TOHA) beyond
+    # NONTOPO, early or late fusion, on TruthfulQA and on-policy TriviaQA
+    parts = [inc[["setting", "delta"]]]
+    if os.path.exists(f"{RES}/defect_probe.csv"):
+        dp = pd.read_csv(f"{RES}/defect_probe.csv")
+        parts.append(dp[dp["test"].isin(["LF_PH_DELTA_beyond_NONTOPO", "LF_DELTA_beyond_NONTOPO"])][["setting", "delta"]])
+    allinc = pd.concat(parts)
+    allinc = allinc[~allinc["setting"].str.startswith("halueval")]
+    m["TopoNTMaxAbs"] = f"{np.ceil(allinc['delta'].abs().max() * 1000) / 1000:.3f}"
     write_timing()
     with open(f"{PAPER}/sink_numbers.tex", "w") as fh:
         for k, v in m.items():
             fh.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
+
+
+def numbers_defect():
+    """Coning defect as a detector (sinktda/defect_probe.py)."""
+    p = f"{RES}/defect_probe.csv"
+    if not os.path.exists(p):
+        return {}
+    d = pd.read_csv(p)
+    aucs = d[d["test"].str.startswith("AUC_")]
+    m = {"DefLayerAuc": _rng(aucs[aucs["B"] == "DELTA"]["auc_B"], "{:.2f}"),
+         "DefHeadAuc": _rng(aucs[aucs["B"] == "PH_DELTA"]["auc_B"], "{:.2f}"),
+         "DefTotal": str(aucs["setting"].nunique())}
+    for tag, test in (("DefHSink", "LF_PH_DELTA_beyond_PH_SINK"), ("DefHNT", "LF_PH_DELTA_beyond_NONTOPO"),
+                      ("DefLSink", "LF_DELTA_beyond_SINK"), ("DefLNT", "LF_DELTA_beyond_NONTOPO")):
+        t = d[d["test"] == test]
+        m[tag + "Range"] = _rng(t["delta"])
+        m[tag + "Sig"] = str(int((t["ci95_lo"] > 0).sum()))
+        m[tag + "Equiv"] = str(int(t["equiv_0.015"].sum()))
+    return m
+
+
+TOHA_BANKS = [("TOHA_toha", "TOHA"), ("TOHA_maxp", r"TOHA$[\bar\pi]$"), ("TOHA_sinkr", r"TOHA$[\bar a_0]$"),
+              ("SUP_toha", "TOHA$_{\\text{sup}}$"), ("SUP_maxp", r"$\bar\pi_{\text{sup}}$"),
+              ("SUP_sinkr", r"$\bar a_{0,\text{sup}}$"), ("NONTOPO", "Non-topo.")]
+
+
+def _toha_frames():
+    fs = [f"{RES}/toha_{k}.csv" for k in ("checks", "auc", "comp")]
+    if not all(os.path.exists(f) for f in fs):
+        return None
+    ck, auc, comp = (pd.read_csv(f) for f in fs)
+    o = {s: i for i, s in enumerate(ORDER)}
+    ck = ck.assign(_o=ck["setting"].map(o).fillna(99)).sort_values("_o").drop(columns="_o")
+    return ck, auc, comp
+
+
+def table_toha():
+    fr = _toha_frames()
+    if fr is None:
+        return r"\textit{TOHA results pending.}"
+    ck, auc, comp = fr
+    cols_ = [r"$\defect_P{=}0$", r"$\rho(d,\bar\pi)$"] + [n for _, n in TOHA_BANKS] + \
+            [r"$\bar\pi-$TOHA", r"$\bar a_0-$TOHA", r"TOHA$\oplus\bar\pi$", r"TOHA$\oplus$NT"]
+    lines = [r"\begin{tabular}{l" + "c" * len(cols_) + "}", r"\toprule",
+             "Setting & " + " & ".join(cols_) + r" \\", r"\midrule"]
+    prev = None
+    for _, r in ck.iterrows():
+        s = r["setting"]
+        b = PRETTY.get(s, (s, ""))[0]
+        if prev is not None and b != prev:
+            lines.append(r"\midrule")
+        prev = b
+        a = auc[auc["setting"] == s].set_index("bank")["auc"]
+        c = comp[comp["setting"] == s].set_index("test")
+        cells = [f"{100 * r['frac_coned_P']:.0f}\\%", f"{r['median_head_rho_maxp']:.3f}"[1:]]
+        cells += ["--" if k not in a else ("1.00" if a[k] >= 0.9995 else f"{a[k]:.3f}"[1:]) for k, _ in TOHA_BANKS]
+        for t in ("TOHA_maxp_vs_toha", "TOHA_sinkr_vs_toha", "LF_toha_beyond_maxp", "LF_toha_beyond_nontopo"):
+            if t not in c.index:
+                cells.append("--")
+                continue
+            x = c.loc[t]
+            mark = r"$^{\equiv}$" if x["equiv_0.015"] else ("$^{*}$" if (x["ci95_lo"] > 0 or x["ci95_hi"] < 0) else "")
+            cells.append(f"${x['delta']:+.3f}${mark}".replace("-0.000", "0.000").replace("+0.000", "0.000"))
+        lines.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(lines)
+
+
+def table_toha_causal():
+    """Sink-bias intervention (sinktda/run_toha_causal.sh)."""
+    fs = [f"{RES}/toha_{k}_causal.csv" for k in ("checks", "auc")]
+    if not all(os.path.exists(f) for f in fs):
+        return r"\textit{Causal results pending.}", {}
+    ck, auc = (pd.read_csv(f) for f in fs)
+    bias = {"": 0, "_sbm2": -2, "_sbp2": 2, "_sbp4": 4}
+    rows, m = [], {}
+    for _, r in ck.iterrows():
+        base = r["setting"].split("_sb")[0]
+        b = bias[r["setting"][len(base):]]
+        a = auc[auc["setting"] == r["setting"]].set_index("bank")["auc"]
+        rows.append(dict(model=PRETTY[base][1], b=b, coned=r["frac_coned_P"], arg0=r["frac_arg0_all"],
+                         rho=r["median_head_rho_sinkr"], toha=a["TOHA_toha"], tsink=a["TOHA_sinkr"],
+                         sup=a["SUP_toha"], supsink=a["SUP_sinkr"]))
+    d = pd.DataFrame(rows).sort_values(["model", "b"])
+    lines = [r"\begin{tabular}{lrrrrrrrr}", r"\toprule",
+             r"Model & $b$ & $\defect_P{=}0$ & sink top & $\rho(d,1-\bar a_0)$ & TOHA & TOHA$[\bar a_0]$ & TOHA$_{\text{sup}}$ & $\bar a_{0,\text{sup}}$ \\",
+             r"\midrule"]
+    for _, r in d.iterrows():
+        lines.append(f"{r['model']} & ${r['b']:+d}$ & ".replace("+0$", "0$") + f"{100 * r['coned']:.0f}\\% & {100 * r['arg0']:.0f}\\% & "
+                     f"{r['rho']:.3f} & {r['toha']:.3f} & {r['tsink']:.3f} & {r['sup']:.3f} & {r['supsink']:.3f} \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    for mod, g in d.groupby("model"):
+        k = "Qw" if mod.startswith("Qwen") else "Tl"
+        lo, hi = g[g.b == g.b.min()].iloc[0], g[g.b == g.b.max()].iloc[0]
+        m[f"Causal{k}ArgLo"], m[f"Causal{k}ArgHi"] = f"{100 * lo['arg0']:.0f}\\%", f"{100 * hi['arg0']:.0f}\\%"
+        m[f"Causal{k}RhoLo"], m[f"Causal{k}RhoHi"] = f"{lo['rho']:.3f}", f"{hi['rho']:.3f}"
+        m[f"Causal{k}ConedLo"], m[f"Causal{k}ConedHi"] = f"{100 * lo['coned']:.0f}\\%", f"{100 * hi['coned']:.0f}\\%"
+        z = g[g.b == 0].iloc[0]
+        m[f"Causal{k}ConedZero"], m[f"Causal{k}ArgZero"] = f"{100 * z['coned']:.0f}\\%", f"{100 * z['arg0']:.0f}\\%"
+        m[f"Causal{k}RhoZero"] = f"{z['rho']:.3f}"
+        m[f"Causal{k}TohaRange"] = _rng(g["toha"], "{:.2f}")
+        m[f"Causal{k}GapLo"] = f"{lo['toha'] - lo['tsink']:+.3f}"
+        m[f"Causal{k}GapHi"] = f"{hi['toha'] - hi['tsink']:+.3f}"
+    return "\n".join(lines), m
+
+
+def numbers_toha():
+    fr = _toha_frames()
+    if fr is None:
+        return {}
+    ck, auc, comp = fr
+    sink = ck[ck["setting"] != "truthfulqa_smollm"]
+    ab = lambda k, sub=None: auc[(auc["bank"] == k) & (auc["setting"].str.startswith(sub) if sub else True)]["auc"]
+    m = {
+        "TohaSettings": str(len(ck)),
+        "TohaCells": f"{int(ck['cells'].sum()):,}",
+        "TohaViol": str(int((ck["viol_upper"] + ck["viol_lower"]).sum())),
+        "TohaConedRange": f"{100 * ck['frac_coned_P'].min():.0f}--{100 * ck['frac_coned_P'].max():.0f}\\%",
+        "TohaGapMax": (lambda e: f"${e[0]}\\cdot10^{{{int(e[1])}}}$")(f"{ck['max_abs_gap_coned'].max():.0e}".split("e")),
+        "TohaArgZeroRange": f"{100 * sink['frac_arg0_all'].min():.0f}--{100 * sink['frac_arg0_all'].max():.0f}\\%",
+        "TohaRhoRange": _rng(ck["median_head_rho_maxp"], "{:.3f}"),
+        "TohaRhoSinkRange": _rng(sink["median_head_rho_sinkr"], "{:.2f}"),
+        "TohaFracHeadsRho": _rng(ck["frac_heads_rho_maxp_ge_0_9"] * 100, "{:.0f}\\%"),
+        "TohaSelConedRange": f"{100 * ck['toha_sel_frac_coned_P'].min():.0f}--{100 * ck['toha_sel_frac_coned_P'].max():.0f}\\%",
+        "TohaSelArgZeroRange": f"{100 * sink['toha_sel_frac_arg0'].min():.0f}--{100 * sink['toha_sel_frac_arg0'].max():.0f}\\%",
+        "TohaSelOverlap": _rng(ck["toha_sel_overlap_sinkr"] * 100, "{:.0f}\\%"),
+        "TohaAuc": _rng(ab("TOHA_toha"), "{:.2f}"),
+        "TohaAucTQA": _rng(ab("TOHA_toha", "truthfulqa"), "{:.2f}"),
+        "TohaAucHE": _rng(ab("TOHA_toha", "halueval"), "{:.2f}"),
+        "TohaAucOnp": _rng(ab("TOHA_toha", "triviaqa"), "{:.2f}"),
+        "TohaMaxpAuc": _rng(ab("TOHA_maxp"), "{:.2f}"),
+        "TohaSinkAuc": _rng(ab("TOHA_sinkr"), "{:.2f}"),
+        "TohaSupAuc": _rng(ab("SUP_toha"), "{:.2f}"),
+        "TohaSupSinkAuc": _rng(ab("SUP_sinkr"), "{:.2f}"),
+    }
+    tl = comp[comp["test"] == "LF_toha_beyond_maxp"]
+    m["TohaLFMaxpMax"] = f"{np.ceil(tl['delta'].abs().max() * 1000) / 1000:.3f}"
+    tn = comp[comp["test"] == "LF_toha_beyond_nontopo"]
+    m["TohaLFNTMax"] = f"{np.ceil(tn['delta'].abs().max() * 1000) / 1000:.3f}"
+    ts = comp[comp["test"] == "TOHA_sinkr_vs_toha"]
+    m["TohaSinkLossSink"] = f"{-ts[ts['setting'] != 'truthfulqa_smollm']['delta'].min():.3f}"
+    m["TohaSinkLossNoSink"] = f"{-ts[ts['setting'] == 'truthfulqa_smollm']['delta'].min():.3f}"
+    for tag, test in (("TohaMaxp", "TOHA_maxp_vs_toha"), ("TohaSink", "TOHA_sinkr_vs_toha"),
+                      ("TohaSupMaxp", "SUP_maxp_vs_toha"), ("TohaSupSink", "SUP_sinkr_vs_toha"),
+                      ("TohaLFMaxp", "LF_toha_beyond_maxp"), ("TohaLFNT", "LF_toha_beyond_nontopo")):
+        t = comp[comp["test"] == test]
+        m[tag + "Range"] = _rng(t["delta"])
+        m[tag + "Equiv"] = str(int(t["equiv_0.015"].sum()))
+        m[tag + "Pos"] = str(int((t["ci95_lo"] > 0).sum()))
+        m[tag + "Neg"] = str(int((t["ci95_hi"] < 0).sum()))
+        m[tag + "NonInf"] = str(int((t["ci90_lo"] > -0.015).sum()))
+        m[tag + "Total"] = str(len(t))
+    return m
 
 
 def main():
@@ -398,6 +630,11 @@ def main():
     th = load("theory")
     auc = load("auc")
     comp = load("comp")
+    if os.path.exists(f"{RES}/late_fusion.csv"):
+        lf = pd.read_csv(f"{RES}/late_fusion.csv")
+        comp = pd.concat([comp, lf], ignore_index=True)
+        comp["_o"] = comp["setting"].map({s: i for i, s in enumerate(ORDER)}).fillna(99)
+        comp = comp.sort_values("_o", kind="stable").drop(columns="_o")
     lay = pd.concat([pd.read_csv(f) for f in glob.glob(f"{RES}/theory_layers_*.csv")], ignore_index=True) \
         if glob.glob(f"{RES}/theory_layers_*.csv") else pd.DataFrame()
     with open(f"{PAPER}/sink_tables.tex", "w") as fh:
@@ -409,6 +646,8 @@ def main():
         fh.write(table_auc_full(auc) + "\n")
     with open(f"{PAPER}/sink_tables.tex", "a") as fh:
         fh.write(f"\\newcommand{{\\SinkTableOnpolicy}}{{%\n{table_onpolicy()}\n}}\n")
+        fh.write(f"\\newcommand{{\\SinkTableToha}}{{%\n{table_toha()}\n}}\n")
+        fh.write(f"\\newcommand{{\\SinkTableTohaCausal}}{{%\n{table_toha_causal()[0]}\n}}\n")
     write_numbers(th, auc, comp)
     fig_layers(lay)
     fig_synthetic()

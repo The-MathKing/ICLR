@@ -20,6 +20,8 @@ MODELS = {
     "tinyllama": ("TinyLlama/TinyLlama-1.1B-Chat-v1.0", "tinyllama"),
     "smollm": ("HuggingFaceTB/SmolLM-1.7B-Instruct", "smollm"),
     "mistral": ("mistralai/Mistral-7B-Instruct-v0.2", "mistral_inst"),
+    "llama8b": ("meta-llama/Llama-3.1-8B-Instruct", "generic_chat"),
+    "qwen7b": ("Qwen/Qwen2.5-7B-Instruct", "qwen_chat"),
 }
 
 

@@ -36,14 +36,21 @@ def pick_device():
     if torch.cuda.is_available():
         return "cuda", torch.bfloat16
     if torch.backends.mps.is_available():
-        return "mps", torch.float16
+        return "mps", torch.bfloat16  # fp16 on MPS overflows (NaNs, degenerate generations)
     return "cpu", torch.float32
 
 
-def load(model_id, device, dtype):
+def load(model_id, device, dtype, attn="eager"):
+    """SINKTDA_OFFLOAD=1 keeps the dtype but lets accelerate place layers that do not fit
+    in GPU memory on the CPU (needed for 8B models in bf16 on a 16 GB card)."""
     from transformers import AutoModelForCausalLM, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, dtype=dtype, attn_implementation="eager")
+    if os.environ.get("SINKTDA_OFFLOAD") == "1" and device == "cuda":
+        gpu = os.environ.get("SINKTDA_GPU_MEM", "13GiB")
+        model = AutoModelForCausalLM.from_pretrained(model_id, dtype=dtype, attn_implementation=attn,
+                                                     device_map="auto", max_memory={0: gpu, "cpu": "64GiB"})
+        return tok, model.eval()
+    model = AutoModelForCausalLM.from_pretrained(model_id, dtype=dtype, attn_implementation=attn)
     model.to(device).eval()
     return tok, model
 
@@ -101,7 +108,7 @@ def main():
     ap.add_argument("--no-perhead", action="store_true")
     ap.add_argument("--workers", type=int, default=7)
     ap.add_argument("--dtype", default=None, choices=[None, "float16", "bfloat16", "float32"],
-                    help="default: float16 on MPS; bfloat16 for triviaqa (fp16 overflows in padded batched generation)")
+                    help="default: bfloat16 on CUDA and MPS")
     ap.add_argument("--limit", type=int, default=None, help="debug: stop after this many rows")
     args = ap.parse_args()
 
@@ -145,8 +152,10 @@ def main():
     for i, r in enumerate(rows):
         enc = tok(r["full"], return_tensors="pt").to(device)
         N = enc["input_ids"].shape[1]
-        p = len(tok(r["prefix"])["input_ids"])
-        p = min(p, N)
+        # a trailing space in the prefix ("Answer: ") is merged into the first answer
+        # token in the full string, so tokenize the prefix without it
+        p = len(tok(r["prefix"].rstrip(" "))["input_ids"])
+        p = min(p, N - 1)
         if N > 1024:
             continue
         with torch.no_grad():

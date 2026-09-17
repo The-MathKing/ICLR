@@ -215,7 +215,7 @@ def theory_checks(name, df):
     L = n_layers(df)
     N = df["seq_len"].values
     rows = []
-    viol_h1 = viol_p0 = 0
+    viol_h1 = viol_p0 = viol_max = 0
     for l in range(L):
         P0 = df[f"layer_{l}_h0_total_persistence"].values
         S = df[f"layer_{l}_star_tot"].values
@@ -225,6 +225,11 @@ def theory_checks(name, df):
         h1t = df[f"layer_{l}_h1_total_persistence"].values
         viol_h1 += int((h1m > d0 + 1e-5).sum())
         viol_p0 += int(((P0 > S + 1e-3) | (P0 < S - (N - 1) * d0 - 1e-3)).sum())
+        M0 = df[f"layer_{l}_h0_max_lifetime"].values
+        Smax = df[f"layer_{l}_star_max"].values
+        viol_max += int(((M0 > Smax + 1e-5) | (M0 < Smax - d0 - 1e-5)).sum())
+        # length-normalized: P0/(N-1) vs S0/(N-1) = 1 - mean sink attention
+        P0n, Sn = P0 / np.maximum(N - 1, 1), S / np.maximum(N - 1, 1)
         rows.append(dict(setting=name, layer=l, depth=l / max(L - 1, 1),
                          frac_coned=float((d0 <= 1e-7).mean()),
                          median_delta0=float(np.median(d0)), median_delta_min=float(np.median(dm)),
@@ -233,13 +238,16 @@ def theory_checks(name, df):
                          frac_h1_zero=float((h1t == 0).mean()),
                          rel_gap=float(np.median((S - P0) / np.maximum(S, 1e-9))),
                          pearson_P0_star=float(np.corrcoef(P0, S)[0, 1]) if P0.std() > 0 and S.std() > 0 else np.nan,
-                         spearman_P0_star=float(spearmanr(P0, S)[0]) if P0.std() > 0 and S.std() > 0 else np.nan))
+                         spearman_P0_star=float(spearmanr(P0, S)[0]) if P0.std() > 0 and S.std() > 0 else np.nan,
+                         spearman_P0_star_norm=float(spearmanr(P0n, Sn)[0]) if P0n.std() > 0 and Sn.std() > 0 else np.nan,
+                         spearman_star_N=float(spearmanr(S, N)[0]) if S.std() > 0 and N.std() > 0 else np.nan))
     lay = pd.DataFrame(rows)
     d0_all = df[cols(df, ["delta0"])].values
     dm_all = df[cols(df, ["delta_min"])].values
     h1_all = df[cols(df, ["h1_total_persistence"])].values
     summ = dict(setting=name, n_rows=len(df), layers=L, mean_N=float(N.mean()),
                 cells=int(d0_all.size), bound_violations_h1=viol_h1, bound_violations_p0=viol_p0,
+                bound_violations_maxdeath=viol_max,
                 frac_cells_coned=float((d0_all <= 1e-7).mean()),
                 frac_cells_coned_any_apex=float((dm_all <= 1e-7).mean()),
                 mean_sink_mass=float(df[cols(df, ["sink_mass"])].values.mean()),
@@ -247,6 +255,8 @@ def theory_checks(name, df):
                 frac_h1zero_given_coned=float((h1_all[d0_all <= 1e-7] == 0).mean()) if (d0_all <= 1e-7).any() else np.nan,
                 median_delta0=float(np.median(d0_all)),
                 median_layer_spearman_P0_star=float(lay["spearman_P0_star"].median()),
+                median_layer_spearman_P0_star_norm=float(lay["spearman_P0_star_norm"].median()),
+                min_layer_spearman_P0_star_norm=float(lay["spearman_P0_star_norm"].min()),
                 median_layer_rel_gap=float(lay["rel_gap"].median()),
                 cell_spearman_delta0_h1=float(spearmanr(d0_all.ravel(), h1_all.ravel())[0]))
     return summ, lay

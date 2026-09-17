@@ -1,10 +1,10 @@
 \documentclass{article}
+\usepackage[T1]{fontenc}
 \usepackage{iclr2026_conference,times}
 % \iclrfinalcopy omitted for double-blind review.
 
 \input{math_commands.tex}
 
-\usepackage{hyperref}
 \usepackage{url}
 \usepackage{microtype}
 \usepackage{graphicx}
@@ -15,6 +15,8 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{longtable}
+\usepackage{float}
+\usepackage{hyperref}
 \setlist{nosep, topsep=3pt, partopsep=0pt}
 \hypersetup{pdfauthor={},pdftitle={},colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
 
@@ -43,8 +45,9 @@
 \input{sink_numbers.tex}
 \input{sink_tables.tex}
 \input{sink_results.tex}
+\input{sink_dtype.tex}
 
-\title{The Topology Is the Sink: Persistent Homology of\\ Causal Attention Graphs Measures Attention Sinks}
+\title{The Topology Is the Sink: Topological Hallucination Detectors Reduce to First-Order Attention Statistics}
 
 \author{Anonymous Author(s)}
 
@@ -52,22 +55,22 @@
 \maketitle
 
 \begin{abstract}
-Persistent homology (PH) of attention graphs is an increasingly popular source of features for detecting hallucinations in large language models. We show that, in decoder-only models, these features are largely a measurement of a much simpler and well-studied object: the \emph{attention sink}. We introduce the \emph{coning defect} $\defect_s$ of a vertex $s$ and prove a stable reduction theorem: every bar of dimension $k\ge1$ in the Vietoris--Rips barcode has length at most $\defect_s$, and $0$-dimensional total persistence lies within $(N{-}1)\defect_s$ of the star weight around $s$. For causal attention with $s$ the first token, $\defect_0$ has a closed form, and $\defect_0=0$ exactly when no token attends to another more than both attend to the sink. We check the theorem on \NCellsTotal{} layer-level attention graphs from \NSettings{} settings (\NModels{} open-weight models; teacher-forced TruthfulQA and HaluEval, and an on-policy TriviaQA benchmark we build). The bounds are never violated. In every model with a first-token sink, \PctConedRange{} of graphs are \emph{exactly} coned and $0$D persistence has a median per-layer rank correlation of at least \RhoMin{} with sink attention; a model without a sink is never coned, as the theorem predicts. $1$D persistence is zero on every coned graph, which explains its reported weakness; we also prove that under i.i.d.\ weights it grows at least linearly in sequence length ($\ge 3N/8-O(\sqrt N)$), so its sub-linear growth on real attention is a signature of coning. For detection, sink features recover most of the $0$D signal, and neither $0$D nor sink-deflated topology adds measurable information to cheap non-topological probes (hidden states, Lookback ratios, log-probabilities) in any setting. We release the extractor, evaluator, and all per-example features.
+Persistent homology (PH) of attention graphs underlies a growing family of hallucination detectors, including the recent TOHA (ACL 2026). We show that, in decoder-only models, these topological features reduce to first-order attention statistics dominated by the \emph{attention sink}, either exactly or up to one computable number. For any symmetric dissimilarity and vertex $s$, we define the \emph{coning defect} $\defect_s$. Combining classical cone and stability arguments, we show that the entire Vietoris--Rips barcode lies within bottleneck distance $\defect_s$ of a ``star diagram'' read off the distances to $s$. Every stable vectorization is therefore a function of one column of the attention matrix, up to $\defect_s$. Applied to TOHA, the same argument shows that its prompt--response topological divergence \emph{equals} the mean, over response tokens, of one minus their largest prompt attention whenever a prompt-level coning defect vanishes, and lies within that defect otherwise. On \TohaCells{} per-head graphs from \NSettings{} settings (\NModels{} open models of 1.1B--3.8B parameters; TruthfulQA, HaluEval, and an on-policy TriviaQA benchmark we build), this identity has no violations and is exact on \TohaConedRange{} of them. Adding TOHA's score to its first-order counterpart changes AUC by at most \TohaLFMaxpMax{} (equivalent within $\pm0.015$ in \TohaLFMaxpEquiv{} of \TohaLFMaxpTotal{} settings), and supervised probes on the two are equivalent in \TohaSupMaxpEquiv{} of \TohaSupMaxpTotal{}. For whole-graph PH, \NCellsTotal{} layer graphs show no bound violations; in every model with a first-token sink, \PctConedRange{} are \emph{exactly} coned, $1$D persistence is zero on all of them, and length-normalized $0$D persistence keeps a median per-layer rank correlation of at least \RhoMin{} with sink attention. For detection, on TruthfulQA and on-policy TriviaQA, none of $0$D PH, sink-deflated PH, or the per-head coning defect adds more than \TopoNTMaxAbs{} AUC to cheap non-topological probes, and TOHA adds at most \TohaLFNTMax{}. We release the extractor, evaluator, and all per-example features.
 \end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
 
-A growing family of hallucination detectors treats a transformer's attention matrix as a weighted graph and summarizes it with persistent homology (PH): barcodes of connected components ($H_0$) and loops ($H_1$) along a Vietoris--Rips filtration \citep{kushnareva2021,cherniavskii2022,perez2022topological,kostenok2023,toha,samaga2026halluzig}. The appeal is that topology might capture \emph{global} structure in how information flows that token-level statistics miss. A separate line of work has established that decoder-only language models route a large share of attention to the first token, the \emph{attention sink} \citep{xiao2023efficient,sun2024massive,cancedda2024spectral,gu2025attentionsink,barbero2025first}. These two literatures do not cite each other.
+A growing family of hallucination detectors treats a transformer's attention matrix as a weighted graph and summarizes it with persistent homology (PH): barcodes of connected components ($H_0$) and loops ($H_1$) along a Vietoris--Rips filtration \citep{kushnareva2021,cherniavskii2022,perez2022topological,kostenok2023,toha,samaga2026halluzig}. The appeal is that topology might capture \emph{global} structure in how information flows that token-level statistics miss. A separate line of work has established that decoder-only language models route a large share of attention to the first token, the \emph{attention sink} \citep{xiao2023efficient,sun2024massive,cancedda2024spectral,gu2025attentionsink,barbero2025first}. Only recently have the two been connected: \citet{binkowski2026sinkprobe} show that sinks carry much of the signal used by attention-based hallucination detectors. No work has yet asked what sinks do to the \emph{topology} of attention graphs.
 
-We show they study, to a large and quantifiable extent, the same thing. When one vertex $s$ is closer to every other vertex than those vertices are to each other, every sublevel set of the Vietoris--Rips filtration is a cone with apex $s$: all higher homology vanishes and the minimum spanning tree (which computes $H_0$) is the star around $s$. Real attention graphs sit at or very near this configuration, because of the sink. The ``topology'' of a causal attention graph is therefore, in most layers, exactly a function of how much attention each token sends to the sink, and in the remaining layers is controlled by a single computable number, the coning defect.
+We show that, for topological detectors, the two literatures study the same object to a large and quantifiable extent. When one vertex $s$ is closer to every other vertex than those vertices are to each other, every sublevel set of the Vietoris--Rips filtration is a cone with apex $s$: all higher homology vanishes and the minimum spanning tree (which computes $H_0$) is the star around $s$. Real attention graphs sit at or very near this configuration, because of the sink. The ``topology'' of a causal attention graph is therefore, in most layers, exactly a function of how much attention each token sends to the sink, and in the remaining layers is controlled by a single computable number, the coning defect. The same holds for the published detector that restricts topology to the prompt--response interface: TOHA's divergence is a first-order attention statistic plus a computable correction, and on real heads the correction adds at most \TohaLFMaxpMax{} AUC.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=*]
-\item \textbf{A stable sink-reduction theorem} (\S\ref{sec:theory}). For any symmetric dissimilarity and any vertex $s$, $k\ge1$ bars have length $\le\defect_s$ and $0$D total persistence is sandwiched between $\stw_s-(N{-}1)\defect_s$ and $\stw_s$ (Theorem~\ref{thm:cone}). For causal attention, $\defect_0$ and $\stw_0$ are closed-form functions of attention to the first token (Corollary~\ref{cor:causal}).
-\item \textbf{Verification on real models} (\S\ref{sec:reduction}). There are zero bound violations in \NCellsTotal{} graphs; in sink-dominated models \PctConedRange{} of graphs are exactly coned and $H_1$ is empty on \emph{every} coned graph, while a model without a sink serves as a negative control.
-\item \textbf{An account of $1$D persistence} (\S\ref{sec:onedim}). We prove $\mathbb{E}[P_1(N)]\ge 3N/8-O(\sqrt N)$ under i.i.d.\ weights (Proposition~\ref{prop:morse}), show real attention scales far more slowly, and trace the gap to coning with a sink dose-response experiment in which a planted cycle is visible to $H_1$ only if it breaks the cone.
-\item \textbf{A detection audit with strong baselines} (\S\ref{sec:detection}). On TruthfulQA, HaluEval, and an on-policy TriviaQA benchmark we build, we compare $0$D/$1$D PH, sink features, and sink-deflated PH against length, lexical, log-probability, LLM-Check \citep{sriramanan2024llmcheck}, Lookback-Lens \citep{chuang2024lookback}, and hidden-state probes, with repeated grouped cross-validation and equivalence tests.
+\item \textbf{A whole-barcode sink reduction} (\S\ref{sec:theory}). The ingredients are classical: a flag complex with a dominating vertex is a cone \citep{barmak2012strong,boissonnat2020edge}, and persistence is stable \citep{cohensteiner2007stability,chazal2009proximity,chazal2014geometric}. We combine them into one-sided bounds in a single computable number. For any symmetric dissimilarity and vertex $s$, bars of dimension $k\ge1$ have length at most $\defect_s$, and $0$D total persistence is sandwiched around the star weight (Theorem~\ref{thm:cone}). The whole barcode is within bottleneck distance $\defect_s$ of the star diagram, so every stable vectorization reduces to one column of distances (Corollary~\ref{cor:diagram}). For causal attention, $\defect_0$ has a closed form (Corollary~\ref{cor:causal}).
+\item \textbf{The published topological detector is a first-order detector} (\S\ref{sec:theory}, \S\ref{sec:toha}). TOHA's topological divergence equals one minus the response tokens' mean max-prompt attention on prompt-coned heads, and is within a computable defect of it otherwise (Proposition~\ref{prop:toha}). This makes exact the qualitative remark of \citet{binkowski2026sinkprobe}. On \TohaCells{} real head graphs the identity has no violations, and adding TOHA to its first-order counterpart changes AUC by \TohaLFMaxpRange{}.
+\item \textbf{Verification of the whole-graph reduction} (\S\ref{sec:reduction}, Appendix~\ref{sec:onedim}). There are zero bound violations in \NCellsTotal{} graphs. Graphs are exactly coned in \PctConedRange{} of cases in sink-dominated models, $H_1$ is empty on every coned graph, and a sink dose-response experiment traces the weakness of $1$D features to coning.
+\item \textbf{A detection audit with strong baselines} (\S\ref{sec:detection}). On TruthfulQA, HaluEval, and an on-policy TriviaQA benchmark, we compare $0$D/$1$D PH, sink features, sink-deflated PH, the coning defect, and TOHA against length, lexical, log-probability, LLM-Check \citep{sriramanan2024llmcheck}, Lookback-Lens \citep{chuang2024lookback}, and hidden-state probes, with grouped cross-validation, early- and late-fusion incremental tests, and equivalence tests.
 \end{enumerate}
 
 \section{Background and related work}
@@ -75,7 +78,7 @@ We show they study, to a large and quantifiable extent, the same thing. When one
 
 \paragraph{Topology of attention.} \citet{kushnareva2021} and \citet{cherniavskii2022} introduced barcodes of symmetrized BERT attention graphs as features for artificial-text detection and acceptability; \citet{perez2022topological} and \citet{kostenok2023} extended them to classification and uncertainty estimation. For hallucination detection, TOHA \citep{toha} computes an MST-based divergence between prompt and response subgraphs, HalluZig \citep{samaga2026halluzig} uses zigzag persistence across layers, and CHARM \citep{charm} learns a message-passing model over attention graphs. \citet{gardinazzi2024persistent} study zigzag persistence of hidden representations. All $0$D summaries in this family are MST statistics (Fact~\ref{fact:mst}; \citealp{gower1969}); our results concern what those statistics measure in \emph{causal} models.
 
-\paragraph{Attention sinks.} \citet{xiao2023efficient} observed that streaming LMs keep the first tokens' key-values because a large share of attention lands there; \citet{sun2024massive} tied sinks to massive activations, \citet{cancedda2024spectral} to low-rank ``dark signals'', \citet{gu2025attentionsink} characterized when they emerge during pre-training, and \citet{barbero2025first} argued they prevent over-mixing. Our theorem turns sink strength into an exact statement about the topology of attention graphs.
+\paragraph{Attention sinks.} \citet{xiao2023efficient} observed that streaming LMs keep the first tokens' key-values because a large share of attention lands there; \citet{sun2024massive} tied sinks to massive activations, \citet{cancedda2024spectral} to low-rank ``dark signals'', \citet{gu2025attentionsink} characterized when they emerge during pre-training, and \citet{barbero2025first} argued they prevent over-mixing; related ``no-op'' attention to special tokens was observed in BERT \citep{clark2019bert} and vision transformers \citep{darcet2024registers}. \citet{binkowski2026sinkprobe} use sinks with large-norm values directly as a hallucination signal (SinkProbe) and argue that earlier attention-based detectors rely on them implicitly. Our theorem makes this precise for topological detectors, turning sink strength into a statement about the topology of attention graphs.
 
 \paragraph{Hallucination detection.} Beyond topology, detectors use sampling consistency \citep{manakul2023selfcheckgpt,farquhar2024semantic}, internal probes \citep{azaria2023internal,burns2022discovering,marks2023geometry,li2023iti,kossen2024semantic,orgad2024llms,du2024haloscope}, covariance spectra \citep{chen2024inside}, attention-kernel log-determinants \citep{sriramanan2024llmcheck}, and context-vs-generated attention ratios \citep{chuang2024lookback}. Recent audits find that several benchmarks admit near-perfect detection from surface form alone \citep{hussain2026parallax,janiak2025illusion}, echoing annotation artifacts in NLI \citep{gururangan2018annotation,mccoy2019right}; we therefore include lexical controls and an on-policy benchmark.
 
@@ -104,10 +107,17 @@ For every symmetric $D$ and every vertex $s$, with $\defect=\defect_s(D)$:
 \end{theorem}
 
 \begin{proof}[Proof sketch (full proof in Appendix~\ref{app:proofs})]
-Let $D'_{uv}=\max(D_{uv},D_{su},D_{sv})$ for $u,v\ne s$ and $D'_{su}=D_{su}$. Then $D\le D'\le D+\defect$ entrywise and $D'$ is coned at $s$. If $D'$ is coned, any simplex $\sigma\not\ni s$ with $|\sigma|\ge2$ has the same filtration value as $\sigma\cup\{s\}$, and a vertex not yet joined to $s$ has no edges; so each $K'_\epsilon$ is a cone with apex $s$ plus isolated points, and $H_k(K'_\epsilon)=0$ for $k\ge1$. The inclusions $K_b\subseteq K'_{b+\defect}\subseteq K_{b+\defect}$ factor the persistence map $H_k(K_b)\to H_k(K_{b+\defect})$ through zero, so no bar outlives $\defect$. For (b), the star is a spanning tree of $D$ (upper bound) and an MST of $D'$ by the cycle property; MST weight and bottleneck are $(N{-}1)$- and $1$-Lipschitz in the sup-norm.
+Let $D'_{uv}=\max(D_{uv},D_{su},D_{sv})$ for $u,v\ne s$ and $D'_{su}=D_{su}$. Then $D\le D'\le D+\defect$ entrywise and $D'$ is coned at $s$. Since $D'$ is coned, any simplex $\sigma\not\ni s$ with $|\sigma|\ge2$ has the same filtration value as $\sigma\cup\{s\}$, and a vertex not yet joined to $s$ has no edges; so each $K'_\epsilon$ is a cone with apex $s$ plus isolated points, and $H_k(K'_\epsilon)=0$ for $k\ge1$. The inclusions $K_b\subseteq K'_{b+\defect}\subseteq K_{b+\defect}$ factor the persistence map $H_k(K_b)\to H_k(K_{b+\defect})$ through zero, so no bar outlives $\defect$. For (b), the star is a spanning tree of $D$ (upper bound) and an MST of $D'$; MST weight and bottleneck are $(N{-}1)$- and $1$-Lipschitz in the sup-norm. The ingredients are standard: Lemma~\ref{lem:coned} is the dominating-vertex (cone) argument behind strong and edge collapses \citep{barmak2012strong,boissonnat2020edge}, and the last step is a one-sided form of the interleaving argument behind persistence stability \citep{chazal2009proximity}.
 \end{proof}
 
-The bound in (a) is tight up to the constant: on $3{,}000$ random causal matrices the largest observed ratio of $H_1$ lifetime to $\defect_0$ was $0.99$.
+The bound in (a) is attained: if $D_{su}=1$ for all $u$ and four further vertices form a $4$-cycle with side $\tfrac12$ and diagonals $1$, then $\defect_s=\tfrac12$ and $H_1$ has the single bar $[\tfrac12,1)$.
+
+Theorem~\ref{thm:cone} controls summaries; the same comparison controls the whole barcode. Call $\Sigma_s(D)$ the \emph{star diagram}: in degree $0$ the bars $[0,D_{su})$, $u\ne s$, plus one infinite bar, and nothing in degree $k\ge1$.
+
+\begin{corollary}[The whole barcode is the star, up to $\defect_s$]
+\label{cor:diagram}
+For every $k$, $d_B\big(\dgm_k(D),\Sigma_s(D)_k\big)\le\defect_s$, with equality of the diagrams when $\defect_s=0$. More precisely, the $j$-th smallest finite $0$D death of $D$ lies in $[D_{s(j)}-\defect_s,\,D_{s(j)}]$, where $D_{s(j)}$ is the $j$-th smallest entry of $(D_{su})_{u\ne s}$, and $\beta_0$ of $K_\epsilon$ lies between $1+\#\{u:D_{su}>\epsilon+\defect_s\}$ and $1+\#\{u:D_{su}>\epsilon\}$. Hence every vectorization that is $L$-Lipschitz in $d_B$ (e.g.\ persistence landscapes; \citealp{bubenik2015landscapes}) is within $L\defect_s$ of a function of the column $(D_{su})_u$. Vectorizations that are stable in $1$-Wasserstein distance (e.g.\ persistence images; \citealp{adams2017persistence}) are within $L\big((N{-}1)\defect_s+\tfrac12\defect_s\sum_{k\ge1}|\dgm_k(D)|\big)$ of such a function. On coned graphs, every vectorization, including persistence entropy and Betti curves, is exactly such a function.
+\end{corollary}
 
 \begin{corollary}[Causal attention]
 \label{cor:causal}
@@ -115,36 +125,40 @@ Let $A$ be lower-triangular and row-stochastic, $D=1-\max(A,A^\top)$, and $s=0$ 
 \[
 \defect_0=\max_{1\le v<u}\big[A_{uv}-\min(A_{u0},A_{v0})\big]_+ .
 \]
-Thus $P_0\in[(N-1)(1-\bar m-\defect_0),\,(N-1)(1-\bar m)]$ and all $H_{k\ge1}$ bars are shorter than $\defect_0$. The graph is exactly coned iff no token attends to an earlier non-sink token more than both of them attend to the sink.
+Thus $P_0\in[(N-1)(1-\bar m-\defect_0),\,(N-1)(1-\bar m)]$ and all $H_{k\ge1}$ bars have length at most $\defect_0$. The graph is exactly coned iff, for all $1\le v<u$, $A_{uv}\le A_{u0}$ and $A_{uv}\le A_{v0}$: no token attends to an earlier non-sink token more than \emph{either} of the two attends to the sink.
 \end{corollary}
 
 \begin{remark}[Choice of distance]
-Coning is an order condition, so it is invariant under any entrywise non-decreasing transform of $D$ (e.g.\ $-\log A$ or ranks in place of $1-A$): the set of exactly coned graphs, and the vanishing of their higher homology, does not depend on how attention is turned into a distance. Only the magnitude of $\defect_s$ on non-coned graphs does.
+Coning is an order condition, so it is invariant under any entrywise strictly increasing transform $f$ of $D$ with $f(0)=0$ (e.g.\ $-\log$ of the symmetrized attention, or ranks without ties, in place of $1-A$). The set of exactly coned graphs, and the vanishing of their higher homology, does not depend on how attention is turned into a distance; only the magnitude of $\defect_s$ on non-coned graphs does. (A merely non-decreasing $f$, such as clipping, can create coning.)
 \end{remark}
 
-Corollary~\ref{cor:causal} makes four testable predictions: \textbf{(P1)} in sink-dominated layers $0$D persistence is an affine function of sink attention; \textbf{(P2)} $H_1$ is empty whenever $\defect_0=0$; \textbf{(P3)} $1$D persistence can only be non-zero where the sink is violated; \textbf{(P4)} removing the sink and renormalizing (\emph{deflation}) exposes whatever non-sink topology exists.
+Corollary~\ref{cor:causal} makes four testable predictions: \textbf{(C1)} in coned layers $0$D total persistence equals $(N{-}1)(1-\bar m)$, so after dividing by $N{-}1$ it is an affine function of sink attention; \textbf{(C2)} $H_1$ is empty whenever $\defect_0=0$; \textbf{(C3)} $1$D persistence can only be non-zero where the sink is violated, with bars no longer than $\defect_0$; \textbf{(C4)} removing the sink and renormalizing (\emph{deflation}) exposes whatever non-sink topology exists.
 
-\paragraph{What i.i.d.\ weights would give.} Earlier work motivates length normalization of $1$D features by the growth of cycles with $N$. That growth is real, but only for graphs far from coned.
+\paragraph{Random weights and directed complexes.} For i.i.d.\ weights, by contrast to Theorem~\ref{thm:cone}, $1$D total persistence grows linearly in $N$ \citep{hiraoka2017msa,hino2019lifetime}; we give an elementary explicit bound, $\mathbb{E}[P_1]\ge\tfrac38N-\sqrt{3N}+O(1)$ (Proposition~\ref{prop:morse}, Appendix~\ref{app:proofs}). For causal attention the directed flag complex is no escape: the digraph is a transitive tournament, so its weighted directed flag complex is isomorphic to $\VR(D)$ as a filtered complex (Proposition~\ref{thm:directed}, Appendix~\ref{app:directed}).
 
-\begin{proposition}[Linear growth under i.i.d.\ weights]
-\label{prop:morse}
-If $\{D_{uv}\}_{u<v}$ are i.i.d.\ $\mathrm{Uniform}[0,1]$, then
-$\mathbb{E}[P_1(N)]\ \ge\ \int_0^1\big[\tbinom N2p-N-\tbinom N3p^3\big]_+dp\ =\ \tfrac38N-O(\sqrt N)$, and $\mathbb{E}[P_1(N)]\le\tbinom N2/2$.
+\paragraph{The published topological detector reduces to a first-order statistic.} TOHA \citep{toha} scores an attention head by the \emph{topological divergence} between the response tokens $R$ and the prompt tokens $P$. Its per-head score is $d(R,P)=\mathrm{MTopDiv}(R,P)/|R|$, where $\mathrm{MTopDiv}$ is the total $0$D persistence of the head's graph $D=1-\max(A,A^\top)$ after all prompt--prompt distances are set to $0$ (equivalently, the minimum spanning forest attaching $R$ to $P$). TOHA averages $d$ over at most ten heads chosen on labelled data. For $u\in R$ let $\pi_u=\max_{v\in P}A_{uv}$ be $u$'s largest attention to any prompt token.
+
+\begin{proposition}[TOHA is max-prompt attention, up to a defect]
+\label{prop:toha}
+Let $A$ be lower-triangular and row-stochastic, and let $P=\{0,\dots,p-1\}$ and $R=\{p,\dots,N-1\}$. With $\defect_P=\max_{w<u\in R}\big[A_{uw}-\min(\pi_u,\pi_w)\big]_+$,
+\[
+\frac1{|R|}\sum_{u\in R}(1-\pi_u)\;-\;\defect_P\;\le\; d(R,P)\;\le\;\frac1{|R|}\sum_{u\in R}(1-\pi_u),
+\]
+with equality when $\defect_P=0$. Moreover $1-\pi_u\le 1-A_{u0}$, with equality iff the first token is among $u$'s most-attended prompt tokens. On a head where this holds for every $u\in R$ and $\defect_P=0$, $d(R,P)=1-\frac1{|R|}\sum_{u\in R}A_{u0}$, the response tokens' mean sink attention.
 \end{proposition}
 \begin{proof}[Proof sketch]
-$K_p$ is the clique complex of $G(N,p)$ \citep{kahle2009topology} and $P_1=\int_0^1\beta_1(K_p)\,dp$. The strong Morse inequality \citep{edelsbrunner2010} gives $\beta_1\ge f_1-f_0-f_2$; take expectations, use $\beta_1\ge0$, and integrate with $p=x/\sqrt N$. The upper bound uses $\beta_1\le f_1$. Details in Appendix~\ref{app:proofs}.
+Zeroing the prompt block merges $P$ at scale $0$, so the remaining finite $0$D bars are the MST weights of the quotient graph on $\{p^*\}\cup R$, where $D_{p^*u}=\min_{v\in P}D_{uv}=1-\pi_u$ (Fact~\ref{fact:mst}). Apply Theorem~\ref{thm:cone}(b) at the apex $p^*$; as in Corollary~\ref{cor:causal}, its coning defect is $\defect_P$ and its star weight is $\sum_u(1-\pi_u)$. Divide by $|R|$.
 \end{proof}
-
-\paragraph{Directed complexes do not escape the reduction.} Symmetrization is often blamed for discarding direction. For causal attention it does not: the directed flag complex with weights $1-A_{ij}$ is isomorphic, as a filtered complex, to $\VR(D)$, because token order is a total order on the support of $A$ (Theorem~\ref{thm:directed}, Appendix~\ref{app:directed}). Theorem~\ref{thm:cone} therefore applies to it verbatim.
+\noindent \citet{binkowski2026sinkprobe} note that sink nodes are ``likely to appear in the MST'' of $\mathrm{MTopDiv}$. Proposition~\ref{prop:toha} makes this exact, and it shows where the topology can enter: only through $\defect_P$, which is non-zero only when a response token attends to an earlier response token more than one of the two attends to its best prompt token. We test the proposition on real heads, and TOHA against its first-order counterparts, in \S\ref{sec:toha}.
 
 \section{Experimental setup}
 \label{sec:setup}
 
-\paragraph{Models and benchmarks.} We use Qwen2.5-1.5B/3B-Instruct, Phi-3-mini-4k-instruct, TinyLlama-1.1B-Chat, and SmolLM-1.7B-Instruct (Mistral-7B-Instruct results appear in Appendix~\ref{app:mistral} when available). \textbf{TruthfulQA} \citep{lin2022truthfulqa}: all 817 questions, each paired with its best answer and first incorrect answer ($1{,}634$ rows) under each model's native chat format. \textbf{HaluEval QA} \citep{li2024halueval}: the first $1{,}000$ (Qwen2.5-3B) or $500$ (Qwen2.5-1.5B) knowledge-grounded questions with right and hallucinated answers. Both are \emph{teacher-forced}: the model reads dataset-written answers. \textbf{TriviaQA on-policy}: $2{,}000$ random validation questions \citep{joshi2017triviaqa}; each model answers greedily (short-phrase instruction, $\le24$ tokens), an answer is labelled hallucinated unless a normalized gold alias occurs in it, and features are extracted on the model's \emph{own} answer. Per-model accuracies are in Table~\ref{tab:onpolicy}.
+\paragraph{Models and benchmarks.} We use Qwen2.5-1.5B/3B-Instruct, Phi-3-mini-4k-instruct, TinyLlama-1.1B-Chat, and SmolLM-1.7B-Instruct (Mistral-7B-Instruct results appear in Appendix~\ref{app:mistral} when available). \textbf{TruthfulQA} \citep{lin2022truthfulqa}: all 817 questions, each paired with its best answer and first incorrect answer ($1{,}634$ rows) under each model's chat format (Appendix~\ref{app:impl}). \textbf{HaluEval QA} \citep{li2024halueval}: the first $1{,}000$ (Qwen2.5-3B) or $500$ (Qwen2.5-1.5B) knowledge-grounded questions with right and hallucinated answers. Both are \emph{teacher-forced}: the model reads dataset-written answers. \textbf{TriviaQA on-policy}: $2{,}000$ random validation questions \citep{joshi2017triviaqa}; each model answers greedily (short-phrase instruction, $\le24$ tokens), an answer is labelled hallucinated unless a normalized gold alias occurs in it, and features are extracted by re-reading the model's \emph{own} answer. Per-model accuracies are in Table~\ref{tab:onpolicy}. All models run in bfloat16 with eager attention.
 
-\paragraph{Features.} Per layer (head-averaged $A$): $0$D (max lifetime, total persistence); $1$D (four summaries, divided by $N$); \textsc{Sink} ($\stw_0$ and $\max_u D_{0u}$, i.e.\ exactly the two quantities Corollary~\ref{cor:causal} says $0$D reduces to); \textsc{Deflated} PH ($0$D+$1$D after deleting token 0 and renormalizing rows); \textsc{Answer-only} PH (induced subgraph on answer tokens); row entropy and row max. Per head: $0$D (MST total and max via a dense Prim's algorithm), sink mass, entropy, Lookback ratio \citep{chuang2024lookback}, and the LLM-Check attention score \citep{sriramanan2024llmcheck}. Other: answer-token log-probability and predictive-entropy statistics; mean-pooled answer hidden states at the middle layer; TF-IDF word and character $n$-grams of the answer text (\textsc{Lexical}).
+\paragraph{Features.} Per layer (head-averaged $A$): $0$D (max lifetime, total persistence); $1$D (four summaries, divided by $N$); \textsc{Sink} ($\stw_0$ and $\max_u D_{0u}$, i.e.\ exactly the two quantities Corollary~\ref{cor:causal} says $0$D reduces to); \textsc{Deflated} PH ($0$D+$1$D after deleting token 0 and renormalizing rows); \textsc{Answer-only} PH (induced subgraph on answer tokens); row entropy and row max. Per head: $0$D (MST total and max via a dense Prim's algorithm), sink mass, entropy, Lookback ratio \citep{chuang2024lookback}, and the LLM-Check attention score \citep{sriramanan2024llmcheck}. \textsc{TOHA} (per head, separate forward pass, same rows): the exact score $d$ of \citet{toha} via a dense Prim's algorithm on the prompt-contracted graph, the $\bar\pi$-score, the response sink score, and $\defect_P$ (Proposition~\ref{prop:toha}). Other: answer-token log-probability and predictive-entropy statistics; mean-pooled answer hidden states at the middle layer; TF-IDF word and character $n$-grams of the answer text (\textsc{Lexical}).
 
-\paragraph{Protocol.} Every number uses one evaluator: standardized features, $L_2$ logistic regression ($C{=}1$ for $\le64$ dimensions; otherwise $C\in\{0.01,0.1,1\}$ by inner grouped 3-fold CV), 10-fold \texttt{StratifiedGroupKFold} grouped by question, repeated over 3 seeds with out-of-fold probabilities averaged. Differences in pooled AUC use a $10{,}000$-resample question-level cluster bootstrap; we call two banks \emph{equivalent} if the 90\% interval lies inside $\pm0.015$ (TOST at $\alpha{=}0.05$) and report TOST power. Paired benchmarks also report within-pair accuracy. The theory checks use every (example, layer) graph; ripser \citep{bauer2021ripser} stores filtration values in 32-bit floats, so bounds are checked at tolerance $10^{-5}$.
+\paragraph{Protocol.} Every number uses one evaluator: standardized features and $L_2$ logistic regression, with $C{=}1$ for banks of at most 64 dimensions and otherwise $C\in\{0.01,0.1,1\}$ chosen by inner grouped 3-fold CV. The outer loop is 10-fold \texttt{StratifiedGroupKFold} grouped by question, repeated over 3 seeds (42--44), with out-of-fold probabilities averaged. Incremental value is tested in two ways. \emph{Early fusion} (``X$\mid$Y'') concatenates the banks. \emph{Late fusion} (``X$\oplus$Y'') stacks the two banks' out-of-fold logits in a second-level logistic regression under the same CV, so that a small bank cannot be drowned out by a wide one. Differences in pooled AUC use a $10{,}000$-resample question-level cluster bootstrap. We call two banks \emph{equivalent} if the 90\% interval lies inside $\pm0.015$ AUC (two one-sided tests, TOST, at $\alpha{=}0.05$), and we report TOST power. Paired benchmarks also report within-pair accuracy. The theory checks use every (example, layer) graph. Ripser \citep{bauer2021ripser} stores filtration values in 32-bit floats, so bar-length and max-death bounds are checked at tolerance $10^{-5}$, and the $P_0$ sandwich, a sum of up to $N$ such values, at $10^{-3}$.
 
 \section{Results}
 \label{sec:results}
@@ -155,7 +169,7 @@ $K_p$ is the clique complex of $G(N,p)$ \citep{kahle2009topology} and $P_1=\int_
 \begin{table}[t]
 \centering
 \small
-\caption{\textbf{Theorem~\ref{thm:cone} on real attention.} \emph{cells}: (example, layer) graphs; \emph{viol.}: violations of Theorem~\ref{thm:cone}(a) or (b) with $s=0$; \emph{coned}: share with $\defect_0=0$ exactly; $H_1{=}0\,|\,$coned: share of coned graphs with empty $H_1$ (P2 predicts $100\%$); last column: median over layers of Spearman$(P_0,\stw_0)$ across examples.}
+\caption{\textbf{Theorem~\ref{thm:cone} on real attention.} \emph{cells}: (example, layer) graphs; \emph{viol.}: violations of any bound in Theorem~\ref{thm:cone}(a)--(b) with $s=0$; \emph{coned}: share with $\defect_0=0$ exactly; $H_1{=}\emptyset\,|\,$coned: share of coned graphs with empty $H_1$ (C2 predicts $100\%$). Last two columns: median over layers of the Spearman correlation across examples between $P_0$ and $\stw_0$ ($\rho_{\text{raw}}$), and between $P_0/(N{-}1)$ and $1-\bar m=\stw_0/(N{-}1)$ ($\rho_{/N}$), which removes the shared dependence on sequence length.}
 \label{tab:theory}
 \resizebox{\linewidth}{!}{\SinkTableTheory}
 \end{table}
@@ -163,7 +177,7 @@ $K_p$ is the clique complex of $G(N,p)$ \citep{kahle2009topology} and $P_1=\int_
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig_sink_layers.pdf}
-\caption{\textbf{Layerwise structure (TruthfulQA).} Coning (left) tracks sink attention (middle): layers with little sink attention, typically the first and last few, are rarely coned, and SmolLM-1.7B, which has no first-token sink, is never coned. Even there, $P_0$ remains rank-aligned with the star weight (right), as Theorem~\ref{thm:cone}(b) permits when $\defect_0$ is small relative to the spread of $\stw_0$.}
+\caption{\textbf{Layerwise structure (TruthfulQA).} Coning (left) tracks sink attention (middle): layers with little sink attention, typically the first few and, in some models, the last few, are rarely coned, and SmolLM-1.7B, which has no first-token sink, is never coned. Right: length-normalized rank correlation between $P_0$ and sink attention. It is near $1$ in the layers of sink models, dips in some open layers, and is low throughout SmolLM-1.7B.}
 \label{fig:layers}
 \end{figure}
 
@@ -174,17 +188,7 @@ $K_p$ is the clique complex of $G(N,p)$ \citep{kahle2009topology} and $P_1=\int_
 
 \RESULTSBEYOND
 
-\subsection{One-dimensional persistence}
-\label{sec:onedim}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig_sink_synthetic.pdf}
-\caption{\textbf{Synthetic checks.} \emph{Left:} Proposition~\ref{prop:morse}'s lower bound against the simulated mean total $1$D persistence under i.i.d.\ weights (8 draws per $N$). \emph{Middle:} random causal attention ($N{=}40$, 200 draws per point) with a logit bias $b$ on token 0: as the sink strengthens, graphs become exactly coned, $H_1$ empties, and $P_0$ becomes a function of the star weight. \emph{Right:} AUC of $1$D total persistence for detecting a planted 6-cycle of logit strength $\gamma$ (150 draws per class). Under a strong sink ($b{=}8$) a planted cycle is invisible unless it is strong enough to break the cone.}
-\label{fig:synthetic}
-\end{figure}
-
-\RESULTSONEDIM
+\paragraph{One-dimensional persistence.} Most real graphs have no $1$D bars at all (Table~\ref{tab:theory}), unlike i.i.d.\ weights, where $1$D persistence grows linearly. Adding $1$D to $0$D changes AUC by \TFourRange{} and is equivalent within $\pm0.015$ in \NTFourEquiv{} of \NComp{} sink settings. A sink dose-response experiment and a planted-cycle experiment (Appendix~\ref{sec:onedim}) show why: under a strong sink, a loop is visible to $H_1$ only if it breaks the cone.
 
 \subsection{Hallucination detection against strong baselines}
 \label{sec:detection}
@@ -192,7 +196,7 @@ $K_p$ is the clique complex of $G(N,p)$ \citep{kahle2009topology} and $P_1=\int_
 \begin{table}[t]
 \centering
 \small
-\caption{\textbf{Pooled out-of-fold ROC-AUC} (3-seed repeated grouped 10-fold CV; seed SD $\le\MaxSeedSD$). TQA: TruthfulQA; HE: HaluEval; TrQA: on-policy TriviaQA. Lex.: answer-text TF-IDF; LogP: log-probability statistics; LLM-C.: LLM-Check; Sink: $(\stw_0,\max_u D_{0u})$ per layer; 0D/1D: persistence per layer; subscript $h$: per head; Lookb.: Lookback ratios; Hidden: mid-layer probe; Non-topo.: LogP+LLM-C.+Lookb.+Hidden+row statistics. Best per row in bold; ``--'': not computed (no per-head features for HE Qwen2.5-3B). Full table in Appendix~\ref{app:tables}.}
+\caption{\textbf{Pooled out-of-fold ROC-AUC} (3-seed repeated grouped 10-fold CV; seed SD $\le\MaxSeedSD$). TQA: TruthfulQA; HE: HaluEval; TrQA: on-policy TriviaQA. Lex.: answer-text TF-IDF; LogP: log-probability statistics; LLM-C.: LLM-Check; Sink: $(\stw_0,\max_u D_{0u})$ per layer; 0D/1D: persistence per layer; subscript $h$: per head (Sink$_h$: sink mass; 0D$_h$: MST total and max); Lookb.: Lookback ratios; Hidden: mid-layer probe; Non-topo.: LogP+LLM-C.+Lookb.+Hidden+row statistics. Best per row in bold. Full table in Appendix~\ref{app:tables}.}
 \label{tab:auc}
 \setlength{\tabcolsep}{3pt}\SinkTableAuc
 \end{table}
@@ -200,34 +204,39 @@ $K_p$ is the clique complex of $G(N,p)$ \citep{kahle2009topology} and $P_1=\int_
 \begin{table}[t]
 \centering
 \small
-\caption{\textbf{Key paired comparisons} ($\Delta$AUC). ``X$-$Y'' is AUC(X)$-$AUC(Y); ``X$\mid$Y'' is AUC(Y+X)$-$AUC(Y). Defl.: sink-deflated $0$D+$1$D PH; NT: all non-topological features. $^{\equiv}$: equivalent within $\pm0.015$ (90\% interval inside the margin); $^{*}$: 95\% interval excludes $0$. Intervals and TOST power for every cell are in Appendix~\ref{app:tables}.}
+\caption{\textbf{Key paired comparisons} ($\Delta$AUC). ``X$-$Y'' is AUC(X)$-$AUC(Y); ``X$\mid$Y'' is AUC(Y+X)$-$AUC(Y) under early fusion; ``X$\oplus$Y'' is the same under late fusion (stacked out-of-fold logits). $P_{0,h}$: per-head MST total. Defl.: sink-deflated $0$D+$1$D PH; NT: all non-topological features. $^{\equiv}$: equivalent within $\pm0.015$ (90\% interval inside the margin); $^{*}$: 95\% interval excludes $0$. Intervals and TOST power for every cell are in Appendix~\ref{app:tables}.}
 \label{tab:tests}
-\setlength{\tabcolsep}{4pt}\SinkTableTests
+\setlength{\tabcolsep}{3pt}\resizebox{\linewidth}{!}{\SinkTableTests}
 \end{table}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig_sink_forest.pdf}
-\caption{\textbf{Four comparisons across all settings} ($\Delta$AUC with 90\% cluster-bootstrap intervals; shaded band: $\pm0.015$). Sink features nearly reproduce $0$D; $0$D adds little beyond them; $1$D adds nothing beyond $0$D; and $0$D adds nothing beyond non-topological probes.}
-\label{fig:forest}
-\end{figure}
+
 
 \RESULTSDETECTION
 
-\subsection{Benchmark artifacts}
-\label{sec:artifacts}
+\subsection{The published topological detector is first-order}
+\label{sec:toha}
 
-\RESULTSARTIFACTS
+\begin{table}[t]
+\centering
+\small
+\caption{\textbf{TOHA against its first-order counterparts} (Proposition~\ref{prop:toha}). $\defect_P{=}0$: share of (example, head) graphs that are exactly prompt-coned, on which $d$ equals the $\bar\pi$-score. $\rho(d,\bar\pi)$: median over heads of the rank correlation across examples. AUC columns: TOHA's head-selection algorithm run on $d$ (TOHA), on the $\bar\pi$-score (TOHA$[\bar\pi]$), and on the response sink score (TOHA$[\bar a_0]$); then supervised probes on all heads of each score; then the non-topological bank. $\Delta$ columns and marks as in Table~\ref{tab:tests}; $\oplus$ is late fusion.}
+\label{tab:toha}
+\setlength{\tabcolsep}{2.5pt}\resizebox{\linewidth}{!}{\SinkTableToha}
+\end{table}
+
+\RESULTSTOHA
+
+\paragraph{Benchmark artifacts.} \RESULTSARTIFACTS
 
 \section{Discussion}
 \label{sec:discussion}
 
 \RESULTSDISCUSSION
 
-\paragraph{Limitations.} Our models range from $1.1$B to $3.8$B parameters (7B in the appendix when available); sink strength changes with scale and training \citep{gu2025attentionsink}, so the \emph{share} of coned layers is model-specific, although Theorem~\ref{thm:cone} is not. We study the head-averaged symmetrized construction and its causal directed-flag equivalent; zigzag constructions across layers \citep{samaga2026halluzig} and learned graph models \citep{charm} are outside the theorem, though their inputs are the same sink-dominated graphs. Our on-policy benchmark uses string-match grading, which mislabels some paraphrases. Teacher-forced benchmarks measure whether attention separates dataset-written true and false text, which Section~\ref{sec:artifacts} shows is partly a property of how that text was written.
+\paragraph{Limitations.} Our models range from $1.1$B to $3.8$B parameters (7B in the appendix when available); sink strength changes with scale and training \citep{gu2025attentionsink}, so the \emph{share} of coned layers is model-specific, although Theorem~\ref{thm:cone} is not. Our results cover Vietoris--Rips persistence of symmetrized attention (head-averaged or per head), its causal directed-flag equivalent, every stable vectorization of it, and TOHA. They do not cover HalluZig \citep{samaga2026halluzig}, which computes zigzag persistence of the \emph{graph} (1-skeleton) homology of top-percentile edge sets across layers: a cone graph still has cycles, because its triangles are not filled, so Theorem~\ref{thm:cone} does not constrain its $H_1$. Learned graph models \citep{charm} are also outside the theorem, although their inputs are the same sink-dominated graphs. TOHA was designed for RAG; only HaluEval supplies a context passage here. Our on-policy labels come from alias string matching, which mislabels some paraphrases and hedged answers and has not been audited against human judgments \citep{janiak2025illusion}. TinyLlama's on-policy answers were generated without the BOS token added at feature extraction. Our intervals resample questions for a fixed, seed-averaged predictor and do not include variation from refitting, so equivalence claims are conditional on the trained models. Prompt formats differ across models (Appendix~\ref{app:impl}), so cross-model comparisons mix architecture and template.
 
 \section*{Reproducibility statement}
-All code is released at \url{https://anonymous.4open.science/r/ICLR-BE07/}: \texttt{sinktda/extract.py} (all features), \texttt{sinktda/evaluate.py} (every AUC, interval, and theory check), \texttt{sinktda/synthetic.py} (Figure~\ref{fig:synthetic}), and \texttt{sinktda/report.py} (every table and figure). Per-example features for all settings and the TriviaQA generations are included. Proofs are in Appendix~\ref{app:proofs}.
+All code is released at \url{https://anonymous.4open.science/r/ICLR-BE07/}. \texttt{sinktda/extract.py} computes all whole-graph and per-head features, \texttt{sinktda/toha.py} computes TOHA and its first-order counterparts and runs TOHA's head selection, and \texttt{sinktda/evaluate.py} produces every AUC, interval and theory check. \texttt{sinktda/late\_fusion.py} and \texttt{sinktda/defect\_probe.py} run the stacked tests, \texttt{sinktda/check\_theory.py} and \texttt{sinktda/synthetic.py} run the numerical and synthetic checks, and \texttt{sinktda/report.py} generates every table, figure and number in the text. The run order is in \texttt{sinktda/run\_fix.sh} and \texttt{sinktda/run\_toha.sh}. Per-example features for all settings and the TriviaQA generations are included. Seeds, prompts, dtype and model identifiers are listed in Appendix~\ref{app:impl}; proofs are in Appendix~\ref{app:proofs}.
 
 \section*{LLM usage statement}
 LLMs were used to help implement experiment code, check reported statistics against result files, and draft and edit text. The authors verified every claim, number, proof, and citation and take full responsibility for the paper.

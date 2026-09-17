@@ -34,3 +34,8 @@ scratch/
 # editor/agent backups
 *.bak2
 *.old150
+
+# Third-party reading material
+refrences/
+references/
+

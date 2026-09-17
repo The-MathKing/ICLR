@@ -42,8 +42,24 @@ def causal_attention(rng, N, b, scale=1.5, plant=None, gamma=0.0):
     return A / A.sum(1, keepdims=True)
 
 
-def run_morse():
-    sim = pd.read_csv("master_results/synthetic_iid_null_scaling.csv")
+def iid_uniform(rng, N):
+    """Symmetric D with i.i.d. Uniform[0,1] upper-triangular entries (Proposition 1's model)."""
+    U = np.triu(rng.uniform(size=(N, N)), 1)
+    return U + U.T
+
+
+NS = (16, 24, 32, 48, 64, 96, 128, 160, 200, 256)
+
+
+def run_morse(seed=0):
+    rng = np.random.default_rng(seed)
+    rows = []
+    for N in NS:
+        draws = 20 if N <= 128 else 8
+        p1 = [ph_features(iid_uniform(rng, N))["h1_total_persistence"] for _ in range(draws)]
+        rows.append(dict(N=N, draws=draws, mean_P1=float(np.mean(p1)), std_P1=float(np.std(p1))))
+        print(rows[-1], flush=True)
+    sim = pd.DataFrame(rows)
     sim["morse_lower_bound"] = [morse_lower_bound(int(n)) for n in sim["N"]]
     sim["trivial_upper_bound"] = [comb(int(n), 2) / 2 for n in sim["N"]]
     sim["bound_holds"] = sim["mean_P1"] >= sim["morse_lower_bound"]
@@ -51,6 +67,17 @@ def run_morse():
     print(sim.to_string(index=False))
     print(f"[S-A] log-log slope of lower bound over N-range: {a:.2f}")
     sim.to_csv(f"{OUT}/synthetic_morse_bound.csv", index=False)
+    # reference exponents for the real-attention scaling table
+    rows = [dict(reference="iid_uniform", alpha=float(np.polyfit(np.log(sim["N"]), np.log(sim["mean_P1"]), 1)[0]))]
+    causal = []
+    for N in NS:
+        p1 = [ph_features(distance_from_attention(causal_attention(rng, N, 0.0)))["h1_total_persistence"]
+              for _ in range(20 if N <= 128 else 8)]
+        causal.append(float(np.mean(p1)))
+        print("causal b=0", N, causal[-1], flush=True)
+    rows.append(dict(reference="causal_b0", alpha=float(np.polyfit(np.log(NS), np.log(causal), 1)[0])))
+    pd.DataFrame(rows).to_csv(f"{OUT}/synthetic_reference_alpha.csv", index=False)
+    print(rows)
 
 
 def run_dose(N=40, trials=200, seed=0):
@@ -108,6 +135,10 @@ def run_planted(N=40, k=6, n=150, seed=1):
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
-    pass  # run_morse() done
-    run_dose()
-    run_planted()
+    import sys
+    if "--morse" in sys.argv:
+        run_morse()
+    else:
+        run_morse()
+        run_dose()
+        run_planted()
