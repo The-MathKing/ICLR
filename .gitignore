@@ -23,9 +23,11 @@ paper/*.synctex.gz
 
 # Cache and raw large feature vector dumps (>100MB)
 phase_hs_results/*_hidden_states.csv*
+sinktda_out/
 hf_cache/
 .hf_cache/
 scratch/
+.claude/
 
 *.old150
 

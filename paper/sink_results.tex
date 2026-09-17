@@ -1,0 +1,58 @@
+% sink_results.tex -- results prose. All numbers come from \input{sink_numbers.tex},
+% which sinktda/report.py regenerates from sinktda_results/.
+
+\newcommand{\RESULTSREDUCTION}{%
+Table~\ref{tab:theory} checks Theorem~\ref{thm:cone} on every layer-level graph of every example: \NCellsTotal{} graphs in total. There are \NViolations{} violations of either bound. In the \NSinkSettings{} settings whose models place \SinkMassRange{} of attention on token~0, \PctConedRange{} of graphs are \emph{exactly} coned ($\defect_0=0$), and on every one of them $H_1$ is empty, as prediction P2 requires. Across graphs, $\defect_0$ and $1$D total persistence have Spearman correlation \RhoDeltaHone{} (P3). The median per-layer rank correlation between $P_0$ and the star weight $\stw_0$ is at least \RhoMin{} in every sink setting (P1); since $\stw_0=(N{-}1)(1-\bar m)$, $0$D total persistence is, up to rank, the mean attention paid to the first token.
+
+Figure~\ref{fig:layers} shows where coning happens: in the middle of the network, where sink attention is high. The first few layers are never sink-dominated, and in some models (TinyLlama, the Qwen models) so is a block of late layers; these layers are rarely coned. There, $P_0$ still tracks $\stw_0$ closely, because $\defect_0$ is small relative to the variation of $\stw_0$ across examples.
+
+\paragraph{A model without a sink is a natural control.} SmolLM-1.7B, under its ChatML format, places only \NoSinkMass{} of its attention on token~0, and no vertex cones any of its graphs (the best apex never reaches $\defect_s=0$). Theorem~\ref{thm:cone} then predicts no reduction, and indeed its $H_1$ is non-empty on most graphs and its per-layer $\rho(P_0,\stw_0)$ drops to \RhoNoSink{}. The reduction is a property of sink-dominated attention, not an artifact of the pipeline.
+}
+
+\newcommand{\RESULTSBEYOND}{%
+If $0$D persistence reduced \emph{exactly} to the star, a classifier on the two sink features would match one on the two $0$D features in every layer. Table~\ref{tab:tests} (``Sink vs.\ 0D'') shows the two banks differ by \TOneRange{} AUC across the \NComp{} sink settings evaluated, and are statistically equivalent within $\pm0.015$ in \NTOneEquiv{} of them. Adding $0$D to the sink bank gains \TTwoRange{}.
+
+\paragraph{The residual lives exactly where the theory says it can.} We split layers without using labels: \emph{coned} layers ($\ge90\%$ of graphs coned) and \emph{open} layers ($<50\%$). Adding the coned layers' $0$D features to \textsc{Sink} changes AUC by \SplitConed{}, whereas the open layers account for \SplitOpen{} (Appendix~\ref{app:tables}). Almost everything $0$D adds beyond sink attention comes from the layers where the sink does not dominate.
+
+\paragraph{Per head, the reduction is tighter.} Per-head sink mass and per-head $0$D are far stronger than their head-averaged versions (Table~\ref{tab:auc}), but adding per-head $0$D to per-head sink mass changes AUC by only \PHTopoRange{}, which is equivalent within $\pm0.015$ in \NPHTopoEquiv{} of \NPHTopoTotal{} settings.
+
+\paragraph{Deleting the sink exposes real, but redundant, structure.} Deflated PH (P4) adds \TThreeTQA{} over \textsc{Sink} on TruthfulQA and \TThreeOnp{} on the on-policy benchmark, and answer-only PH behaves similarly (Appendix~\ref{app:tables}). So attention graphs carry some non-sink geometry. As \S\ref{sec:detection} shows, however, this geometry is already available to non-topological probes.
+}
+
+\newcommand{\RESULTSONEDIM}{%
+Under i.i.d.\ weights, $1$D persistence grows super-linearly over the range that matters, and Proposition~\ref{prop:morse} guarantees at least linear growth asymptotically (Figure~\ref{fig:synthetic}, left). Real attention behaves very differently: most graphs have \emph{no} $1$D bars at all (Table~\ref{tab:theory}), and the bars that exist are confined to graphs with a non-zero coning defect. Figure~\ref{fig:synthetic} (middle) reproduces this transition in a controlled setting: raising the sink's logit bias moves random causal attention from the i.i.d.-like regime to exact coning, with $H_1$ emptying in lockstep.
+
+This explains a recurring empirical observation, that $1$D features add little to $0$D. At full sample size, adding length-normalized $1$D to $0$D changes AUC by \TFourRange{} and is equivalent within $\pm0.015$ in \NTFourEquiv{} of \NComp{} sink settings. The mechanism is not that loops are uninformative in principle. In a strongly sinked model, a loop can only exist where some token pays more attention to another token than both pay to the sink, and its lifetime is bounded by that excess. Figure~\ref{fig:synthetic} (right) makes this concrete: a planted $6$-cycle that $H_1$ detects easily under a moderate sink ($b{=}6$, $\gamma{=}8$: AUC $0.97$) is invisible under a strong one ($b{=}8$, $\gamma\le4$: AUC $\le0.51$) until it is strong enough to break the cone.
+}
+
+\newcommand{\RESULTSDETECTION}{%
+Table~\ref{tab:auc} places attention-graph topology among standard detectors. Three patterns hold across benchmarks.
+
+\emph{Topology is dominated by cheap non-topological probes.} On TruthfulQA and the on-policy benchmark, a mean-pooled hidden-state probe (\HiddenAll{}) and per-head Lookback ratios (\LookbackAll{}) outperform every topological bank, and their combination with log-probability, LLM-Check, and row statistics reaches \NonTopoAll{}. Adding $0$D PH to that combination changes AUC by \IZeroRange{} (equivalent within $\pm0.015$ in \NIZeroEquiv{} of \NIZeroTotal{} settings), and adding sink-deflated PH changes it by \IDeflRange{} (equivalent in \NIDeflEquiv{} of \NIZeroTotal{}).
+
+\emph{Which cheap probe wins depends on whether text is teacher-forced.} On TruthfulQA, token log-probability is weak (\LogpTQA{}), consistent with the benchmark's design around imitative falsehoods, and $0$D PH (\ZeroDTQA{}) beats it for four of five models. On-policy, log-probability is strong (\LogpOnp{}) and beats $0$D (\ZeroDOnp{}) for three of four models, tying on TinyLlama. Conclusions about topology versus confidence drawn from a single teacher-forced benchmark do not transfer.
+
+\emph{Per-head resolution matters more than topology.} Per-head features of every kind are far stronger than head-averaged ones, and per-head entropy lands within \PHEntRange{} AUC of per-head $0$D (Appendix~\ref{app:tables}).
+}
+
+\newcommand{\RESULTSARTIFACTS}{%
+A TF-IDF model on the answer text alone reaches \LexTQA{} AUC on TruthfulQA and \LexHE{} on HaluEval, beating every head-averaged attention feature (on HaluEval even a hidden-state probe reaches \HiddenHE{}, which says more about the benchmark than the probe). On-policy, where the text is the model's own, the same model reaches only \LexOnp{}. Teacher-forced benchmarks therefore reward detectors for recognizing how the dataset's true and false answers were \emph{written}, a problem shared with other hallucination corpora \citep{hussain2026parallax,janiak2025illusion}. On HaluEval, where lexical separability is near perfect, we report results for completeness (Appendix~\ref{app:tables}) but draw no conclusions from them.
+}
+
+\newcommand{\RESULTSDISCUSSION}{%
+\paragraph{What attention-graph topology measures.} In decoder-only models, head-averaged Vietoris--Rips persistence is controlled by one scalar per graph, the coning defect of the first token. Where it is zero, which is the majority of middle-layer graphs in every sink-dominated model we tested, $0$D persistence \emph{is} the sink attention and higher homology is empty. Where it is positive, the bounds of Theorem~\ref{thm:cone} say how far topology can depart from the sink, and the data show that this departure is concentrated in a few early and late layers.
+
+\paragraph{Recommendations.}
+(i) Report sink attention and $\defect_0$ next to any attention-graph topological feature. Both are cheap ($O(N)$ and $O(N^2)$), and $\defect_0$ says in advance whether higher-dimensional features can be non-zero at all.
+(ii) Compare topological detectors against per-head non-topological statistics (sink mass, entropy, Lookback ratios) at the same resolution, and against a hidden-state probe.
+(iii) Evaluate on the model's own generations; teacher-forced benchmarks mix detection with recognition of dataset authorship.
+(iv) If structure beyond the sink is the goal, remove the sink first (deflation) or restrict to answer tokens. Both expose real non-sink geometry, but in our settings it was not new information.
+}
+
+\newcommand{\MISTRALAPPENDIX}{%
+Mistral-7B-Instruct-v0.2 does not fit in the memory of the machine used for the main experiments. The released extractor runs it unchanged on a single 16\,GB GPU (\texttt{sinktda/RUN\_ON\_5080.md}). An accuracy-level audit of this model under its \texttt{[INST]} format found that $99.99\%$ of its $1$D features are exactly zero and that $0$D and $0$D+$1$D banks are equivalent; by Theorem~\ref{thm:cone}(c) this is what exact coning in every graph would produce, but we have not yet verified $\defect_0=0$ on its graphs directly.
+}
+
+\newcommand{\TIMINGPARAGRAPH}{%
+\input{sink_timing.tex}
+}

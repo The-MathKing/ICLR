@@ -26,18 +26,19 @@ Reuses master_pipeline.canonical_oof and master_pipeline.cluster_bootstrap_tost 
 protocol is identical to every other number in the paper.
 
 Design note on the strength of the control. A weak lexical control makes 0D look good by
-default, so the control here is deliberately strong: TF-IDF(1-2 grams, 2000 features)
-reduced by SVD to `--svd_components` dimensions (default 50, versus the 10 used by
-joint_confound_analysis.py). The lexical-alone AUC is reported so the reader can see how
-much of the known ceiling the control actually captures; if it lands well below the 0.830
-reported by compute_lexical_confound.py, the control is too weak and the gate is not
+default, so the control here is deliberately strong: word TF-IDF (1-2 grams) AND character
+TF-IDF (2-5 grams, char_wb), both sublinear-tf and 2000 features each, reduced jointly by
+SVD to `--svd_components` dimensions, then concatenated with answer character length, word
+count and tokenized sequence length. The lexical-alone AUC is reported so the reader can
+see how much of the known ceiling the control actually captures; if it lands well below the
+0.830 reported by compute_lexical_confound.py, the control is too weak and the gate is not
 informative.
 
 Usage:
     python rigor/gate_b_lexical_survival.py
-    python rigor/gate_b_lexical_survival.py --svd_components 100 --n_boot 2000
+    python rigor/gate_b_lexical_survival.py --svd_components 200
 
-Outputs: rigor/results/gate_b_lexical_survival.csv
+Outputs: rigor/results/gate_b_lexical_survival_svd{N}.csv
 """
 import argparse
 import os
@@ -47,6 +48,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from datasets import load_dataset
+from scipy.sparse import hstack as sparse_hstack
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -88,12 +90,22 @@ def halueval_answer_text(n_questions):
 
 
 def lexical_features(text, n_components, seed=42):
-    """Char length, word count, and SVD-reduced TF-IDF of the answer text alone."""
+    """Strong lexical control: word AND character n-grams, SVD-reduced, plus length.
+
+    Character n-grams are included deliberately. They capture stylistic regularities
+    that word n-grams miss -- punctuation habits, morphology, hedging suffixes -- which
+    is exactly the kind of authorship signature that distinguishes a dataset's
+    hand-written correct answer from its hand-written distractor. A weak control would
+    make 0D look good by default, so the control is built to be hard to beat.
+    """
     char_len = text.str.len().values.astype(float)
     word_count = text.apply(lambda s: len(s.split())).values.astype(float)
 
-    tfidf = TfidfVectorizer(max_features=2000, ngram_range=(1, 2))
-    mat = tfidf.fit_transform(text)
+    word_tfidf = TfidfVectorizer(max_features=2000, ngram_range=(1, 2), sublinear_tf=True)
+    char_tfidf = TfidfVectorizer(max_features=2000, ngram_range=(2, 5),
+                                 analyzer="char_wb", sublinear_tf=True)
+    mat = sparse_hstack([word_tfidf.fit_transform(text), char_tfidf.fit_transform(text)]).tocsr()
+
     k = int(min(n_components, mat.shape[1] - 1))
     svd = TruncatedSVD(n_components=k, random_state=seed)
     reduced = svd.fit_transform(mat)
@@ -135,6 +147,9 @@ def main(svd_components, n_boot, seed):
         h0_cols = [c for c in merged.columns if "_h0_" in c]
         X_h0 = merged[h0_cols].values
         X_lex, evr = lexical_features(merged["answer_text"], svd_components, seed)
+        # Sequence length joins the control so the increment isolates what 0D adds beyond
+        # BOTH surface form and the length confound of Proposition 1, not just one of them.
+        X_lex = np.column_stack([X_lex, merged["seq_len"].values.astype(float)])
 
         print(f"rows={len(merged)} groups={len(np.unique(groups))} "
               f"0D dims={X_h0.shape[1]} lex dims={X_lex.shape[1]} (TF-IDF var explained {evr:.1%})")
@@ -214,7 +229,7 @@ def main(svd_components, n_boot, seed):
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--svd_components", type=int, default=50)
-    p.add_argument("--n_boot", type=int, default=2000)
+    p.add_argument("--n_boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
     raise SystemExit(main(args.svd_components, args.n_boot, args.seed))

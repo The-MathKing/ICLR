@@ -1,0 +1,71 @@
+\newcommand{\SinkTableTestsFull}{%
+\begin{tabular}{lllrrrrcc}
+\toprule
+Setting & Test & A $\to$ B & AUC$_A$ & AUC$_B$ & $\Delta$ & 90\% CI & TOST$_{.015}$ & power$_{.015}$ \\
+\midrule
+TruthfulQA / Qwen2.5-3B & T1 reduction & 0D $\to$ SINK & 0.754 & 0.740 & -0.0142 & [-0.0245, -0.0041] & no & 0.59 \\
+TruthfulQA / Qwen2.5-3B & I defl beyond lex & LEX $\to$ LEX+DEFL & 0.820 & 0.829 & +0.0091 & [-0.0037, +0.0218] & no & 0.22 \\
+TruthfulQA / Qwen2.5-3B & I sink beyond lex & LEX $\to$ LEX+SINK & 0.820 & 0.843 & +0.0227 & [+0.0127, +0.0328] & no & 0.57 \\
+TruthfulQA / Qwen2.5-3B & I 0D beyond lex & LEX $\to$ LEX+0D & 0.820 & 0.847 & +0.0270 & [+0.0163, +0.0379] & no & 0.48 \\
+TruthfulQA / Qwen2.5-3B & I defl beyond nontopo & NONTOPO $\to$ NONTOPO+DEFL & 0.927 & 0.928 & +0.0012 & [-0.0003, +0.0028] & yes & 1.00 \\
+TruthfulQA / Qwen2.5-3B & I 0D beyond nontopo & NONTOPO $\to$ NONTOPO+0D & 0.927 & 0.928 & +0.0006 & [-0.0002, +0.0014] & yes & 1.00 \\
+TruthfulQA / Qwen2.5-3B & B len & 0D $\to$ LEN & 0.754 & 0.529 & -0.2256 & [-0.2476, -0.2033] & no & 0.00 \\
+TruthfulQA / Qwen2.5-3B & B rowstat & 0D $\to$ ROWSTAT & 0.754 & 0.751 & -0.0031 & [-0.0157, +0.0097] & no & 0.22 \\
+TruthfulQA / Qwen2.5-3B & B lex & 0D $\to$ LEX & 0.754 & 0.820 & +0.0657 & [+0.0472, +0.0840] & no & 0.00 \\
+TruthfulQA / Qwen2.5-3B & B llmcheck & 0D $\to$ LLMCHECK & 0.754 & 0.693 & -0.0611 & [-0.0775, -0.0441] & no & 0.00 \\
+TruthfulQA / Qwen2.5-3B & B lookback & 0D $\to$ LOOKBACK & 0.754 & 0.897 & +0.1428 & [+0.1281, +0.1571] & no & 0.03 \\
+TruthfulQA / Qwen2.5-3B & B hidden & 0D $\to$ HIDDEN & 0.754 & 0.913 & +0.1590 & [+0.1442, +0.1737] & no & 0.03 \\
+TruthfulQA / Qwen2.5-3B & B logprob & 0D $\to$ LOGPROB & 0.754 & 0.631 & -0.1237 & [-0.1464, -0.1010] & no & 0.00 \\
+TruthfulQA / Qwen2.5-3B & PH 0D vs entropy & PH 0D $\to$ PH ENT & 0.854 & 0.859 & +0.0048 & [-0.0054, +0.0151] & no & 0.55 \\
+TruthfulQA / Qwen2.5-3B & PH topo beyond sink & PH SINK $\to$ PH SINK+PH 0DTOT & 0.850 & 0.860 & +0.0099 & [+0.0064, +0.0135] & yes & 1.00 \\
+TruthfulQA / Qwen2.5-3B & PH reduction & PH 0DTOT $\to$ PH SINK & 0.844 & 0.850 & +0.0066 & [-0.0008, +0.0138] & yes & 0.92 \\
+TruthfulQA / Qwen2.5-3B & T6 answer only beyond sink & SINK $\to$ SINK+ANS & 0.740 & 0.784 & +0.0441 & [+0.0292, +0.0586] & no & 0.04 \\
+TruthfulQA / Qwen2.5-3B & T4b 1D beyond sink & SINK $\to$ SINK+1D & 0.740 & 0.747 & +0.0068 & [-0.0006, +0.0144] & yes & 0.90 \\
+TruthfulQA / Qwen2.5-3B & T4 1D beyond 0D & 0D $\to$ 0D+1D & 0.754 & 0.760 & +0.0059 & [-0.0017, +0.0135] & yes & 0.89 \\
+TruthfulQA / Qwen2.5-3B & T3 deflated beyond sink & SINK $\to$ SINK+DEFL & 0.740 & 0.772 & +0.0316 & [+0.0195, +0.0437] & no & 0.31 \\
+TruthfulQA / Qwen2.5-3B & T2 topo beyond sink & SINK $\to$ 0D+SINK & 0.740 & 0.757 & +0.0173 & [+0.0091, +0.0258] & no & 0.81 \\
+TruthfulQA / Qwen2.5-3B & T1 legacy proxy & 0D $\to$ LEGACY MSTPROXY & 0.754 & 0.714 & -0.0407 & [-0.0531, -0.0284] & no & 0.26 \\
+TruthfulQA / Qwen2.5-3B & I 0D beyond logprob & LOGPROB $\to$ LOGPROB+0D & 0.631 & 0.787 & +0.1567 & [+0.1376, +0.1757] & no & 0.00 \\
+TruthfulQA / Qwen2.5-3B & I 0D beyond hidden & HIDDEN $\to$ HIDDEN+0D & 0.913 & 0.914 & +0.0010 & [-0.0001, +0.0020] & yes & 1.00 \\
+\bottomrule
+\end{tabular}
+}
+\newcommand{\SinkTableAucFull}{%
+\begin{tabular}{llrrrr}
+\toprule
+Setting & Bank & dim & AUC & seed SD & pair acc. \\
+\midrule
+TruthfulQA / Qwen2.5-3B & LEN & 2 & 0.529 & 0.0003 & 0.567 \\
+TruthfulQA / Qwen2.5-3B & LEX+0D & -- & 0.847 & 0.0016 & 0.860 \\
+TruthfulQA / Qwen2.5-3B & HIDDEN+0D & 2120 & 0.914 & 0.0009 & 0.917 \\
+TruthfulQA / Qwen2.5-3B & LOGPROB+0D & 78 & 0.787 & 0.0022 & 0.820 \\
+TruthfulQA / Qwen2.5-3B & NONTOPO+DEFL & 2954 & 0.928 & 0.0007 & 0.931 \\
+TruthfulQA / Qwen2.5-3B & NONTOPO+0D & 2810 & 0.928 & 0.0004 & 0.936 \\
+TruthfulQA / Qwen2.5-3B & NONTOPO & 2738 & 0.927 & 0.0006 & 0.938 \\
+TruthfulQA / Qwen2.5-3B & PH SINK+PH 0DTOT & 1152 & 0.860 & 0.0032 & 0.889 \\
+TruthfulQA / Qwen2.5-3B & SINK+1D & 216 & 0.747 & 0.0021 & 0.767 \\
+TruthfulQA / Qwen2.5-3B & SINK+ANS & 288 & 0.784 & 0.0026 & 0.791 \\
+TruthfulQA / Qwen2.5-3B & SINK+DEFL & 288 & 0.772 & 0.0032 & 0.802 \\
+TruthfulQA / Qwen2.5-3B & 0D+1D & 216 & 0.760 & 0.0012 & 0.789 \\
+TruthfulQA / Qwen2.5-3B & 0D+SINK & 144 & 0.757 & 0.0019 & 0.788 \\
+TruthfulQA / Qwen2.5-3B & PH ENT & 576 & 0.859 & 0.0016 & 0.906 \\
+TruthfulQA / Qwen2.5-3B & LEX+SINK & -- & 0.843 & 0.0021 & 0.859 \\
+TruthfulQA / Qwen2.5-3B & PH SINK & 576 & 0.850 & 0.0018 & 0.865 \\
+TruthfulQA / Qwen2.5-3B & PH 0D & 1152 & 0.854 & 0.0022 & 0.857 \\
+TruthfulQA / Qwen2.5-3B & LOOKBACK & 576 & 0.897 & 0.0026 & 0.906 \\
+TruthfulQA / Qwen2.5-3B & LLMCHECK & 36 & 0.693 & 0.0011 & 0.764 \\
+TruthfulQA / Qwen2.5-3B & LEGACY MSTPROXY & 36 & 0.714 & 0.0006 & 0.786 \\
+TruthfulQA / Qwen2.5-3B & LEX & -- & 0.820 & 0.0014 & 0.829 \\
+TruthfulQA / Qwen2.5-3B & HIDDEN & 2048 & 0.913 & 0.0008 & 0.916 \\
+TruthfulQA / Qwen2.5-3B & LOGPROB & 6 & 0.631 & 0.0008 & 0.682 \\
+TruthfulQA / Qwen2.5-3B & ROWSTAT & 72 & 0.751 & 0.0003 & 0.829 \\
+TruthfulQA / Qwen2.5-3B & ANS & 216 & 0.752 & 0.0017 & 0.745 \\
+TruthfulQA / Qwen2.5-3B & DEFL & 216 & 0.717 & 0.0009 & 0.748 \\
+TruthfulQA / Qwen2.5-3B & 1D & 144 & 0.602 & 0.0018 & 0.583 \\
+TruthfulQA / Qwen2.5-3B & SINK & 72 & 0.740 & 0.0028 & 0.765 \\
+TruthfulQA / Qwen2.5-3B & 0D & 72 & 0.754 & 0.0017 & 0.799 \\
+TruthfulQA / Qwen2.5-3B & PH 0DTOT & 576 & 0.844 & 0.0010 & 0.868 \\
+TruthfulQA / Qwen2.5-3B & LEX+DEFL & -- & 0.829 & 0.0010 & 0.842 \\
+\bottomrule
+\end{tabular}
+}

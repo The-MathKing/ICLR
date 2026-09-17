@@ -158,7 +158,7 @@ def main(n_boot, seed):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--n_boot", type=int, default=2000)
+    p.add_argument("--n_boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
     raise SystemExit(main(args.n_boot, args.seed))

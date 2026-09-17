@@ -1,0 +1,73 @@
+\newcommand{\SinkTableTheory}{%
+\begin{tabular}{llrrrrrrr}
+\toprule
+Benchmark & Model & $\bar N$ & graphs & viol. & sink attn. & coned & $H_1{=}\emptyset\,|\,$coned & $\rho(P_0,\stw_0)$ \\
+\midrule
+TruthfulQA & Qwen2.5-3B & 44.2 & 58,824 & 0 & 0.50 & 62.2\% & 100.0\% & 1.000 \\
+TruthfulQA & Qwen2.5-1.5B & 44.2 & 45,752 & 0 & 0.53 & 64.5\% & 100.0\% & 1.000 \\
+TruthfulQA & Phi-3-mini & 29.0 & 52,288 & 0 & 0.69 & 88.4\% & 100.0\% & 1.000 \\
+TruthfulQA & TinyLlama-1.1B & 42.3 & 35,948 & 0 & 0.53 & 36.2\% & 100.0\% & 1.000 \\
+TruthfulQA & SmolLM-1.7B & 32.4 & 39,216 & 0 & 0.02 & 0.0\% & -- & 0.967 \\
+HaluEval & Qwen2.5-3B & 126.9 & 72,000 & 0 & 0.42 & 53.0\% & 100.0\% & 1.000 \\
+HaluEval & Qwen2.5-1.5B & 128.1 & 28,000 & 0 & 0.45 & 62.5\% & 100.0\% & 1.000 \\
+TriviaQA (on-policy) & Qwen2.5-3B & 68.6 & 72,000 & 0 & 0.48 & 63.0\% & 100.0\% & 1.000 \\
+TriviaQA (on-policy) & Qwen2.5-1.5B & 68.8 & 56,000 & 0 & 0.52 & 50.6\% & 100.0\% & 1.000 \\
+TriviaQA (on-policy) & Phi-3-mini & 46.1 & 64,000 & 0 & 0.69 & 87.1\% & 100.0\% & 1.000 \\
+TriviaQA (on-policy) & TinyLlama-1.1B & 72.0 & 44,000 & 0 & 0.50 & 36.4\% & 100.0\% & 1.000 \\
+\bottomrule
+\end{tabular}
+}
+\newcommand{\SinkTableAuc}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Setting & Lex. & LogP & LLM-C. & Sink & 0D & 1D & Sink$_h$ & 0D$_h$ & Lookb. & Hidden & Non-topo. \\
+\midrule
+TQA Qw3B & .820 & .631 & .693 & .740 & .754 & .602 & .850 & .854 & .897 & .913 & \textbf{.927} \\
+TQA Qw1.5B & .820 & .638 & .666 & .723 & .726 & .586 & .830 & .838 & .851 & .916 & \textbf{.917} \\
+TQA Phi-3 & .820 & .578 & .653 & .652 & .647 & .529 & .871 & .868 & .892 & .933 & \textbf{.936} \\
+TQA TinyLl. & .820 & .637 & .614 & .644 & .654 & .593 & .807 & .805 & .850 & .883 & \textbf{.885} \\
+TQA SmolLM & .820 & .589 & .604 & .611 & .584 & .545 & .720 & .798 & .863 & .894 & \textbf{.899} \\
+\midrule
+HE Qw3B & .981 & .993 & - & .827 & .816 & .709 & - & - & - & \textbf{.999} & - \\
+HE Qw1.5B & .979 & .993 & .791 & .820 & .789 & .747 & .922 & .949 & .997 & .999 & \textbf{.999} \\
+\midrule
+TrQA Qw3B & .596 & .839 & .688 & .717 & .732 & .601 & .820 & .807 & .861 & .841 & \textbf{.870} \\
+TrQA Qw1.5B & .609 & .823 & .676 & .707 & .716 & .574 & .767 & .768 & .824 & .855 & \textbf{.873} \\
+TrQA Phi-3 & .635 & .877 & .676 & .707 & .710 & .546 & .826 & .807 & .840 & .867 & \textbf{.883} \\
+TrQA TinyLl. & .740 & .724 & .688 & .720 & .720 & .659 & .814 & .775 & .823 & .827 & \textbf{.842} \\
+\bottomrule
+\end{tabular}
+}
+\newcommand{\SinkTableTests}{%
+\begin{tabular}{lccccccc}
+\toprule
+Setting & Sink$-$0D & 0D$\mid$Sink & 0D$_h\mid$Sink$_h$ & Defl.$\mid$Sink & 1D$\mid$0D & 0D$\mid$NT & Defl.$\mid$NT \\
+\midrule
+TQA Qw3B & $-0.014$$^{*}$ & $+0.017$$^{*}$ & $+0.010$$^{\equiv}$ & $+0.032$$^{*}$ & $+0.006$$^{\equiv}$ & $+0.001$$^{\equiv}$ & $+0.001$$^{\equiv}$ \\
+TQA Qw1.5B & $-0.003$$^{\equiv}$ & $+0.012$$^{*}$ & $+0.011$$^{\equiv}$ & $+0.034$$^{*}$ & $-0.008$$^{\equiv}$ & $0.000$$^{\equiv}$ & $0.000$$^{\equiv}$ \\
+TQA Phi-3 & $+0.005$$^{\equiv}$ & $+0.006$$^{\equiv}$ & $0.000$$^{\equiv}$ & $+0.033$$^{*}$ & $-0.001$$^{\equiv}$ & $0.000$$^{\equiv}$ & $+0.001$$^{\equiv}$ \\
+TQA TinyLl. & $-0.010$ & $+0.020$$^{*}$ & $+0.004$$^{\equiv}$ & $+0.045$$^{*}$ & $+0.005$$^{\equiv}$ & $0.000$$^{\equiv}$ & $-0.001$$^{\equiv}$ \\
+TQA SmolLM & $+0.027$$^{*}$ & $+0.030$$^{*}$ & $+0.105$$^{*}$ & $+0.041$$^{*}$ & $+0.004$$^{\equiv}$ & $0.000$$^{\equiv}$ & $0.000$$^{\equiv}$ \\
+\midrule
+HE Qw3B & $+0.011$ & $+0.030$$^{*}$ & -- & $+0.055$$^{*}$ & $+0.013$$^{*}$ & -- & -- \\
+HE Qw1.5B & $+0.031$$^{*}$ & $+0.012$$^{*}$ & $+0.008$$^{\equiv}$ & $+0.052$$^{*}$ & $+0.026$$^{*}$ & $0.000$$^{\equiv}$ & $0.000$$^{\equiv}$ \\
+\midrule
+TrQA Qw3B & $-0.015$$^{*}$ & $+0.021$$^{*}$ & $+0.004$$^{\equiv}$ & $+0.002$ & $-0.003$$^{\equiv}$ & $+0.001$$^{\equiv}$ & $0.000$$^{\equiv}$ \\
+TrQA Qw1.5B & $-0.009$ & $+0.010$ & $+0.004$$^{\equiv}$ & $+0.012$ & $-0.002$$^{\equiv}$ & $0.000$$^{\equiv}$ & $-0.001$$^{\equiv}$ \\
+TrQA Phi-3 & $-0.004$$^{\equiv}$ & $+0.006$$^{\equiv}$ & $+0.002$$^{\equiv}$ & $+0.029$$^{*}$ & $-0.005$$^{\equiv}$ & $0.000$$^{\equiv}$ & $+0.002$$^{\equiv}$ \\
+TrQA TinyLl. & $+0.001$$^{\equiv}$ & $+0.004$$^{\equiv}$ & $-0.001$$^{\equiv}$ & $+0.014$ & $-0.002$$^{\equiv}$ & $0.000$$^{\equiv}$ & $0.000$$^{\equiv}$ \\
+\bottomrule
+\end{tabular}
+}
+\newcommand{\SinkTableOnpolicy}{%
+\begin{tabular}{lrrrr}
+\toprule
+Model & questions & accuracy & rows used & mean answer tokens \\
+\midrule
+Qwen2.5-3B & 2,000 & 42.4\% & 2,000 & 5.5 \\
+Qwen2.5-1.5B & 2,000 & 31.4\% & 2,000 & 5.8 \\
+Phi-3-mini & 2,000 & 56.2\% & 2,000 & 6.0 \\
+TinyLlama-1.1B & 2,000 & 26.4\% & 2,000 & 18.9 \\
+\bottomrule
+\end{tabular}
+}
