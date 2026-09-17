@@ -1,2 +1,2 @@
-setting,n_rows,layers,mean_N,cells,bound_violations_h1,bound_violations_p0,frac_cells_coned,frac_cells_coned_any_apex,mean_sink_mass,frac_cells_h1_zero,frac_h1zero_given_coned,median_delta0,median_layer_spearman_P0_star,median_layer_rel_gap,cell_spearman_delta0_h1
-triviaqa_phi3,2000,32,46.137,64000,0,0,0.871296875,0.871296875,0.689544495929469,0.9018125,1.0,0.0,1.0,0.0,0.8681748294392704
+setting,n_rows,layers,mean_N,cells,bound_violations_h1,bound_violations_p0,bound_violations_maxdeath,frac_cells_coned,frac_cells_coned_any_apex,mean_sink_mass,frac_cells_h1_zero,frac_h1zero_given_coned,median_delta0,median_layer_spearman_P0_star,median_layer_spearman_P0_star_norm,min_layer_spearman_P0_star_norm,median_layer_rel_gap,cell_spearman_delta0_h1
+triviaqa_phi3,2000,32,46.137,64000,0,0,0,0.871296875,0.871296875,0.689544495929469,0.9018125,1.0,0.0,1.0,1.0,0.8424033296356745,0.0,0.8681748294392704

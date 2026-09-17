@@ -1,6 +1,6 @@
 @inproceedings{toha,
   title={Hallucination Detection in {LLM}s with Topological Divergence on Attention Graphs},
-  author={Bazarova, Alexandra and Yastrebova, Maria and Cherniavskii, Daniil and Zhukov, Roman and Barannikov, Serguei and Piontkovskaya, Irina and Burnaev, Evgeny},
+  author={Bazarova, Alexandra and Volodichev, Andrei and Yugay, Aleksandr and Shulga, Andrey and Ermilova, Alina and Polev, Konstantin and Belikova, Julia and Parchiev, Rauf and Simakov, Dmitry and Savchenko, Maxim and Savchenko, Andrey and Barannikov, Serguei and Zaytsev, Alexey},
   booktitle={Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (ACL Volume 1: Long Papers)},
   pages={15449--15470},
   year={2026},
@@ -16,10 +16,11 @@
 }
 
 @inproceedings{samaga2026halluzig,
-  title={{HalluZig}: Detecting {LLM} Hallucinations using Zigzag Persistence on Attention Graphs},
-  author={Samaga, Chetan and Gonzalez Arroyo, Gilberto and Dey, Tamal K.},
+  title={{HalluZig}: Hallucination Detection using Zigzag Persistence},
+  author={Samaga, Shreyas N. and Gonzalez Arroyo, Gilberto and Dey, Tamal K.},
   booktitle={Proceedings of the 19th Conference of the European Chapter of the Association for Computational Linguistics (EACL)},
-  year={2026}
+  year={2026},
+  note={arXiv:2601.01552}
 }
 
 @article{gower1969,
@@ -75,17 +76,18 @@
 }
 
 @inproceedings{chuang2024lookback,
-  title={Do Large Language Models Latently Know When They are Hallucinating? Lookback Lens: Detecting Hallucinations via Context Attention},
-  author={Chuang, Yung-Sung and others},
-  booktitle={International Conference on Machine Learning (ICML)},
+  title={Lookback Lens: Detecting and Mitigating Contextual Hallucinations in Large Language Models Using Only Attention Maps},
+  author={Chuang, Yung-Sung and Qiu, Linlu and Hsieh, Cheng-Yu and Krishna, Ranjay and Kim, Yoon and Glass, James R.},
+  booktitle={Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing},
+  pages={1419--1436},
   year={2024}
 }
 
-@article{xiao2023efficient,
+@inproceedings{xiao2023efficient,
   title={Efficient Streaming Language Models with Attention Sinks},
   author={Xiao, Guangxuan and Tian, Yuandong and Chen, Beidi and Han, Song and Lewis, Mike},
-  journal={arXiv preprint arXiv:2309.17453},
-  year={2023}
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024}
 }
 
 @article{huang2023survey,
@@ -308,10 +310,10 @@
   year={2026}
 }
 
-@article{janiak2025illusion,
+@inproceedings{janiak2025illusion,
   title={The Illusion of Progress: Re-evaluating Hallucination Detection in {LLM}s},
   author={Janiak, Denis and Binkowski, Jakub and Sawczyn, Albert and Gabrys, Bogdan and Shwartz-Ziv, Ravid and Kajdanowicz, Tomasz},
-  journal={arXiv preprint arXiv:2508.08285},
+  booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing},
   year={2025}
 }
 
@@ -359,13 +361,13 @@
 }
 
 @article{flagser2020,
-  title={Flagser: Computing persistent homology of directed flag complexes},
+  title={Computing Persistent Homology of Directed Flag Complexes},
   author={L{\"u}tgehetmann, Daniel and Govc, Dejan and Smith, Jason P. and Levi, Ran},
-  journal={SoftwareX},
-  volume={12},
-  pages={100561},
-  year={2020},
-  publisher={Elsevier}
+  journal={Algorithms},
+  volume={13},
+  number={1},
+  pages={19},
+  year={2020}
 }
 
 
@@ -452,9 +454,10 @@
 }
 
 @inproceedings{joshi2017triviaqa,
-  title={{TriviaQA}: A Reading Comprehension Dataset of Over 100,000 Question-Answer Pairs for Evaluation},
-  author={Joshi, Mandar and Chen, Danqi and Liu, Yinhan and Weld, Daniel S. and Zettlemoyer, Luke and Levy, Omer},
-  booktitle={Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (ACL)},
+  title={{TriviaQA}: A Large Scale Distantly Supervised Challenge Dataset for Reading Comprehension},
+  author={Joshi, Mandar and Choi, Eunsol and Weld, Daniel and Zettlemoyer, Luke},
+  booktitle={Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
+  pages={1601--1611},
   year={2017}
 }
 
@@ -470,4 +473,107 @@
   author={Gardinazzi, Yuri and Panerai, Giada and Viswanathan, Karthik and Ansuini, Alessio and Cazzaniga, Alberto and Biagetti, Matteo},
   journal={arXiv preprint arXiv:2410.11042},
   year={2024}
+}
+
+
+% ---- added in AC-review revision (verified 2026-09-16) ----
+@article{hino2019lifetime,
+  title={Asymptotic Behavior of Lifetime Sums for Random Simplicial Complex Processes},
+  author={Hino, Masanori and Kanazawa, Shu},
+  journal={Journal of the Mathematical Society of Japan},
+  volume={71},
+  number={3},
+  pages={765--804},
+  year={2019}
+}
+
+@article{hiraoka2017msa,
+  title={Minimum Spanning Acycle and Lifetime of Persistent Homology in the {L}inial--{M}eshulam Process},
+  author={Hiraoka, Yasuaki and Shirai, Tomoyuki},
+  journal={Random Structures \& Algorithms},
+  volume={51},
+  number={2},
+  pages={315--340},
+  year={2017}
+}
+
+@article{frieze1985mst,
+  title={On the Value of a Random Minimum Spanning Tree Problem},
+  author={Frieze, Alan M.},
+  journal={Discrete Applied Mathematics},
+  volume={10},
+  number={1},
+  pages={47--56},
+  year={1985}
+}
+
+@article{barmak2012strong,
+  title={Strong Homotopy Types, Nerves and Collapses},
+  author={Barmak, Jonathan Ariel and Minian, Elias Gabriel},
+  journal={Discrete \& Computational Geometry},
+  volume={47},
+  number={2},
+  pages={301--328},
+  year={2012}
+}
+
+@inproceedings{boissonnat2020edge,
+  title={Edge Collapse and Persistence of Flag Complexes},
+  author={Boissonnat, Jean-Daniel and Pritam, Siddharth},
+  booktitle={36th International Symposium on Computational Geometry (SoCG)},
+  series={LIPIcs},
+  volume={164},
+  pages={19:1--19:15},
+  year={2020}
+}
+
+@article{chazal2014geometric,
+  title={Persistence Stability for Geometric Complexes},
+  author={Chazal, Fr{\'e}d{\'e}ric and de Silva, Vin and Oudot, Steve},
+  journal={Geometriae Dedicata},
+  volume={173},
+  number={1},
+  pages={193--214},
+  year={2014}
+}
+
+@article{binkowski2026sinkprobe,
+  title={Attention Sinks as Internal Signals for Hallucination Detection in Large Language Models},
+  author={Binkowski, Jakub and Adamczewski, Kamil and Kajdanowicz, Tomasz},
+  journal={arXiv preprint arXiv:2604.10697},
+  year={2026}
+}
+
+@inproceedings{clark2019bert,
+  title={What Does {BERT} Look At? An Analysis of {BERT}'s Attention},
+  author={Clark, Kevin and Khandelwal, Urvashi and Levy, Omer and Manning, Christopher D.},
+  booktitle={Proceedings of the 2019 ACL Workshop BlackboxNLP: Analyzing and Interpreting Neural Networks for NLP},
+  pages={276--286},
+  year={2019}
+}
+
+@inproceedings{darcet2024registers,
+  title={Vision Transformers Need Registers},
+  author={Darcet, Timoth{\'e}e and Oquab, Maxime and Mairal, Julien and Bojanowski, Piotr},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024}
+}
+
+@article{bubenik2015landscapes,
+  title={Statistical Topological Data Analysis using Persistence Landscapes},
+  author={Bubenik, Peter},
+  journal={Journal of Machine Learning Research},
+  volume={16},
+  pages={77--102},
+  year={2015}
+}
+
+@article{adams2017persistence,
+  title={Persistence Images: A Stable Vector Representation of Persistent Homology},
+  author={Adams, Henry and Emerson, Tegan and Kirby, Michael and Neville, Rachel and Peterson, Chris and Shipman, Patrick and Chepushtanova, Sofya and Hanson, Eric and Motta, Francis and Ziegelmeier, Lori},
+  journal={Journal of Machine Learning Research},
+  volume={18},
+  number={8},
+  pages={1--35},
+  year={2017}
 }

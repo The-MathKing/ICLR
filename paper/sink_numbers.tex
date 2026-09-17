@@ -5,42 +5,188 @@
 \newcommand{\PctConedRange}{36--88\%}
 \newcommand{\SinkMassRange}{0.42 to 0.69}
 \newcommand{\NoSinkMass}{0.02}
-\newcommand{\RhoMin}{0.999}
-\newcommand{\RhoNoSink}{0.967}
-\newcommand{\RhoDeltaHone}{0.33 to 0.89}
+\newcommand{\RhoMin}{0.98}
+\newcommand{\RhoRawMin}{0.999}
+\newcommand{\RhoNoSink}{0.41}
+\newcommand{\RhoNoSinkRaw}{0.967}
+\newcommand{\RhoLayerMinRange}{-0.14 to 0.84}
+\newcommand{\NoSinkHOneNonempty}{87\%}
+\newcommand{\RhoDeltaHone}{0.32 to 0.89}
 \newcommand{\NViolations}{0}
+\newcommand{\NSeedSDAbove}{17}
 \newcommand{\MaxSeedSD}{0.008}
 \newcommand{\NComp}{10}
-\newcommand{\NTOneEquiv}{4}
+\newcommand{\NTOneEquiv}{5}
 \newcommand{\TOneRange}{-0.015 to +0.031}
-\newcommand{\TTwoRange}{+0.004 to +0.030}
-\newcommand{\NTTwoEquiv}{3}
-\newcommand{\TThreeTQA}{+0.032 to +0.045}
+\newcommand{\TTwoRange}{+0.003 to +0.028}
+\newcommand{\NTTwoEquiv}{4}
+\newcommand{\TThreeTQA}{+0.029 to +0.045}
 \newcommand{\TThreeOnp}{+0.002 to +0.029}
-\newcommand{\TThreeHE}{+0.052 to +0.055}
-\newcommand{\NTFourEquiv}{8}
-\newcommand{\TFourRange}{-0.008 to +0.026}
+\newcommand{\TThreeHE}{+0.052 to +0.058}
+\newcommand{\NTFourEquiv}{7}
+\newcommand{\TFourRange}{-0.008 to +0.033}
+\newcommand{\TFourExceptions}{TQA Qw3B, HE Qw3B and HE Qw1.5B}
 \newcommand{\PHTopoRange}{-0.001 to +0.011}
-\newcommand{\NPHTopoEquiv}{9}
-\newcommand{\NPHTopoTotal}{9}
-\newcommand{\PHEntRange}{-0.016 to +0.036}
-\newcommand{\NIZeroEquiv}{10}
-\newcommand{\NIZeroTotal}{10}
+\newcommand{\NPHTopoEquiv}{10}
+\newcommand{\NPHTopoTotal}{10}
+\newcommand{\PHEntRange}{-0.016 to +0.034}
+\newcommand{\NIZeroEquiv}{11}
+\newcommand{\NIZeroTotal}{11}
 \newcommand{\IZeroRange}{0.000 to +0.001}
-\newcommand{\NIDeflEquiv}{10}
+\newcommand{\NSettingsNT}{11}
+\newcommand{\NLogpZeroDTQA}{3}
+\newcommand{\NLogpZeroDTQATotal}{5}
+\newcommand{\NLogpBeatsZeroDTQA}{4}
+\newcommand{\NLogpOnpSig}{3}
+\newcommand{\NLogpOnpTotal}{4}
+\newcommand{\NDeflOnpSig}{1}
+\newcommand{\NDeflOnpTotal}{4}
+\newcommand{\NDeflTQASig}{4}
+\newcommand{\NDeflTQATotal}{4}
+\newcommand{\NIDeflEquiv}{11}
 \newcommand{\IDeflRange}{-0.001 to +0.002}
 \newcommand{\LexTQA}{0.82}
 \newcommand{\LexOnp}{0.60 to 0.74}
 \newcommand{\LexHE}{0.98}
 \newcommand{\LogpTQA}{0.58 to 0.64}
 \newcommand{\LogpOnp}{0.72 to 0.88}
-\newcommand{\ZeroDTQA}{0.58 to 0.75}
+\newcommand{\ZeroDTQA}{0.58 to 0.74}
 \newcommand{\ZeroDOnp}{0.71 to 0.73}
-\newcommand{\ZeroDHE}{0.79 to 0.82}
+\newcommand{\ZeroDHE}{0.79 to 0.81}
 \newcommand{\NonTopoAll}{0.84 to 0.94}
 \newcommand{\HiddenAll}{0.83 to 0.93}
 \newcommand{\LookbackAll}{0.82 to 0.90}
 \newcommand{\HiddenHE}{1.00}
 \newcommand{\SplitConed}{-0.001 to +0.004}
-\newcommand{\SplitOpen}{+0.003 to +0.029}
+\newcommand{\SplitOpen}{+0.003 to +0.027}
+\newcommand{\IZeroMaxAbs}{0.003}
+\newcommand{\IZeroAllEquiv}{yes}
+\newcommand{\MorseNumbersText}{Numerically, the integral equals 0.791, 3.92, 11.9, 30.2, 70.1 at $N=16,32,64,128,256$, against simulated means 1.91, 5.83, 15.5, 36.2, 79.3 under i.i.d.\ Uniform$[0,1]$ weights (Figure~\ref{fig:synthetic}, left). Over $N\in[16,256]$ both grow faster than linearly (log-log slopes 1.55 and 1.31), a pre-asymptotic effect of the $-\sqrt{3N}$ term; both are $\Theta(N)$ as $N\to\infty$.}
+\newcommand{\LFZeroNTRange}{0.000 to +0.002}
+\newcommand{\LFZeroNTEquiv}{11}
+\newcommand{\LFZeroNTSig}{0}
+\newcommand{\LFZeroNTTotal}{11}
+\newcommand{\LFDeflNTRange}{0.000 to +0.001}
+\newcommand{\LFDeflNTEquiv}{11}
+\newcommand{\LFDeflNTSig}{0}
+\newcommand{\LFDeflNTTotal}{11}
+\newcommand{\LFSinkNTRange}{0.000 to +0.001}
+\newcommand{\LFSinkNTEquiv}{11}
+\newcommand{\LFSinkNTSig}{0}
+\newcommand{\LFSinkNTTotal}{11}
+\newcommand{\LFZeroHidRange}{0.000 to +0.008}
+\newcommand{\LFZeroHidEquiv}{11}
+\newcommand{\LFZeroHidSig}{1}
+\newcommand{\LFZeroHidTotal}{11}
+\newcommand{\LFZeroLogpRange}{0.000 to +0.128}
+\newcommand{\LFZeroLogpEquiv}{5}
+\newcommand{\LFZeroLogpSig}{8}
+\newcommand{\LFZeroLogpTotal}{11}
 \newcommand{\OnpAccRange}{26\% to 56\%}
+\newcommand{\CheckTohaN}{400}
+\newcommand{\CheckDiagN}{300}
+\newcommand{\CheckTohaErr}{3\cdot10^{-8}}
+\newcommand{\CheckViol}{0}
+\newcommand{\PlantModerate}{0.97}
+\newcommand{\PlantStrong}{0.51}
+\newcommand{\PlantNone}{0.57}
+\newcommand{\DefLayerAuc}{0.50 to 0.65}
+\newcommand{\DefHeadAuc}{0.69 to 0.96}
+\newcommand{\DefTotal}{11}
+\newcommand{\DefHSinkRange}{+0.006 to +0.027}
+\newcommand{\DefHSinkSig}{11}
+\newcommand{\DefHSinkEquiv}{3}
+\newcommand{\DefHNTRange}{0.000 to +0.008}
+\newcommand{\DefHNTSig}{3}
+\newcommand{\DefHNTEquiv}{11}
+\newcommand{\DefLSinkRange}{-0.001 to +0.006}
+\newcommand{\DefLSinkSig}{0}
+\newcommand{\DefLSinkEquiv}{11}
+\newcommand{\DefLNTRange}{-0.001 to +0.001}
+\newcommand{\DefLNTSig}{0}
+\newcommand{\DefLNTEquiv}{11}
+\newcommand{\TohaSettings}{11}
+\newcommand{\TohaCells}{12,336,672}
+\newcommand{\TohaViol}{0}
+\newcommand{\TohaConedRange}{57--88\%}
+\newcommand{\TohaGapMax}{$6\cdot10^{-8}$}
+\newcommand{\TohaArgZeroRange}{40--75\%}
+\newcommand{\TohaRhoRange}{0.954 to 0.998}
+\newcommand{\TohaRhoSinkRange}{0.78 to 0.99}
+\newcommand{\TohaFracHeadsRho}{69\% to 89\%}
+\newcommand{\TohaSelConedRange}{70--95\%}
+\newcommand{\TohaSelArgZeroRange}{19--79\%}
+\newcommand{\TohaSelOverlap}{0\% to 69\%}
+\newcommand{\TohaAuc}{0.65 to 0.97}
+\newcommand{\TohaAucTQA}{0.65 to 0.75}
+\newcommand{\TohaAucHE}{0.97}
+\newcommand{\TohaAucOnp}{0.71 to 0.73}
+\newcommand{\TohaMaxpAuc}{0.65 to 0.99}
+\newcommand{\TohaSinkAuc}{0.59 to 0.97}
+\newcommand{\TohaSupAuc}{0.83 to 1.00}
+\newcommand{\TohaSupSinkAuc}{0.83 to 1.00}
+\newcommand{\TohaLFMaxpMax}{0.007}
+\newcommand{\TohaLFNTMax}{0.013}
+\newcommand{\TohaSinkLossSink}{0.049}
+\newcommand{\TohaSinkLossNoSink}{0.107}
+\newcommand{\TohaMaxpRange}{-0.012 to +0.018}
+\newcommand{\TohaMaxpEquiv}{5}
+\newcommand{\TohaMaxpPos}{3}
+\newcommand{\TohaMaxpNeg}{2}
+\newcommand{\TohaMaxpNonInf}{9}
+\newcommand{\TohaMaxpTotal}{11}
+\newcommand{\TohaSinkRange}{-0.107 to +0.014}
+\newcommand{\TohaSinkEquiv}{2}
+\newcommand{\TohaSinkPos}{1}
+\newcommand{\TohaSinkNeg}{7}
+\newcommand{\TohaSinkNonInf}{4}
+\newcommand{\TohaSinkTotal}{11}
+\newcommand{\TohaSupMaxpRange}{-0.007 to +0.004}
+\newcommand{\TohaSupMaxpEquiv}{11}
+\newcommand{\TohaSupMaxpPos}{0}
+\newcommand{\TohaSupMaxpNeg}{1}
+\newcommand{\TohaSupMaxpNonInf}{11}
+\newcommand{\TohaSupMaxpTotal}{11}
+\newcommand{\TohaSupSinkRange}{-0.021 to +0.008}
+\newcommand{\TohaSupSinkEquiv}{9}
+\newcommand{\TohaSupSinkPos}{1}
+\newcommand{\TohaSupSinkNeg}{1}
+\newcommand{\TohaSupSinkNonInf}{10}
+\newcommand{\TohaSupSinkTotal}{11}
+\newcommand{\TohaLFMaxpRange}{0.000 to +0.007}
+\newcommand{\TohaLFMaxpEquiv}{11}
+\newcommand{\TohaLFMaxpPos}{4}
+\newcommand{\TohaLFMaxpNeg}{0}
+\newcommand{\TohaLFMaxpNonInf}{11}
+\newcommand{\TohaLFMaxpTotal}{11}
+\newcommand{\TohaLFNTRange}{0.000 to +0.012}
+\newcommand{\TohaLFNTEquiv}{9}
+\newcommand{\TohaLFNTPos}{3}
+\newcommand{\TohaLFNTNeg}{0}
+\newcommand{\TohaLFNTNonInf}{11}
+\newcommand{\TohaLFNTTotal}{11}
+\newcommand{\CausalQwArgLo}{21\%}
+\newcommand{\CausalQwArgHi}{56\%}
+\newcommand{\CausalQwRhoLo}{0.605}
+\newcommand{\CausalQwRhoHi}{0.962}
+\newcommand{\CausalQwConedLo}{37\%}
+\newcommand{\CausalQwConedHi}{69\%}
+\newcommand{\CausalQwConedZero}{58\%}
+\newcommand{\CausalQwArgZero}{45\%}
+\newcommand{\CausalQwRhoZero}{0.893}
+\newcommand{\CausalQwTohaRange}{0.65 to 0.67}
+\newcommand{\CausalQwGapLo}{+0.043}
+\newcommand{\CausalQwGapHi}{+0.007}
+\newcommand{\CausalTlArgLo}{21\%}
+\newcommand{\CausalTlArgHi}{83\%}
+\newcommand{\CausalTlRhoLo}{0.406}
+\newcommand{\CausalTlRhoHi}{0.996}
+\newcommand{\CausalTlConedLo}{63\%}
+\newcommand{\CausalTlConedHi}{86\%}
+\newcommand{\CausalTlConedZero}{74\%}
+\newcommand{\CausalTlArgZero}{63\%}
+\newcommand{\CausalTlRhoZero}{0.967}
+\newcommand{\CausalTlTohaRange}{0.65 to 0.70}
+\newcommand{\CausalTlGapLo}{+0.072}
+\newcommand{\CausalTlGapHi}{+0.049}
+\newcommand{\TopoNTMaxAbs}{0.008}

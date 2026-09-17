@@ -27,45 +27,73 @@ Fix $s$ and $\defect=\defect_s(D)$. Define $D'_{uv}=\max(D_{uv},D_{su},D_{sv})$ 
 
 \emph{Step 3: (a).} The persistence map $H_k(K_b)\to H_k(K_{b+\defect})$ is induced by the composite inclusion in Step 2 and therefore factors through $H_k(K'_{b+\defect})$, which is zero for $k\ge1$ by Lemma~\ref{lem:coned}. The rank of $H_k(K_b)\to H_k(K_{b'})$ equals the number of bars $[b_i,d_i)$ with $b_i\le b$ and $d_i>b'$. A bar with $d_i-b_i>\defect$ would contribute to this rank at $b=b_i$, $b'=b_i+\defect$, a contradiction. So every bar has length at most $\defect$, and summing gives the bound on $P_k$.
 
-\emph{Step 4: (b).} By Fact~\ref{fact:mst}, $P_0(D)=w_D(T_D)$ for an MST $T_D$ of $D$. The star $T_s=\{\{s,u\}\}_{u\ne s}$ is a spanning tree, so $P_0(D)\le w_D(T_s)=\stw_s(D)$. For the lower bound, $T_s$ is an MST of $D'$: every non-star edge $\{u,v\}$ closes the cycle $s,u,v$ in which it is a heaviest edge ($D'_{uv}\ge\max(D'_{su},D'_{sv})$), so by the cycle property it can be excluded. Hence $w_{D'}(T_{D'})=w_{D'}(T_s)=\stw_s(D)$, and
+\emph{Step 4: (b).} By Fact~\ref{fact:mst}, $P_0(D)=w_D(T_D)$ for an MST $T_D$ of $D$. The star $T_s=\{\{s,u\}\}_{u\ne s}$ is a spanning tree, so $P_0(D)\le w_D(T_s)=\stw_s(D)$. For the lower bound, $T_s$ is an MST of $D'$, even with ties. Root any spanning tree $T$ at $s$ and let $e_u$ be the edge from $u\ne s$ to its parent $p(u)$. If $p(u)=s$ then $D'_{e_u}=D'_{su}$; otherwise $D'_{e_u}=D'_{u\,p(u)}\ge\max(D'_{su},D'_{s\,p(u)})\ge D'_{su}$ because $D'$ is coned. The map $u\mapsto e_u$ is a bijection onto the edges of $T$, so $w_{D'}(T)\ge\sum_{u\ne s}D'_{su}=w_{D'}(T_s)$ and $\max_{e\in T}D'_e\ge\max_u D'_{su}$. Hence $w_{D'}(T_{D'})=w_{D'}(T_s)=\stw_s(D)$, and
 $P_0(D)=w_D(T_D)\ge w_{D'}(T_D)-(N-1)\defect\ge w_{D'}(T_{D'})-(N-1)\defect=\stw_s(D)-(N-1)\defect.$
-The maximum finite $0$D death is the bottleneck value $\min_T\max_{e\in T}w(e)$, which is attained by any MST; it is at most $\max_u D_{su}$ (the star is a spanning tree) and is $1$-Lipschitz in the sup-norm, which gives the lower bound because the bottleneck of $D'$ is $\max_u D_{su}$.
+The maximum finite $0$D death is the bottleneck value $\min_T\max_{e\in T}w(e)$, which is attained by any MST; it is at most $\max_u D_{su}$ (the star is a spanning tree) and is $1$-Lipschitz in the sup-norm, which gives the lower bound because the bottleneck of $D'$ is $\max_u D_{su}$ (by the rooted-tree argument above).
+
+\emph{Relation to known results.} Lemma~\ref{lem:coned} is the classical observation that a flag complex in which one vertex is adjacent to every non-isolated vertex, and to every simplex, is a cone; this is the dominated-vertex mechanism behind strong collapses \citep{barmak2012strong} and edge collapses of flag filtrations \citep{boissonnat2020edge}. Step~3 is a one-sided instance of the interleaving argument behind the stability of persistence \citep{cohensteiner2007stability,chazal2009proximity,chazal2014geometric}. The two-sided stability theorem would give bars of length at most $2\defect$, whereas the one-sided comparison $D\le D'$ gives $\defect$, which is attained (Section~\ref{sec:theory}).
 
 \emph{Step 5: (c).} If $\defect=0$ then $D'=D$, and the claims follow from Lemma~\ref{lem:coned} and Step 4.
 \end{proof}
+
+\begin{proof}[Proof of Corollary~\ref{cor:diagram}]
+Let $D'$ be as in the proof of Theorem~\ref{thm:cone}. Since $D'$ is coned at $s$, Lemma~\ref{lem:coned} and Step~4 give $\dgm_k(D')=\Sigma_s(D)_k$ for all $k$: no bars in degree $k\ge1$, and $0$D deaths equal to the star weights $D'_{su}=D_{su}$. For $1\le j\le N-1$, the $j$-th smallest finite $0$D death of a matrix $E$ is $w_j(E)=\min\{\epsilon:\beta_0(K^E_\epsilon)\le N-j\}$. If $E\le E'$ entrywise then $K^{E'}_\epsilon\subseteq K^E_\epsilon$ on the same vertex set, so $\beta_0(K^E_\epsilon)\le\beta_0(K^{E'}_\epsilon)$ and $w_j(E)\le w_j(E')$; and $w_j(E+c)=w_j(E)+c$ on off-diagonal entries. From $D\le D'\le D+\defect_s$ we get $w_j(D)\le D_{s(j)}\le w_j(D)+\defect_s$. The same inclusions give the Betti-$0$ sandwich, because $\beta_0(K'_\epsilon)=1+\#\{u:D_{su}>\epsilon\}$. Matching the $j$-th deaths shows that $d_B(\dgm_0(D),\Sigma_s(D)_0)\le\defect_s$ and $W_1\le(N-1)\defect_s$. In degree $k\ge1$, every bar has length at most $\defect_s$ (Theorem~\ref{thm:cone}(a)), so matching it to the diagonal costs at most $\defect_s/2$ in $\ell^\infty$. The Lipschitz statements follow from the stability of landscapes in $d_B$ \citep{bubenik2015landscapes} and of persistence images in $W_1$ \citep{adams2017persistence}. If $\defect_s=0$ then $D=D'$.
+\end{proof}
+
+\begin{proof}[Proof of Proposition~\ref{prop:toha}]
+Let $\tilde D$ equal $D$ except that $\tilde D_{vv'}=0$ for $v,v'\in P$. At scale $0$, Kruskal's algorithm joins all of $P$ into one component with $|P|-1$ zero-length bars. Every later merge is a merge in the quotient graph $Q$ on $\{p^*\}\cup R$ with $Q_{p^*u}=\min_{v\in P}\tilde D_{vu}$ and $Q_{uw}=D_{uw}$. So $\mathrm{MTopDiv}(R,P)=P_0(Q)$. For $u\in R$ and $v\in P$ we have $v<u$ and $D_{uv}=1-A_{uv}$, so $Q_{p^*u}=1-\pi_u$. For $w<u$ in $R$, $Q_{uw}=1-A_{uw}$, and $\max(Q_{p^*u},Q_{p^*w})-Q_{uw}=A_{uw}-\min(\pi_u,\pi_w)$, so $\defect_{p^*}(Q)=\defect_P$. Theorem~\ref{thm:cone}(b) with $N-1=|R|$ gives the sandwich, with equality when $\defect_P=0$ by part (c). Finally $\pi_u\ge A_{u0}$ because $0\in P$.
+\end{proof}
+
+We checked both statements numerically. The fast MTop-Div (a dense Prim's algorithm on $Q$) agrees with ripser run on $\tilde D$ to $\CheckTohaErr$ on \CheckTohaN{} random causal matrices. On these, and on \CheckDiagN{} further random matrices checked for the elementwise death bound and the bar bound in degrees $1$ and $2$, there are \CheckViol{} violations (\texttt{sinktda/check\_theory.py}).
 
 \begin{proof}[Proof of Corollary~\ref{cor:causal}]
 For $u>v$, $A_{vu}=0$, so $D_{uv}=1-A_{uv}$; in particular $D_{0u}=1-A_{u0}$. For $1\le v<u$, $\max(D_{0u},D_{0v})-D_{uv}=A_{uv}-\min(A_{u0},A_{v0})$. Substitute into Theorem~\ref{thm:cone}.
 \end{proof}
 
-\subsection{Proposition~\ref{prop:morse}}
+\subsection{Linear growth of $1$D persistence under i.i.d.\ weights}
+Length normalization of $1$D features is usually motivated by the growth of cycles with $N$. For i.i.d.\ weights this growth is known: $0$D total persistence converges to $\zeta(3)$ \citep{frieze1985mst}, and $1$D total persistence of the random clique-complex process is $\Theta(N)$ \citep{hiraoka2017msa,hino2019lifetime}. The following elementary bound makes the constant explicit.
+
+\begin{proposition}[Linear growth under i.i.d.\ weights]
+\label{prop:morse}
+If $\{D_{uv}\}_{u<v}$ are i.i.d.\ $\mathrm{Uniform}[0,1]$, then
+$\mathbb{E}[P_1(N)]\ \ge\ \int_0^1\big[\tbinom N2p-N-\tbinom N3p^3\big]_+dp\ =\ \tfrac38N-\sqrt{3N}+O(1)$. (A matching $O(N)$ upper bound is Theorem~1.5 of \citealp{hino2019lifetime}.)
+\end{proposition}
 \begin{proof}
 With i.i.d.\ uniform weights, the edges with $D_{uv}\le p$ form an Erd\H{o}s--R\'enyi graph $G(N,p)$ and $K_p$ is its clique (flag) complex. Every $1$D bar is contained in $[0,1)$, because $K_1$ is the full simplex. Writing $\beta_1(p)$ for the first Betti number of $K_p$, the number of bars alive at $p$ is $\beta_1(p)$, so $P_1=\int_0^1\beta_1(p)\,dp$.
-For any finite complex with $f_i$ faces of dimension $i$, the strong Morse inequality at degree $2$ reads $\beta_2-\beta_1+\beta_0\le f_2-f_1+f_0$ \citep{edelsbrunner2010}, hence $\beta_1\ge f_1-f_0-f_2+\beta_0+\beta_2\ge f_1-f_0-f_2$. Since also $\beta_1\ge0$, Jensen's inequality gives $\mathbb{E}\beta_1(p)\ge[\mathbb{E}f_1-f_0-\mathbb{E}f_2]_+=[\binom N2p-N-\binom N3p^3]_+$. Integrating over $p$ gives the first inequality. With $p=x/\sqrt N$ the integrand is $N^{3/2}(x/2-x^3/6)-N+O(N^{1/2})$, positive on $x\in(2/\sqrt N\cdot(1+o(1)),\sqrt3)$, and
-$\int_0^1[\cdot]_+dp=N\int_0^{\sqrt3}\big(\tfrac x2-\tfrac{x^3}{6}\big)dx-O(\sqrt N)=\tfrac38N-O(\sqrt N).$
-For the upper bound, $\beta_1\le f_1$ gives $\mathbb{E}P_1\le\int_0^1\binom N2p\,dp=\binom N2/2$.
+For any finite complex with $f_i$ faces of dimension $i$, the strong Morse inequality at degree $2$ reads $\beta_2-\beta_1+\beta_0\le f_2-f_1+f_0$ \citep{edelsbrunner2010}, hence $\beta_1\ge f_1-f_0-f_2+\beta_0+\beta_2\ge f_1-f_0-f_2$. Since also $\beta_1\ge0$, Jensen's inequality gives $\mathbb{E}\beta_1(p)\ge[\mathbb{E}f_1-f_0-\mathbb{E}f_2]_+=[\binom N2p-N-\binom N3p^3]_+$. Integrating over $p$ gives the first inequality. With $p=x/\sqrt N$ and $dp=dx/\sqrt N$, the integrand divided by $\sqrt N$ is $N(x/2-x^3/6)-\sqrt N+O(1)$ uniformly for $x\in[0,\sqrt3+1]$. It is positive on an interval whose endpoints are $O(N^{-1/2})$ from $0$ and $\sqrt3$, and it is negative for larger $x$. Hence
+$\int_0^1[\cdot]_+dp=N\int_0^{\sqrt3}\big(\tfrac x2-\tfrac{x^3}{6}\big)dx-\sqrt{3N}+O(1)=\tfrac38N-\sqrt{3N}+O(1).$
+Numerically, $(\tfrac38N-\text{bound})/\sqrt N=1.62,1.67,1.70,1.72$ at $N=2^8,2^{10},2^{12},2^{14}$, approaching $\sqrt3\approx1.73$. The order $\Theta(N)$ itself is known \citep{hiraoka2017msa,hino2019lifetime}; the proposition only makes the constant explicit.
 \end{proof}
-Numerically, the integral equals $0.79, 3.92, 11.9, 30.2, 70.1$ at $N=16,32,64,128,256$, against simulated means $1.84, 6.46, 22.4, 64.9, 168.0$ (Figure~\ref{fig:synthetic}, left). Both grow super-linearly over this range (log-log slopes $1.55$ and $1.61$); the lower bound's slope tends to $1$ as $N\to\infty$.
+\MorseNumbersText
 
 \subsection{Directed flag complexes on causal attention}
 \label{app:directed}
-\begin{theorem}[Directed flag collapse]
+\begin{proposition}[Directed flag collapse]
 \label{thm:directed}
-Let $A$ be lower-triangular with $A_{ij}>0$ for all $j\le i$ (the diagonal included; self-loops are ignored). Let $\mathrm{DFl}(A)$ be the filtered directed flag complex \citep{flagser2020} of the digraph with an edge $i\to j$ for every $j<i$ and weight $1-A_{ij}$, and let $\VR(D)$ be as above with $D=1-\max(A,A^\top)$. Then $\mathrm{DFl}(A)$ and $\VR(D)$ are isomorphic filtered complexes, so $\dgm_k(\mathrm{DFl}(A))=\dgm_k(\VR(D))$ for all $k$. The same holds for any weighting $w(i\to j)=\phi(A_{ij})$ with $D_{ij}=\phi(\max(A_{ij},A_{ji}))$ and $\phi$ non-increasing.
-\end{theorem}
+Let $A$ be lower-triangular with non-negative entries (self-loops are ignored). Let $\mathrm{DFl}(A)$ be the filtered directed flag complex \citep{flagser2020} of the digraph with an edge $i\to j$ for \emph{every} $j<i$ (a transitive tournament) and weight $1-A_{ij}$, and let $\VR(D)$ be as above with $D=1-\max(A,A^\top)$. Then $\mathrm{DFl}(A)$ and $\VR(D)$ are isomorphic filtered complexes, so $\dgm_k(\mathrm{DFl}(A))=\dgm_k(\VR(D))$ for all $k$. The same holds for any weighting $w(i\to j)=\phi(A_{ij})$ with $D_{ij}=\phi(\max(A_{ij},A_{ji}))$ and $\phi$ non-increasing.
+\end{proposition}
 \begin{proof}
 A directed $k$-simplex is an ordered tuple $(v_0,\dots,v_k)$ with an edge $v_a\to v_b$ for all $a<b$. Edges exist only from later to earlier tokens, so a vertex set $S$ supports exactly one directed simplex, its elements in decreasing order; every other ordering uses a missing forward edge. (A missing edge is not a zero-weight edge; encoding it as weight $0$ would admit all orderings, a common implementation error.) This bijection preserves faces. Its filtration value is $\max_{a<b}(1-A_{v_av_b})$, and for $u>v$, $D_{uv}=1-A_{uv}$, so the undirected value $\max_{u,v\in S}D_{uv}$ is the same number.
 \end{proof}
-We verified the bijection and the filtration identity by explicit enumeration on $420$ random causal matrices ($N\le8$, four families including tie-dense and underflowing matrices; $30{,}060$ vertex sets; zero violations), and confirmed that the identity fails for bidirectional attention, where a set of size $n$ supports $n!$ orderings. The collapse is a consequence of causality, so directional treatments that are well motivated for bidirectional encoders \citep{kushnareva2021} do not transfer to decoders.
+We verified the bijection and the filtration identity by explicit enumeration on $420$ random causal matrices ($N\le8$, four families including tie-dense and underflowing matrices; $30{,}060$ vertex sets; zero violations), and confirmed that the identity fails for bidirectional attention, where a set of size $n$ supports $n!$ orderings. The collapse is a consequence of causality: for decoders, the directed flag complex adds nothing to its symmetrized counterpart. Directional features that do not come from flag complexes, such as those of \citet{kushnareva2021} for bidirectional encoders, are outside this statement.
 
 \section{Implementation and protocol details}
 \label{app:impl}
 
-\paragraph{Extraction.} Models run in float16 on Apple-silicon (MPS) with eager attention. For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; per-head MSTs use a batched dense Prim's algorithm (SciPy's sparse MST drops explicit zero-weight edges, which occur when $A_{u0}\approx1$). $\defect_0$ uses the closed form of Corollary~\ref{cor:causal}; $\min_s\defect_s$ is computed by brute force over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} restricts $D$ to the answer tokens without renormalization. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, with $\bar a$ the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
+\paragraph{Extraction.} All reported settings run in bfloat16 on Apple-silicon (MPS) with eager attention; float16 on MPS produced non-finite values and degenerate generations for Qwen models, and the extractor refuses non-finite logits. Model identifiers are in Table~\ref{tab:models} (Hugging Face \texttt{main} revisions as of September 2026). For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; per-head MSTs use a batched dense Prim's algorithm (SciPy's sparse MST drops explicit zero-weight edges, which occur when $A_{u0}\approx1$). $\defect_0$ uses the closed form of Corollary~\ref{cor:causal}; $\min_s\defect_s$ is computed by brute force over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} restricts $D$ to the answer tokens without renormalization. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, with $\bar a$ the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
 
-\paragraph{Prompts.} TruthfulQA uses each model's native format: the Qwen chat template with the default system turn, \texttt{<|user|>\ldots<|end|>} for Phi-3, \texttt{<|user|>\ldots</s>} for TinyLlama, ChatML without system turn for SmolLM, and \texttt{[INST]\ldots[/INST]} for Mistral. HaluEval uses \texttt{Knowledge: \ldots\textbackslash nQuestion: \ldots\textbackslash nAnswer: }. The on-policy prompt is the model's chat template around ``Answer the following question with a short phrase only, no explanation. Question: \ldots''. Token 0 is whatever token the format places first (BOS for TinyLlama and Mistral, \texttt{<|user|>} for Phi-3, whose tokenizer adds no BOS, \texttt{<|im\_start|>} for Qwen and SmolLM, and ``Knowledge'' for Qwen on HaluEval); the theorem does not require it to be a special token.
+\paragraph{Prompts.} TruthfulQA uses each model's own format: the Qwen chat template with an explicit system turn ``You are a helpful assistant.'', \texttt{<|user|>\ldots<|end|>} for Phi-3, \texttt{<|user|>\ldots</s>} for TinyLlama, ChatML without system turn for SmolLM, and \texttt{[INST]\ldots[/INST]} for Mistral. HaluEval uses \texttt{Knowledge: \ldots\textbackslash nQuestion: \ldots\textbackslash nAnswer: } without a chat template. The prompt boundary is computed by tokenizing the prefix without its trailing space, which the full string merges into the first answer token. The on-policy prompt is the model's chat template around ``Answer the following question with a short phrase only, no explanation. Question: \ldots''. Token 0 is whatever token the format places first (BOS for TinyLlama and Mistral, \texttt{<|user|>} for Phi-3, whose tokenizer adds no BOS, \texttt{<|im\_start|>} for Qwen and SmolLM, and ``Knowledge'' for Qwen on HaluEval); the theorem does not require it to be a special token. On-policy answers were generated from the chat-formatted prompt with \texttt{add\_special\_tokens=False}, and features were extracted with the tokenizer's default special tokens; the two differ only for TinyLlama, whose extraction input starts with a BOS token.
 
-\paragraph{On-policy benchmark.}
+\paragraph{Sensitivity to inference precision.} An earlier run of five settings in float16 lets us measure how much each bank depends on numerical precision (Table~\ref{tab:dtype}). Switching to bfloat16 changes the AUC of head-averaged topological banks by up to \DtypeTopoMax{} (\DtypeTopoWorst{}; at most \DtypeTopoOther{} elsewhere), and of sink features by up to \DtypeSinkMax{}, but that of non-topological banks by at most \DtypeNTMax{}. Short $1$D bars live near the scale of $\defect_0$ and are sensitive to small perturbations of attention, which is one more reason to report the precision alongside any attention-topology result.
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{AUC change from float16 to bfloat16} (same prompts and protocol; HaluEval Qwen2.5-3B also changed its prompt boundary, see above).}
+\label{tab:dtype}
+\resizebox{\linewidth}{!}{\SinkTableDtype}
+\end{table}
+
+\paragraph{On-policy benchmark.} Table~\ref{tab:onpolicy} summarizes the generations each model produced and how they were graded.
 \begin{table}[h]
 \centering
 \small
@@ -74,14 +102,44 @@ We verified the bijection and the filtration identity by explicit enumeration on
 \SinkTableOnpolicy
 \end{table}
 
-\paragraph{Statistics.} Bootstrap resamples are drawn over questions (both rows of a pair move together). TOST power at margin $\epsilon$ assumes a true difference of $0$ and a normal sampling distribution with the bootstrap SE: $2\Phi(\epsilon/\mathrm{SE}-z_{0.95})-1$. Repeated-CV predictions are averaged before bootstrapping, so the intervals reflect sampling of questions for a fixed, split-averaged predictor; the seed-to-seed SD of the pooled AUC is reported separately and is below $0.004$ everywhere.
+\paragraph{Statistics.} Bootstrap resamples are drawn over questions (both rows of a pair move together). TOST power at margin $m$ assumes a true difference of $0$ and a normal sampling distribution with the bootstrap SE: $2\Phi(m/\mathrm{SE}-z_{0.95})-1$. Repeated-CV predictions (seeds 42, 43, 44) are averaged before bootstrapping (seed 0), so the intervals reflect sampling of questions for a fixed, split-averaged predictor and omit refitting variance. The seed-to-seed SD of the pooled AUC is reported separately (Appendix~\ref{app:tables}); it is at most \MaxSeedSD{} and exceeds $0.004$ in \NSeedSDAbove{} of the bank--setting cells. The $C$ rule depends on bank width, so the same bank can be fitted with $C{=}1$ for a shallow model and with tuned $C$ for a deeper one. Late fusion fits the second-level model on first-level out-of-fold scores, as in standard stacking; its training rows' first-level scores come from models that saw the corresponding test questions, which is a mild, standard optimism shared by both arms of the comparison.
+
+\input{sink_appendix_extra.tex}
+
+\section{One-dimensional persistence}
+\label{sec:onedim}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_sink_synthetic.pdf}
+\caption{\textbf{Synthetic checks.} \emph{Left:} Proposition~\ref{prop:morse}'s lower bound against the simulated mean total $1$D persistence under i.i.d.\ Uniform$[0,1]$ weights (20 draws per $N\le128$, 8 above). \emph{Middle:} random causal attention ($N{=}40$, 200 draws per point) with a logit bias $b$ on token 0: as the sink strengthens, graphs become exactly coned, $H_1$ empties, and $P_0$ becomes a function of the star weight. \emph{Right:} AUC of $1$D total persistence for detecting a planted 6-cycle of logit strength $\gamma$ (150 draws per class). Without a sink ($b{=}0$) the planted cycle is lost among background cycles; under a strong sink ($b{=}8$) it is invisible unless it is strong enough to break the cone.}
+\label{fig:synthetic}
+\end{figure}
+
+\RESULTSONEDIM
 
 \section{Full results}
 \label{app:tables}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_sink_forest.pdf}
+\caption{\textbf{Four comparisons across all settings} ($\Delta$AUC with 90\% cluster-bootstrap intervals; shaded band: $\pm0.015$). Sink features nearly reproduce $0$D; $0$D adds little beyond them; $1$D adds little beyond $0$D except in three settings; and $0$D adds nothing beyond non-topological probes under early fusion (late fusion in Table~\ref{tab:tests}).}
+\label{fig:forest}
+\end{figure}
 \small
 \input{sink_tables_auc_full.tex}
 {\tiny\setlength{\tabcolsep}{2.5pt}\input{sink_tables_tests_full.tex}}
 \normalsize
+
+\section{Intervening on the sink}
+\label{app:causal}
+\RESULTSCAUSAL
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Sink-bias intervention} (teacher-forced TruthfulQA; labels unchanged). A constant $b$ is added to the attention logit of key $0$ for every query after token $0$, in every head and layer. $\defect_P{=}0$: share of prompt-coned head graphs. Sink top: share of head graphs in which token $0$ is every response token's most-attended prompt token. $\rho$: median per-head rank correlation between TOHA's $d$ and the response sink score. Remaining columns: AUCs as in Table~\ref{tab:toha}.}
+\label{tab:causal}
+\SinkTableTohaCausal
+\end{table}
 
 \section{Mistral-7B}
 \label{app:mistral}
@@ -89,6 +147,6 @@ We verified the bijection and the filtration identity by explicit enumeration on
 
 \section{Relation to accuracy-level audits, and cost}
 \label{app:legacy}
-Audits of attention-graph PH that stop at classification accuracy observe four facts that the theory now explains: (i) $0$D persistence equals an MST statistic (Fact~\ref{fact:mst}); (ii) $1$D persistence adds little beyond $0$D (Table~\ref{tab:tests}, column ``1D $\mid$ 0D''), which Theorem~\ref{thm:cone} now explains; (iii) the $1$D bank of Mistral-7B under its \texttt{[INST]} format is $99.99\%$ zeros, which is exactly the coned regime; (iv) HaluEval answers are separable from text alone.
+Audits of attention-graph PH that stop at classification accuracy observe four facts that the theory now explains: (i) $0$D persistence equals an MST statistic (Fact~\ref{fact:mst}); (ii) $1$D persistence adds little beyond $0$D (Table~\ref{tab:tests}, column ``1D $\mid$ 0D''), which Theorem~\ref{thm:cone} now explains; (iii) an earlier audit reported that the $1$D bank of Mistral-7B under its \texttt{[INST]} format is $99.99\%$ zeros, which is what exact coning would produce (not yet re-verified with this pipeline; Appendix~\ref{app:mistral}); (iv) HaluEval answers are separable from text alone.
 
 \paragraph{Cost.} \TIMINGPARAGRAPH
