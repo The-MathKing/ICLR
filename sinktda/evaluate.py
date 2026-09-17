@@ -45,6 +45,50 @@ C_GRID = (0.01, 0.1, 1.0)
 N_JOBS = int(os.environ.get("SINKTDA_JOBS", "3"))
 
 
+def merge_csv(path, new, key="setting"):
+    """Write `new` to `path`, keeping any rows for settings `new` does not cover.
+
+    `toha evaluate` and `defect_probe` rebuild their whole table from whatever feature
+    directories happen to be in sinktda_out/. That is destructive once a setting's
+    features are no longer on disk: the setting silently vanishes from every table that
+    reads the file, even though its rows were computed correctly earlier. Merging keeps
+    those rows exactly as they were and replaces only the settings just evaluated.
+
+    Row order does not matter here: report.py sorts by ORDER when it loads these files.
+    """
+    new = pd.DataFrame(new)
+    if not (len(new) and key in new.columns and os.path.exists(path)):
+        new.to_csv(path, index=False)
+        return new
+
+    # Keep the retained rows as their original text. Round-tripping them through
+    # read_csv/to_csv perturbs the last bit of some floats (~1e-23 on a 1e-08 quantity),
+    # and these are published numbers -- they should not move at all.
+    raw = pd.read_csv(path, dtype=str, keep_default_na=False)
+    if key not in raw.columns or list(raw.columns) != list(new.columns):
+        old = pd.read_csv(path)
+        kept = old[~old[key].isin(set(new[key]))] if key in old.columns else old.iloc[0:0]
+        merged = pd.concat([kept, new], ignore_index=True)
+        merged.to_csv(path, index=False)
+        return merged
+
+    drop = set(new[key].astype(str))
+    lines = open(path, encoding="utf-8").read().splitlines()
+    header, body = lines[0], lines[1:]
+    col = list(raw.columns).index(key)
+    keep = [ln for ln, s in zip(body, raw[key].astype(str)) if s not in drop]
+    n_kept = len({s for s in raw[key].astype(str) if s not in drop})
+    if n_kept:
+        print(f"[merge] {os.path.basename(path)}: keeping {n_kept} existing setting(s) "
+              f"verbatim, replacing {new[key].nunique()}")
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(header + "\n")
+        for ln in keep:
+            fh.write(ln + "\n")
+        fh.write(new.to_csv(index=False, header=False, lineterminator="\n"))
+    return pd.read_csv(path)
+
+
 # ---------------------------------------------------------------------------
 # data
 # ---------------------------------------------------------------------------

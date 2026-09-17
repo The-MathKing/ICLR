@@ -274,9 +274,10 @@ def evaluate(names):
     auc = pd.DataFrame([r for o in out for r in o[1]])
     comp = pd.DataFrame([r for o in out for r in o[2]])
     suffix = os.environ.get("TOHA_SUFFIX", "")
-    ck.to_csv(f"{RES}/toha_checks{suffix}.csv", index=False)
-    auc.to_csv(f"{RES}/toha_auc{suffix}.csv", index=False)
-    comp.to_csv(f"{RES}/toha_comp{suffix}.csv", index=False)
+    from sinktda.evaluate import merge_csv
+    ck = merge_csv(f"{RES}/toha_checks{suffix}.csv", ck)
+    auc = merge_csv(f"{RES}/toha_auc{suffix}.csv", auc)
+    comp = merge_csv(f"{RES}/toha_comp{suffix}.csv", comp)
     pd.set_option("display.width", 250)
     print(ck.to_string(index=False))
     print(auc.pivot(index="setting", columns="bank", values="auc").round(3).to_string())

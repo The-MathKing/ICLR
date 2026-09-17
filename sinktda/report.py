@@ -299,20 +299,50 @@ def fig_forest(comp):
     plt.close(fig)
 
 
-def table_onpolicy():
-    lines = [r"\begin{tabular}{lrrrr}", r"\toprule",
-             r"Model & questions & accuracy & rows used & mean answer tokens \\", r"\midrule"]
+ONP_CACHE = f"{RES}/onpolicy_summary.csv"
+
+
+def onpolicy_stats():
+    """Per on-policy setting: questions, accuracy (%), rows used, mean answer tokens.
+
+    Prefers the live generations.csv/layers.parquet, and falls back to the cached summary
+    for settings whose feature directory is no longer on disk. The small-model feature
+    directories were lost; their cached rows were parsed from the generated table that the
+    original runs produced, so those published values are carried through unchanged rather
+    than silently dropped from the table. Live readings refresh the cache.
+    """
+    cache = pd.read_csv(ONP_CACHE).set_index("setting") if os.path.exists(ONP_CACHE) else None
+    out, live = {}, []
     for s in ORDER:
         if not s.startswith("triviaqa"):
             continue
-        g = f"sinktda_out/{s}/generations.csv"
-        lp = f"sinktda_out/{s}/layers.parquet"
-        if not (os.path.exists(g) and os.path.exists(lp)):
-            continue
-        gen = pd.read_csv(g, keep_default_na=False)
-        lay = pd.read_parquet(lp, columns=["answer_len"])
-        lines.append(f"{PRETTY[s][1]} & {len(gen):,} & {100 * gen['correct'].mean():.1f}\\% & {len(lay):,} & "
-                     f"{lay['answer_len'].mean():.1f} \\\\")
+        g, lp = f"sinktda_out/{s}/generations.csv", f"sinktda_out/{s}/layers.parquet"
+        if os.path.exists(g) and os.path.exists(lp):
+            gen = pd.read_csv(g, keep_default_na=False)
+            lay = pd.read_parquet(lp, columns=["answer_len"])
+            out[s] = dict(questions=len(gen), accuracy=100 * gen["correct"].mean(),
+                          rows_used=len(lay), mean_answer_tokens=float(lay["answer_len"].mean()))
+            live.append(s)
+        elif cache is not None and s in cache.index:
+            r = cache.loc[s]
+            out[s] = dict(questions=int(r["questions"]), accuracy=float(r["accuracy"]),
+                          rows_used=int(r["rows_used"]),
+                          mean_answer_tokens=float(r["mean_answer_tokens"]))
+    if out:  # keep the cache current for settings we can still read
+        df = pd.DataFrame([dict(setting=s, **v) for s, v in out.items()])
+        df.to_csv(ONP_CACHE, index=False)
+    if live and len(live) < len(out):
+        print(f"[onpolicy] live: {len(live)}; from cache: {len(out) - len(live)} "
+              f"({', '.join(s for s in out if s not in live)})")
+    return out
+
+
+def table_onpolicy():
+    lines = [r"\begin{tabular}{lrrrr}", r"\toprule",
+             r"Model & questions & accuracy & rows used & mean answer tokens \\", r"\midrule"]
+    for s, v in onpolicy_stats().items():
+        lines.append(f"{PRETTY[s][1]} & {v['questions']:,} & {v['accuracy']:.1f}\\% & "
+                     f"{v['rows_used']:,} & {v['mean_answer_tokens']:.1f} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines)
 
@@ -471,9 +501,8 @@ def write_numbers(th, auc, comp):
         m[tag + "Equiv"] = str(int(d["equiv_0.015"].sum())) if len(d) else "--"
         m[tag + "Sig"] = str(int((d["ci95_lo"] > 0).sum())) if len(d) else "--"
         m[tag + "Total"] = str(len(d))
-    gens = [pd.read_csv(f"sinktda_out/{s_}/generations.csv", keep_default_na=False)["correct"].mean()
-            for s_ in ORDER if s_.startswith("triviaqa") and os.path.exists(f"sinktda_out/{s_}/generations.csv")]
-    m["OnpAccRange"] = _rng(pd.Series(gens) * 100, "{:.0f}\\%")
+    gens = [v["accuracy"] for v in onpolicy_stats().values()]
+    m["OnpAccRange"] = _rng(pd.Series(gens), "{:.0f}\\%")
     if os.path.exists(f"{RES}/check_theory.csv"):
         ct = pd.read_csv(f"{RES}/check_theory.csv").iloc[0]
         m["CheckTohaN"], m["CheckDiagN"] = f"{int(ct['toha_n'])}", f"{int(ct['diag_n'])}"
