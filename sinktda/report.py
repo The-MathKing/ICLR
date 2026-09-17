@@ -378,6 +378,25 @@ def _rng(x, fmt="{:+.3f}"):
     return f(lo) if f(lo) == f(hi) else f"{f(lo)} to {f(hi)}"
 
 
+def _join_names(names):
+    """Oxford-free English list: "A", "A and B", "A, B and C" -- these land in prose."""
+    n = sorted(names)
+    if not n:
+        return "--"
+    return n[0] if len(n) == 1 else " and ".join([", ".join(n[:-1]), n[-1]])
+
+
+def _extremes(df, col, tag, fmt="{:.2f}", scale=1.0):
+    """Macros for the smallest and largest value of `col`, each with the model it belongs
+    to, so prose can contrast two settings without hardcoding either number or name."""
+    if not len(df):
+        return {}
+    lo, hi = df.loc[df[col].idxmin()], df.loc[df[col].idxmax()]
+    name = lambda r: PRETTY.get(r["setting"], (r["setting"], r["setting"]))[1]
+    return {tag + "Min": fmt.format(lo[col] * scale), tag + "MinModel": name(lo),
+            tag + "Max": fmt.format(hi[col] * scale), tag + "MaxModel": name(hi)}
+
+
 def _model_size_range(models):
     """Range of nominal parameter counts over the models actually evaluated.
     Raises rather than guessing, so a new model cannot silently yield a wrong range."""
@@ -419,6 +438,12 @@ def write_numbers(th, auc, comp):
         "PctConedRange": f"{pc.min():.0f}--{pc.max():.0f}\\%" if len(pc) else "--",
         "SinkMassRange": _rng(sink["mean_sink_mass"], "{:.2f}"),
         "NoSinkMass": _rng(nosink["mean_sink_mass"], "{:.2f}"),
+        "NoSinkModels": _join_names({PRETTY.get(s, (s, s))[1] for s in nosink["setting"]}),
+        "NNoSinkModels": str(len({PRETTY.get(s, (s, s))[1] for s in nosink["setting"]})),
+        # share of graphs coned at *some* apex: separates a model with no cone structure
+        # at all from one whose sink simply is not the first token
+        "NoSinkConedAny": _rng(nosink["frac_cells_coned_any_apex"] * 100, "{:.0f}\\%"),
+        **_extremes(nosink, "frac_cells_coned_any_apex", "NoSinkConedAny", "{:.0f}\\%", 100),
         "RhoMin": f"{np.floor(sink['median_layer_spearman_P0_star_norm'].min() * 100) / 100:.2f}" if len(sink) else "--",
         "RhoRawMin": f"{np.floor(sink['median_layer_spearman_P0_star'].min() * 1000) / 1000:.3f}" if len(sink) else "--",
         "RhoNoSink": _rng(nosink["median_layer_spearman_P0_star_norm"], "{:.2f}"),
@@ -748,6 +773,8 @@ def numbers_toha():
         "TohaArgZeroRange": f"{100 * sink['frac_arg0_all'].min():.0f}--{100 * sink['frac_arg0_all'].max():.0f}\\%",
         "TohaRhoRange": _rng(ck["median_head_rho_maxp"], "{:.3f}"),
         "TohaRhoSinkRange": _rng(sink["median_head_rho_sinkr"], "{:.2f}"),
+        # the same correlation in the models whose sink is not the first token
+        "TohaRhoSinkNoSink": _rng(ck[~ck["setting"].isin(set(sink["setting"]))]["median_head_rho_sinkr"], "{:.2f}"),
         "TohaFracHeadsRho": _rng(ck["frac_heads_rho_maxp_ge_0_9"] * 100, "{:.0f}\\%"),
         "TohaSelConedRange": f"{100 * ck['toha_sel_frac_coned_P'].min():.0f}--{100 * ck['toha_sel_frac_coned_P'].max():.0f}\\%",
         "TohaSelArgZeroRange": f"{100 * sink['toha_sel_frac_arg0'].min():.0f}--{100 * sink['toha_sel_frac_arg0'].max():.0f}\\%",
@@ -771,8 +798,8 @@ def numbers_toha():
     in_sink = ts["setting"].isin(ss) if ss is not None else ts["setting"] != "truthfulqa_smollm"
     m["TohaSinkLossSink"] = f"{-ts[in_sink]['delta'].min():.3f}"
     m["TohaSinkLossNoSink"] = _rng(-ts[~in_sink]["delta"], "{:.3f}") if (~in_sink).any() else "--"
-    m["TohaNoSinkModels"] = ", ".join(sorted(
-        {PRETTY.get(s, (s, s))[1] for s in ts.loc[~in_sink, "setting"]})) or "--"
+    m["TohaNoSinkModels"] = _join_names(
+        {PRETTY.get(s, (s, s))[1] for s in ts.loc[~in_sink, "setting"]})
     for tag, test in (("TohaMaxp", "TOHA_maxp_vs_toha"), ("TohaSink", "TOHA_sinkr_vs_toha"),
                       ("TohaSupMaxp", "SUP_maxp_vs_toha"), ("TohaSupSink", "SUP_sinkr_vs_toha"),
                       ("TohaLFMaxp", "LF_toha_beyond_maxp"), ("TohaLFNT", "LF_toha_beyond_nontopo")):
