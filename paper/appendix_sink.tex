@@ -125,6 +125,14 @@ We verified the bijection and the filtration identity by explicit enumeration on
 \caption{\textbf{Four comparisons across all settings} ($\Delta$AUC with 90\% cluster-bootstrap intervals; shaded band: $\pm0.015$). Sink features nearly reproduce $0$D; $0$D adds little beyond them; $1$D adds little beyond $0$D except in three settings; and $0$D adds nothing beyond non-topological probes under early fusion (late fusion in Table~\ref{tab:tests}).}
 \label{fig:forest}
 \end{figure}
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Key paired comparisons} ($\Delta$AUC). ``X$-$Y'' is AUC(X)$-$AUC(Y); ``X$\mid$Y'' is AUC(Y+X)$-$AUC(Y) under early fusion; ``X$\oplus$Y'' is the same under late fusion (stacked out-of-fold logits). $P_{0,h}$: per-head MST total. Defl.: sink-deflated $0$D+$1$D PH; NT: all non-topological features. $^{\equiv}$: equivalent within $\pm0.015$ (90\% interval inside the margin); $^{*}$: 95\% interval excludes $0$. Intervals and TOST power for every cell are in Appendix~\ref{app:tables}.}
+\label{tab:tests}
+\setlength{\tabcolsep}{3pt}\resizebox{\linewidth}{!}{\SinkTableTests}
+\end{table}
+
 \small
 \input{sink_tables_auc_full.tex}
 {\tiny\setlength{\tabcolsep}{2.5pt}\input{sink_tables_tests_full.tex}}
