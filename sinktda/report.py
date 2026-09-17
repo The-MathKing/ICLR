@@ -397,6 +397,32 @@ def _extremes(df, col, tag, fmt="{:.2f}", scale=1.0):
             tag + "Max": fmt.format(hi[col] * scale), tag + "MaxModel": name(hi)}
 
 
+def _rho_delta_h1_floor(sink):
+    """Describe the setting at the bottom of the rho(delta_0, P_1) range.
+
+    C3 predicts that 1D persistence can only appear where the cone is violated, and the
+    correlation between delta_0 and P_1 is the evidence. In the most strongly coned
+    settings almost every graph has delta_0 = 0 and no 1D bars, so both quantities are
+    near-constant and their rank correlation collapses towards zero -- which reads as weak
+    support when it is the opposite. These macros let the text say so without naming a
+    model or a number that could go stale.
+    """
+    if not len(sink) or "cell_spearman_delta0_h1" not in sink.columns:
+        return {}
+    cut = 0.9
+    near, rest = sink[sink["frac_cells_coned"] >= cut], sink[sink["frac_cells_coned"] < cut]
+    if not len(near) or not len(rest):
+        return {}
+    return {
+        "RhoDeltaHoneNearCut": f"{cut * 100:.0f}\\%",
+        "RhoDeltaHoneNearN": str(len(near)),
+        "RhoDeltaHoneNearConed": _rng(near["frac_cells_coned"] * 100, "{:.1f}\\%"),
+        "RhoDeltaHoneNearHOneZero": _rng(near["frac_cells_h1_zero"] * 100, "{:.2f}\\%"),
+        "RhoDeltaHoneNear": _rng(near["cell_spearman_delta0_h1"], "{:.2f}"),
+        "RhoDeltaHoneRest": f"{rest['cell_spearman_delta0_h1'].min():.2f}",
+    }
+
+
 def _model_size_range(models):
     """Range of nominal parameter counts over the models actually evaluated.
     Raises rather than guessing, so a new model cannot silently yield a wrong range."""
@@ -451,6 +477,10 @@ def write_numbers(th, auc, comp):
         "RhoLayerMinRange": _rng(sink["min_layer_spearman_P0_star_norm"], "{:.2f}"),
         "NoSinkHOneNonempty": _rng((1 - nosink["frac_cells_h1_zero"]) * 100, "{:.0f}\\%"),
         "RhoDeltaHone": _rng(sink["cell_spearman_delta0_h1"], "{:.2f}"),
+        # The bottom of that range is the most strongly coned setting, where delta_0 and
+        # P_1 are both near-constant, so the rank correlation is degenerate rather than
+        # the prediction weak. Derived from whichever setting is the minimum.
+        **_rho_delta_h1_floor(sink),
         "NViolations": str(int((th["bound_violations_h1"] + th["bound_violations_p0"] + th.get("bound_violations_maxdeath", 0)).sum())),
         "NSeedSDAbove": str(int((auc["auc_seed_sd"] > 0.004).sum())),
         "MaxSeedSD": f"{auc['auc_seed_sd'].max():.3f}" if len(auc) else "--",
