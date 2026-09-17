@@ -77,7 +77,7 @@ items S1–S12) and `REVITALIZE_PLAN.md` §8.
    - report the label-audit disagreement (14% on Mistral). Conclusions are unchanged — all
      four dominance claims survive — but the number belongs in the paper.
 4. Compile -- **done**. MiKTeX was already installed on the Windows box, just not on
-   PATH (`%LOCALAPPDATA%\Programs\MiKTeX\miktexind`); latexmk needs Perl, which is
+   PATH (`%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`); latexmk needs Perl, which is
    not installed, so drive `pdflatex` and `bibtex` directly. 36 pages, 0 undefined
    references, 0 overfull boxes, main text ending on page 9.
 
