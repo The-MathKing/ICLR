@@ -46,6 +46,31 @@ def settings():
     return [s for s in ORDER if os.path.exists(f"{OUT}/{s}/layers.parquet")]
 
 
+def guard_missing_features(force=False):
+    """Refuse to regenerate the appendix when feature directories have gone missing.
+
+    Every table here is computed from sinktda_out/<setting>/layers.parquet, and the rows
+    cannot be rebuilt from sinktda_results/: the LaTeX row needs the share of rows with
+    P1>0, R^2 and the Spearman correlation, none of which scaling_real_attention.csv
+    stores. Running with a subset therefore silently rewrites the appendix and
+    scaling_real_attention.csv with fewer settings than the paper reports, and the loss is
+    not recoverable. Pass --force only if a shorter table is genuinely what you want.
+    """
+    have = set(settings())
+    f = f"{RES}/scaling_real_attention.csv"
+    known = set(pd.read_csv(f)["setting"]) if os.path.exists(f) else set()
+    lost = sorted(known - have)
+    if lost and not force:
+        raise SystemExit(
+            "appendix_extra: refusing to run.\n"
+            f"  {len(lost)} setting(s) are in {f} but have no features in {OUT}/:\n"
+            "    " + ", ".join(lost) + "\n"
+            "  Their appendix rows cannot be rebuilt from sinktda_results/ (the table needs\n"
+            "  per-row quantities the CSV does not keep), so regenerating now would drop them\n"
+            "  from the appendix and from scaling_real_attention.csv permanently.\n"
+            "  Restore those sinktda_out/ directories, or pass --force to accept a shorter table.")
+
+
 def load(s):
     d = pd.read_parquet(f"{OUT}/{s}/layers.parquet")
     d["y"] = (d["label"] == "hallucinated").astype(int)
@@ -299,7 +324,10 @@ def no_force_text():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--examples", action="store_true")
+    ap.add_argument("--force", action="store_true",
+                    help="regenerate even if some settings no longer have features")
     args = ap.parse_args()
+    guard_missing_features(args.force)
     style()
     if args.examples:
         worked_example()

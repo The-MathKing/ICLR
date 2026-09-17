@@ -12,6 +12,7 @@ the same grouped repeated CV and question-level bootstrap as every other number.
 Writes sinktda_results/late_fusion.csv
 """
 import glob
+import sys
 import os
 
 import numpy as np
@@ -29,9 +30,16 @@ def logit(p):
 
 
 def main():
+    # Named settings are recomputed; everything else keeps the row it already has.
+    # Refitting a setting that is already in late_fusion.csv would move a published
+    # number for no reason -- the fits are library-version sensitive, and the small-model
+    # features are gone, so those rows cannot be reproduced exactly anyway.
+    only = set(sys.argv[1:])
     rows = []
     for f in sorted(glob.glob(f"{RES}/oof/*.npz")):
         name = os.path.basename(f)[:-4]
+        if only and name not in only:
+            continue
         z = np.load(f)
         y, g = z["y"], z["g"]
         for base, extra in PAIRS:
@@ -44,7 +52,8 @@ def main():
             r.update(bootstrap_delta(y, pb, pc, g))
             rows.append(r)
             print(name, r["test"], f"{r['delta']:+.4f} [{r['ci90_lo']:+.4f}, {r['ci90_hi']:+.4f}]", flush=True)
-    pd.DataFrame(rows).to_csv(f"{RES}/late_fusion.csv", index=False)
+    from sinktda.evaluate import merge_csv
+    merge_csv(f"{RES}/late_fusion.csv", rows)
 
 
 if __name__ == "__main__":
