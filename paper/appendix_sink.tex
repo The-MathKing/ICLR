@@ -1,0 +1,94 @@
+% appendix_sink.tex -- \input by paper.tex after \appendix
+
+\section{Proofs}
+\label{app:proofs}
+
+Throughout, $D$ is a symmetric $N\times N$ matrix with non-negative entries and zero diagonal, $K_\epsilon$ is the Vietoris--Rips complex at scale $\epsilon$, $\mathrm{filt}_D(\sigma)=\max_{u,v\in\sigma}D_{uv}$ (with $\mathrm{filt}_D(\{u\})=0$), and homology is taken over a field. Bars are half-open intervals $[b,d)$.
+
+\subsection{Fact~\ref{fact:mst}}
+All vertices enter at $0$. Processing edges in non-decreasing weight order, an edge either joins two components, in which case (elder rule) one $0$D class dies at its weight and Kruskal's algorithm adds the edge to the spanning forest, or it closes a cycle, in which case no $0$D class dies and Kruskal discards it. Hence the $N-1$ finite death times are the MST edge weights \citep{gower1969,edelsbrunner2010}.
+
+\subsection{Theorem~\ref{thm:cone}}
+
+\begin{lemma}[Coned filtrations]
+\label{lem:coned}
+If $D$ is coned at $s$, then for every $\epsilon\ge0$, $K_\epsilon=C_\epsilon\sqcup I_\epsilon$, where $C_\epsilon$ is a simplicial cone with apex $s$ and $I_\epsilon$ is a set of isolated vertices. Consequently $\tilde H_k(K_\epsilon)=0$ for every $k\ge1$.
+\end{lemma}
+\begin{proof}
+Let $\sigma\in K_\epsilon$ with $s\notin\sigma$ and $|\sigma|\ge2$. For each $u\in\sigma$ choose $v\in\sigma\setminus\{u\}$; coning gives $D_{su}\le D_{uv}\le\mathrm{filt}_D(\sigma)\le\epsilon$. Therefore $\mathrm{filt}_D(\sigma\cup\{s\})=\mathrm{filt}_D(\sigma)$ and $\sigma\cup\{s\}\in K_\epsilon$. Now let $u\ne s$ be a vertex with $D_{su}>\epsilon$. If $u$ had an edge $\{u,v\}\in K_\epsilon$ then $D_{su}\le D_{uv}\le\epsilon$, a contradiction; so $u$ is isolated. Let $I_\epsilon$ be these vertices and $C_\epsilon$ the subcomplex on the remaining vertices. Every vertex of $C_\epsilon$ is adjacent to $s$, and by the first part every simplex of $C_\epsilon$ extends by $s$, so $C_\epsilon$ is the cone over its link of $s$ and is contractible. $H_k$ of a disjoint union is the direct sum, and isolated points have no homology in degree $\ge1$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:cone}]
+Fix $s$ and $\defect=\defect_s(D)$. Define $D'_{uv}=\max(D_{uv},D_{su},D_{sv})$ for $u,v\ne s$, $u\ne v$; $D'_{su}=D'_{us}=D_{su}$; $D'_{uu}=0$.
+
+\emph{Step 1: $D\le D'\le D+\defect$ and $D'$ is coned at $s$.} The first inequality is immediate. For $u,v\ne s$, $D'_{uv}-D_{uv}=[\max(D_{su},D_{sv})-D_{uv}]_+\le\defect$. Coning: $\max(D'_{su},D'_{sv})=\max(D_{su},D_{sv})\le D'_{uv}$.
+
+\emph{Step 2: interleaving.} Since filtration values are maxima of entries, $\mathrm{filt}_D\le\mathrm{filt}_{D'}\le\mathrm{filt}_D+\defect$. Hence for every $b$, $K_b\subseteq K'_{b+\defect}\subseteq K_{b+\defect}$, where $K'$ is the filtration of $D'$.
+
+\emph{Step 3: (a).} The persistence map $H_k(K_b)\to H_k(K_{b+\defect})$ is induced by the composite inclusion in Step 2 and therefore factors through $H_k(K'_{b+\defect})$, which is zero for $k\ge1$ by Lemma~\ref{lem:coned}. The rank of $H_k(K_b)\to H_k(K_{b'})$ equals the number of bars $[b_i,d_i)$ with $b_i\le b$ and $d_i>b'$. A bar with $d_i-b_i>\defect$ would contribute to this rank at $b=b_i$, $b'=b_i+\defect$, a contradiction. So every bar has length at most $\defect$, and summing gives the bound on $P_k$.
+
+\emph{Step 4: (b).} By Fact~\ref{fact:mst}, $P_0(D)=w_D(T_D)$ for an MST $T_D$ of $D$. The star $T_s=\{\{s,u\}\}_{u\ne s}$ is a spanning tree, so $P_0(D)\le w_D(T_s)=\stw_s(D)$. For the lower bound, $T_s$ is an MST of $D'$: every non-star edge $\{u,v\}$ closes the cycle $s,u,v$ in which it is a heaviest edge ($D'_{uv}\ge\max(D'_{su},D'_{sv})$), so by the cycle property it can be excluded. Hence $w_{D'}(T_{D'})=w_{D'}(T_s)=\stw_s(D)$, and
+$P_0(D)=w_D(T_D)\ge w_{D'}(T_D)-(N-1)\defect\ge w_{D'}(T_{D'})-(N-1)\defect=\stw_s(D)-(N-1)\defect.$
+The maximum finite $0$D death is the bottleneck value $\min_T\max_{e\in T}w(e)$, which is attained by any MST; it is at most $\max_u D_{su}$ (the star is a spanning tree) and is $1$-Lipschitz in the sup-norm, which gives the lower bound because the bottleneck of $D'$ is $\max_u D_{su}$.
+
+\emph{Step 5: (c).} If $\defect=0$ then $D'=D$, and the claims follow from Lemma~\ref{lem:coned} and Step 4.
+\end{proof}
+
+\begin{proof}[Proof of Corollary~\ref{cor:causal}]
+For $u>v$, $A_{vu}=0$, so $D_{uv}=1-A_{uv}$; in particular $D_{0u}=1-A_{u0}$. For $1\le v<u$, $\max(D_{0u},D_{0v})-D_{uv}=A_{uv}-\min(A_{u0},A_{v0})$. Substitute into Theorem~\ref{thm:cone}.
+\end{proof}
+
+\subsection{Proposition~\ref{prop:morse}}
+\begin{proof}
+With i.i.d.\ uniform weights, the edges with $D_{uv}\le p$ form an Erd\H{o}s--R\'enyi graph $G(N,p)$ and $K_p$ is its clique (flag) complex. Every $1$D bar is contained in $[0,1)$, because $K_1$ is the full simplex. Writing $\beta_1(p)$ for the first Betti number of $K_p$, the number of bars alive at $p$ is $\beta_1(p)$, so $P_1=\int_0^1\beta_1(p)\,dp$.
+For any finite complex with $f_i$ faces of dimension $i$, the strong Morse inequality at degree $2$ reads $\beta_2-\beta_1+\beta_0\le f_2-f_1+f_0$ \citep{edelsbrunner2010}, hence $\beta_1\ge f_1-f_0-f_2+\beta_0+\beta_2\ge f_1-f_0-f_2$. Since also $\beta_1\ge0$, Jensen's inequality gives $\mathbb{E}\beta_1(p)\ge[\mathbb{E}f_1-f_0-\mathbb{E}f_2]_+=[\binom N2p-N-\binom N3p^3]_+$. Integrating over $p$ gives the first inequality. With $p=x/\sqrt N$ the integrand is $N^{3/2}(x/2-x^3/6)-N+O(N^{1/2})$, positive on $x\in(2/\sqrt N\cdot(1+o(1)),\sqrt3)$, and
+$\int_0^1[\cdot]_+dp=N\int_0^{\sqrt3}\big(\tfrac x2-\tfrac{x^3}{6}\big)dx-O(\sqrt N)=\tfrac38N-O(\sqrt N).$
+For the upper bound, $\beta_1\le f_1$ gives $\mathbb{E}P_1\le\int_0^1\binom N2p\,dp=\binom N2/2$.
+\end{proof}
+Numerically, the integral equals $0.79, 3.92, 11.9, 30.2, 70.1$ at $N=16,32,64,128,256$, against simulated means $1.84, 6.46, 22.4, 64.9, 168.0$ (Figure~\ref{fig:synthetic}, left). Both grow super-linearly over this range (log-log slopes $1.55$ and $1.61$); the lower bound's slope tends to $1$ as $N\to\infty$.
+
+\subsection{Directed flag complexes on causal attention}
+\label{app:directed}
+\begin{theorem}[Directed flag collapse]
+\label{thm:directed}
+Let $A$ be lower-triangular with $A_{ij}>0$ for all $j\le i$ (the diagonal included; self-loops are ignored). Let $\mathrm{DFl}(A)$ be the filtered directed flag complex \citep{flagser2020} of the digraph with an edge $i\to j$ for every $j<i$ and weight $1-A_{ij}$, and let $\VR(D)$ be as above with $D=1-\max(A,A^\top)$. Then $\mathrm{DFl}(A)$ and $\VR(D)$ are isomorphic filtered complexes, so $\dgm_k(\mathrm{DFl}(A))=\dgm_k(\VR(D))$ for all $k$. The same holds for any weighting $w(i\to j)=\phi(A_{ij})$ with $D_{ij}=\phi(\max(A_{ij},A_{ji}))$ and $\phi$ non-increasing.
+\end{theorem}
+\begin{proof}
+A directed $k$-simplex is an ordered tuple $(v_0,\dots,v_k)$ with an edge $v_a\to v_b$ for all $a<b$. Edges exist only from later to earlier tokens, so a vertex set $S$ supports exactly one directed simplex, its elements in decreasing order; every other ordering uses a missing forward edge. (A missing edge is not a zero-weight edge; encoding it as weight $0$ would admit all orderings, a common implementation error.) This bijection preserves faces. Its filtration value is $\max_{a<b}(1-A_{v_av_b})$, and for $u>v$, $D_{uv}=1-A_{uv}$, so the undirected value $\max_{u,v\in S}D_{uv}$ is the same number.
+\end{proof}
+We verified the bijection and the filtration identity by explicit enumeration on $420$ random causal matrices ($N\le8$, four families including tie-dense and underflowing matrices; $30{,}060$ vertex sets; zero violations), and confirmed that the identity fails for bidirectional attention, where a set of size $n$ supports $n!$ orderings. The collapse is a consequence of causality, so directional treatments that are well motivated for bidirectional encoders \citep{kushnareva2021} do not transfer to decoders.
+
+\section{Implementation and protocol details}
+\label{app:impl}
+
+\paragraph{Extraction.} Models run in float16 on Apple-silicon (MPS) with eager attention. For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; per-head MSTs use a batched dense Prim's algorithm (SciPy's sparse MST drops explicit zero-weight edges, which occur when $A_{u0}\approx1$). $\defect_0$ uses the closed form of Corollary~\ref{cor:causal}; $\min_s\defect_s$ is computed by brute force over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} restricts $D$ to the answer tokens without renormalization. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, with $\bar a$ the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
+
+\paragraph{Prompts.} TruthfulQA uses each model's native format: the Qwen chat template with the default system turn, \texttt{<|user|>\ldots<|end|>} for Phi-3, \texttt{<|user|>\ldots</s>} for TinyLlama, ChatML without system turn for SmolLM, and \texttt{[INST]\ldots[/INST]} for Mistral. HaluEval uses \texttt{Knowledge: \ldots\textbackslash nQuestion: \ldots\textbackslash nAnswer: }. The on-policy prompt is the model's chat template around ``Answer the following question with a short phrase only, no explanation. Question: \ldots''. Token 0 is whatever token the format places first (BOS for TinyLlama and Mistral, \texttt{<|user|>} for Phi-3, whose tokenizer adds no BOS, \texttt{<|im\_start|>} for Qwen and SmolLM, and ``Knowledge'' for Qwen on HaluEval); the theorem does not require it to be a special token.
+
+\paragraph{On-policy benchmark.}
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{TriviaQA on-policy benchmark.} $2{,}000$ validation questions sampled with seed 0; greedy decoding, first line of the answer, at most 24 new tokens. An answer is correct if any normalized gold alias (lower-cased, punctuation and articles removed) occurs in the normalized answer as a whole-word span. Empty answers are dropped.}
+\label{tab:onpolicy}
+\SinkTableOnpolicy
+\end{table}
+
+\paragraph{Statistics.} Bootstrap resamples are drawn over questions (both rows of a pair move together). TOST power at margin $\epsilon$ assumes a true difference of $0$ and a normal sampling distribution with the bootstrap SE: $2\Phi(\epsilon/\mathrm{SE}-z_{0.95})-1$. Repeated-CV predictions are averaged before bootstrapping, so the intervals reflect sampling of questions for a fixed, split-averaged predictor; the seed-to-seed SD of the pooled AUC is reported separately and is below $0.004$ everywhere.
+
+\section{Full results}
+\label{app:tables}
+\small
+\input{sink_tables_auc_full.tex}
+{\tiny\setlength{\tabcolsep}{2.5pt}\input{sink_tables_tests_full.tex}}
+\normalsize
+
+\section{Mistral-7B}
+\label{app:mistral}
+\MISTRALAPPENDIX
+
+\section{Relation to accuracy-level audits, and cost}
+\label{app:legacy}
+Audits of attention-graph PH that stop at classification accuracy observe four facts that the theory now explains: (i) $0$D persistence equals an MST statistic (Fact~\ref{fact:mst}); (ii) $1$D persistence adds little beyond $0$D (Table~\ref{tab:tests}, column ``1D $\mid$ 0D''), which Theorem~\ref{thm:cone} now explains; (iii) the $1$D bank of Mistral-7B under its \texttt{[INST]} format is $99.99\%$ zeros, which is exactly the coned regime; (iv) HaluEval answers are separable from text alone.
+
+\paragraph{Cost.} \TIMINGPARAGRAPH

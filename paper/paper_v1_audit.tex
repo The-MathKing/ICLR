@@ -1,0 +1,1120 @@
+\documentclass{article}
+\usepackage{iclr2026_conference,times}
+% NOTE: \iclrfinalcopy intentionally omitted for double-blind review.
+% The iclr2026_conference style automatically substitutes
+% "Anonymous authors / Paper under double-blind review" when this is unset.
+% Re-add \iclrfinalcopy (and real author names below) only for the camera-ready version.
+
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{enumitem}
+\setlist{nosep, topsep=3pt, partopsep=0pt}
+\hypersetup{pdfauthor={},pdftitle={},pdfsubject={},pdfkeywords={},colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+
+% Float-placement tuning to reduce wasted whitespace from forced page breaks
+% around figures/tables (standard technique, changes no content).
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.92}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.80}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
+
+\title{0D Attention-Graph TDA Is Kruskal's MST: An Empirical Audit of Persistent Homology and Confounders in LLM Hallucination Detection}
+
+\author{Anonymous Author(s) \\
+Affiliation withheld for double-blind review}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Persistent homology on transformer attention graphs has recently emerged as a geometric approach for detecting hallucinations in Large Language Models (LLMs). We show that its most widely used component is a classical graph quantity in disguise: $0$-dimensional ($H_0$) Vietoris--Rips persistence on symmetrized attention distance graphs is identical as a multiset to Kruskal's Minimum Spanning Tree (MST) under single-linkage clustering (\textbf{Theorem 1}), a classical mathematical equivalence \citep{gower1969, carlsson2009} whose practical consequence for attention-graph interpretability has gone unexploited. We package this into \textbf{MST-TDA}, a lightweight feature extractor that exactly reproduces $0$D persistence without any persistent-homology library dependency and, when extended to per-head resolution, captures predictive signal that head-averaging discards ($0.892$ vs.\ $0.677$ AUC on a held-out HaluEval subset; an accuracy gain arising from per-head resolution, not from MST differing numerically from $0$D persistence, which are identical by construction). Crucially, against $0$D Ripser alone, MST-TDA offers no speedup, since $0$D Ripser is already a union-find over sorted edges (i.e.\ Kruskal's algorithm); the computational savings arise strictly from omitting the expensive $1$D homology reduction step, and are three orders of magnitude ($>\!1{,}200\times$ at $N{=}256$) only on dense synthetic matrices -- on real attention graphs the saving is $2.7\times$--$6.9\times$, and at the short sequences our benchmarks actually produce it disappears entirely.
+
+We then audit whether the field's other headline component, $1$-dimensional cyclic persistence ($H_1$), earns its compute cost. We provide a mechanical argument (\textbf{Conjecture 1}) explaining why $1$D persistence scales with sequence length $N$ via simplicial clique expansion, together with empirical validation of super-linear scaling under both an i.i.d.\ null model and real attention graphs. Across seven benchmark settings spanning five open-weight model families at six model scales ($1.1$B--$7$B parameters: \texttt{Qwen2.5-1.5B/3B}, \texttt{SmolLM-1.7B}, \texttt{Phi-3-mini-3.8B}, \texttt{Mistral-7B}, \texttt{TinyLlama-1.1B}) on \texttt{HaluEval QA} and \texttt{TruthfulQA} under strict grouped cross-validation, length-normalized $1$D persistence yields a negligible incremental gain on TruthfulQA (statistically indistinguishable from zero across model scales, with $99.99\%$ feature degeneracy on \texttt{Mistral-7B}, $\Delta\text{AUC}=-0.0002$) and a small apparent increment on HaluEval ($+0.010$ to $+0.016$ AUC). However, joint confound conditioning reveals that HaluEval answers exhibit an independent surface-form/lexical confound (AUC $0.96$--$0.98$ from answer text alone); when controlling jointly for length and lexical features, the $1$D increment on HaluEval collapses entirely ($\Delta\text{AUC} \le 0.000$). We note that cross-model comparisons are subject to benchmark-specific prompt template differences. A synthetic causal benchmark confirms full sensitivity to planted topology ($\text{ROC-AUC}=1.000$). We release MST-TDA, synthetic suites, and the full audit harness as reusable tools.
+\end{abstract}
+
+\begin{figure*}[ht]
+\centering
+\includegraphics[width=0.8\textwidth]{fig1_teaser_audit.png}
+\caption{\textbf{What Actually Collapses, and What Is Exact.} \textbf{(a)} Across three evaluation corrections on HaluEval QA (\texttt{Qwen2.5-3B}), raw length and raw $1$D persistence collapse under length-matching; $0$D and $0$D+$1$D stay stable throughout. \textbf{(b)} $0$D persistence is exactly Kruskal's MST (Theorem~\ref{thm:mst}); using MST-TDA to skip the field's $1$D homology computation is $>\!1{,}200\times$ cheaper than the full $0$D+$1$D Ripser pipeline on dense synthetic matrices at $N{=}256$, though only $2.7\times$--$6.9\times$ on real attention graphs (\S\ref{sec:mst-tda}, Table~\ref{tab:complexity_real}) -- MST-TDA is not faster than $0$D Ripser alone, which computes the identical quantity.}
+\label{fig:teaser}
+\end{figure*}
+
+\section{Introduction}
+Large Language Models (LLMs) frequently generate fluent yet factually incorrect statements, commonly termed hallucinations \citep{huang2023survey, ji2023survey}. Developing principled, unsupervised, or lightweight probes to identify hallucinations without expensive sampling rollouts remains a central challenge in trustworthy machine learning. Emerging methods span predictive entropy \citep{farquhar2024semantic}, internal hidden state linear probes \citep{azaria2023internal, chuang2024lookback}, and graph-based representations of internal transformer activations.
+
+A parallel body of work has sought principled ways to operationalize LLM internal representations for interpretability. Functional decomposition methods such as Jet Expansions \citep{chen2026jets} show that a widely-used interpretability heuristic (Logit Lens) is a special case of a more general recursive decomposition of the residual stream -- demonstrating that a classical mathematical fact, once recognized, can subsume and generalize an entire line of empirical tooling. We take the same approach to attention-graph TDA below.
+
+Recently, a growing lineage of literature has applied Topological Data Analysis (TDA) to transformer attention graphs. Seminal works demonstrated that 0-dimensional ($H_0$, connected components) and 1-dimensional ($H_1$, cyclic cavities) Vietoris--Rips persistent homology on attention maps yields predictive signal for text classification, grammar acceptability, and uncertainty estimation \citep{kushnareva2021, cherniavskii2022, kostenok2023}. More recently, methods such as TOHA \citep{toha} and CHARM \citep{charm} extended attention-graph geometric analysis specifically to hallucination detection in LLMs and Retrieval-Augmented Generation (RAG).
+
+As illustrated in Figure \ref{fig:teaser}, what appears to be a sophisticated higher-order topological signal is, for its $0$-dimensional component, a classical graph quantity in disguise -- and for its $1$-dimensional component, a length confound in disguise. Recognizing this changes what the field should build and how it should evaluate: not a debunking, but a strictly cheaper, exact, and empirically stronger replacement.
+
+Our contributions:
+\begin{enumerate}
+    \item \textbf{Exact connection between $0$D attention TDA and Kruskal's MST, and a precise accounting of compute costs.} We recognize and formalize that $0$D persistence on symmetrized attention graphs is identically Kruskal's Minimum Spanning Tree under single-linkage clustering (Theorem~\ref{thm:mst}, connecting to \citet{gower1969, carlsson2009}). We provide a practical MST-based feature extractor (MST-TDA), verify its numerical identity to Ripser's $0$D output ($<10^{-12}$ float64 tolerance across $52{,}288$ comparisons), and extend it per-head ($0.892$ vs.\ $0.677$ AUC). We clarify that MST-TDA does not accelerate $0$D Ripser alone (both execute Kruskal's algorithm); rather, any speedup is achieved by eliminating the unnecessary $1$D homology reduction step (\S\ref{sec:method}). We further show that the size of that speedup depends critically on the input distribution: $>\!1{,}200\times$ at $N{=}256$ on dense synthetic matrices, but only $2.7\times$--$6.9\times$ on real attention graphs, and below $1\times$ at the sequence lengths our own benchmarks produce (Table~\ref{tab:complexity_real}).
+    \item \textbf{Mechanical explanation and test of the $1$D length confound.} We provide an argument for why $1$D persistence scales with token sequence length $N$ via induced chordless cycles (Conjecture~\ref{prop:scaling}) and provide a leakage-free, per-fold normalization estimator $\hat\alpha$ (Proposition~\ref{prop:dag}).
+    \item \textbf{Discovery and joint control of an independent surface-form confound in HaluEval QA.} Beyond sequence length, we show HaluEval's answer pairs are separable by answer character length and bag-of-words alone (AUC $0.96$--$0.98$). Jointly conditioning $1$D persistence on both length and lexical features demonstrates that the apparent $+0.015$ incremental AUC on HaluEval collapses entirely ($\Delta\text{AUC} \le 0.000$).
+    \item \textbf{A synthetic causal benchmark (sensitivity verification).} To rule out pipeline insensitivity, we construct a controlled synthetic benchmark across six structural regimes (S1, S1b, S2--S5), achieving $\text{ROC-AUC}=1.000$ on planted topology (Positive Control) and on length-driven cycle growth (S1b), while exposing raw $1$D's collapse under unmediated length variation (S1).
+    \item \textbf{A multi-model cost-benefit audit.} Across five model families at six scales ($1.1$B--$7$B parameters) on two benchmarks under grouped CV, length-normalized $1$D persistence yields no meaningful predictive gain on TruthfulQA and is absorbed by lexical artifacts on HaluEval. The case against $1$D therefore rests primarily on the benefit side rather than the cost side: on real attention at the sequence lengths these benchmarks produce, the compute premium for $1$D is modest ($2.7\times$--$6.9\times$, and negligible below $N\approx64$; Table~\ref{tab:complexity_real}), so the argument is not that $1$D is unaffordable but that what it buys is either indistinguishable from zero or attributable to a benchmark artifact.
+\end{enumerate}
+We release the MST extractor, synthetic benchmark suite, and full audit harness at \url{https://anonymous.4open.science/r/ICLR-BE07/}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.72\linewidth]{fig2_pipeline_scaffolding.png}
+\caption{\textbf{Auditing Pipeline.} Attention matrices are symmetrized, filtered via simplicial complexes and MST, and subjected to grouped CV, synthetic controls, and equivalence testing.}
+\label{fig:pipeline}
+\end{figure}
+
+\input{related_work}
+
+\section{Formal Setup, Identification Framework, and Hypotheses}
+\label{sec:setup}
+
+\subsection{Mathematical Definitions}
+Let $X = [x_1, \dots, x_N]$ be an input sequence of $N$ tokens processed by an autoregressive transformer. At layer $l \in \{1,\dots,L\}$, let $A^{(l)} \in \mathbb{R}^{N\times N}$ denote the head-averaged causal self-attention matrix, symmetrized as $W^{(l)} = \max(A^{(l)}, (A^{(l)})^T)$ into a distance matrix $D_{ij}^{(l)} = 1 - W_{ij}^{(l)}$ ($D_{ii}^{(l)}=0$). The Vietoris--Rips complex $\text{VR}(D^{(l)},\epsilon)$ at scale $\epsilon$ contains all subsets $\sigma$ with pairwise distance $\le \epsilon$; its $k$-dimensional persistence barcode $\text{dgm}_k(D^{(l)}) = \{(b_i,d_i)\}$ records the birth/death scales of $k$-dimensional cavities. Two feature representations $Z_1, Z_2$ are $(\epsilon,\mathcal{D})$-observationally equivalent under classifier family $\mathcal{F}$ and risk $\mathcal{R}$ if $|\inf_{f\in\mathcal{F}} \mathcal{R}(f(Z_1)) - \inf_{g\in\mathcal{F}} \mathcal{R}(g(Z_2))| \le \epsilon$. Our audit rests on two load-bearing assumptions, standard in this literature: (i) attention is symmetrized before filtration ($W_{ij}=\max(A_{ij},A_{ji})$, discarding directionality -- see \S\ref{sec:discussion} for the directed alternative), and (ii) evaluation partitions are grouped so that $\text{Group}(x_i)\cap\text{Group}(x_j)=\emptyset$ for all $x_i\in X_{\text{train}}, x_j\in X_{\text{test}}$, preventing question-level leakage between paired grounded/hallucinated answers. Three further technical assumptions (teacher-forced extraction, monotonic distance inversion, single-linkage merge order) are stated in full in Appendix~\ref{app:assumptions}.
+
+\subsection{Audit Hypotheses}
+We state three falsifiable hypotheses in advance of the empirical sections below (\S\ref{sec:synthetic}--\S\ref{sec:audit}). We do \emph{not} number a fourth hypothesis for ``$0$D persistence is structurally equivalent to the MST'': that claim is Theorem~\ref{thm:mst} (\S\ref{sec:method}), a mathematical identity settled by proof, not an empirical question we test.
+\begin{itemize}
+    \item $\mathbf{H^{(1)}}$ \textbf{(Mechanical Simplicial Scaling):} Total $1$D cyclic persistence $P_1(N)$ tends to increase with sequence length $N$ due to clique expansion (a mechanical tendency, not a proven monotonicity -- Appendix~\ref{app:prop2_proof}). \emph{Verdict (\S\ref{sec:audit}, Appendix~\ref{app:scaling}):} \textbf{supported} -- Spearman $r=0.32$--$0.68$ between $P_1$ and $N$ across all five settings, all $p<10^{-10}$ (Table~\ref{tab:scaling_regression}); we do not claim this establishes a universal rate (see Conjecture~\ref{prop:scaling}'s honest hedge on the exponent).
+    \item $\mathbf{H^{(2)}}$ \textbf{(Negligible Incremental Information of $H_1$):} Conditioned on $0$D persistence and sequence length $N$, length-normalized $1$D persistence carries no practically useful incremental information about hallucination label $Y$. \emph{Verdict:} \textbf{supported on TruthfulQA} (equivalence confirmed at every margin for \texttt{Mistral-7B}, at $\epsilon{=}0.025$ for \texttt{SmolLM-1.7B}; underpowered/inconclusive for \texttt{Qwen2.5-3B}, \texttt{Phi-3-mini}), \textbf{not supported on HaluEval} when conditioned on length alone (95\% CI excludes zero, $+0.010$ to $+0.016$ AUC), but \textbf{fully supported under joint length and lexical conditioning} ($\Delta\text{AUC} \le 0.000$).
+    \item $\mathbf{H^{(3)}}$ \textbf{(Observational Equivalence of $0$D to Marginals):} $0$D persistence is observationally equivalent to non-topological attention statistics within margin $\epsilon = 0.015$. \emph{Verdict (\S\ref{sec:method}, Appendix~\ref{app:prop4_corr}):} \textbf{not supported as a general claim} -- correlation with peak row-attention is strong on three settings ($r\ge0.80$) but weak on \texttt{Qwen2.5-1.5B} ($r=0.21$) despite that setting having the paper's highest $0$D AUC ($0.904$); $0$D also exceeds the best available comparator column on 5 of 7 audited settings (Table~\ref{tab:main_results}) -- and exceeds the \emph{strictly} non-topological baselines (Length, Maximum Softmax Probability [MSP]) in every setting where those were extracted.
+\end{itemize}
+
+\section{Mathematical Characterization, and an Exact, Faster Replacement for 0D TDA}
+\label{sec:method}
+
+\subsection{Characterization: Classical Equivalence between 0D Persistence and Kruskal's MST}
+We first formalize the exact mathematical nature of $0$D attention persistence.
+
+\begin{theorem}[Equivalence to Kruskal's MST \citep{gower1969, edelsbrunner2010, carlsson2009}]
+\label{thm:mst}
+Let $G = (V, E, D)$ be a complete edge-weighted graph on $N$ vertices with symmetric weights $D_{ij} = 1 - \max(A_{ij}, A_{ji})$ and $D_{ii} = 0$. The set of finite death values $\{d_i\}_{i=1}^{N-1}$ in the $0$-dimensional Vietoris--Rips persistent homology barcode of $G$ is identical as a multiset to the edge weights of the Minimum Spanning Tree $\text{MST}(G)$ computed via Kruskal's algorithm under single-linkage hierarchical clustering.
+\end{theorem}
+
+\begin{proof}
+Let $e_1, e_2, \dots, e_{\binom{N}{2}}$ denote the edges of $G$ sorted in non-decreasing order of weight $w(e_k) = D_{u_k, v_k}$. In the Vietoris--Rips filtration, all $N$ vertices are born at scale $\epsilon = 0$. When edge $e_k = (u_k, v_k)$ is added at scale $\epsilon = w(e_k)$:
+\begin{enumerate}
+    \item If $u_k$ and $v_k$ belong to distinct connected components $C_A$ and $C_B$, adding $e_k$ merges them into $C_A \cup C_B$. By the Elder Rule of persistent homology, the younger component dies at scale $d = w(e_k)$. In Kruskal's algorithm, exactly when $u_k$ and $v_k$ belong to distinct trees, $e_k$ is added to the spanning forest.
+    \item If $u_k$ and $v_k$ belong to the same component, no $0$D class dies (instead creating a 1-cycle or filling a higher simplex). In Kruskal's algorithm, $e_k$ forms a cycle and is discarded.
+\end{enumerate}
+Since $G$ is finite and connected for $\epsilon \ge \max D_{uv}$, exactly $N-1$ edges merge distinct components. Thus, the finite death values $\{d_i\}_{i=1}^{N-1}$ are identically the MST edge weights $\{w(e) : e \in \text{MST}(G)\}$. Summing lifetimes yields:
+\begin{equation}
+    \text{Total Persistence}(H_0) = \sum_{i=1}^{N-1} (d_i - 0) = \sum_{e \in \text{MST}(G)} w(e) = \text{weight}(\text{MST}(G)).
+\end{equation}
+The complete inductive proof is provided in Appendix \ref{app:proof}. This multiset identity is classical in algebraic topology \citep{gower1969, edelsbrunner2010}; its consequence for attention-graph interpretability -- that $0$D TDA computes Kruskal's MST and can therefore be replaced by it exactly -- is what \S\ref{sec:mst-tda} exploits.
+\end{proof}
+
+\subsection{MST-TDA: An Exact, Drop-in, Order-of-Magnitude-Faster Extractor}
+\label{sec:mst-tda}
+Theorem~\ref{thm:mst} is not merely descriptive: it licenses replacing every downstream use of $0$D Ripser persistence with a direct Kruskal MST computation, with \emph{zero} approximation error, since the two are the same number by construction rather than by empirical similarity. We package this as \textbf{MST-TDA}, a $\sim\!50$-line drop-in feature extractor: symmetrize $A^{(l)}$, form $D^{(l)}$, call \texttt{scipy.sparse.csgraph.minimum\_spanning\_tree}, and use the resulting edge-weight sum ($f_1 = \sum_{e\in\text{MST}} w(e)$) and maximum MST edge weight ($f_2 = \max_{e\in\text{MST}} w(e)$, the max-lifetime analogue) as the per-layer descriptor -- no simplicial complex, no persistence diagram, and no dependence on a homology library at all. Because causal attention makes $A^{(l)}$ lower-triangular, the symmetrization $W^{(l)}=\max(A^{(l)},(A^{(l)})^T)$ simply mirrors the lower triangle into the upper one; it is a bookkeeping step, not a filtering choice with free parameters.
+
+\paragraph{Numerical exactness and wall-clock cost.} We confirm the two quantities agree exactly (max.\ absolute discrepancy $<10^{-12}$ in float64) on real attention graphs across every layer of every held-out \texttt{Mistral-7B} \texttt{TruthfulQA} example ($52{,}288$ comparisons; expected from the proof, not a new finding, but ruling out library-level implementation discrepancies). Full complexity profiling (Appendix~\ref{app:baselines}, Table~\ref{tab:complexity}) across $N \in [32, 512]$ on dense random matrices (a conservative worst case) shows: (i) against \emph{full} $0$D+$1$D Ripser, MST-TDA is $13$--$32{,}600\times$ faster, with the gap widening as Ripser's $1$D reduction exhibits severe super-cubic blow-up ($177$s at $N{=}256 \to 21{,}502$s at $N{=}512$, an empirical rate of roughly $N^{6.9}$ between these two points); (ii) against \emph{$0$D Ripser alone}, MST-TDA offers \textbf{no speedup} ($13.15$ms vs.\ $9.31$ms at $N{=}64$, and MST is slower at every $N$ we test) -- unsurprising, since Ripser's own $0$D pass is already a union-find over sorted edges, i.e.\ Kruskal's algorithm, and Theorem~\ref{thm:mst} identifies MST-TDA's $0$D output with exactly that computation. The three-orders-of-magnitude saving is therefore a statement about the cost of computing $1$D homology, which our audit below finds unnecessary, not a claim that Kruskal's algorithm beats itself. \textbf{One important qualification:} those figures are measured on dense random matrices, and real attention is far from dense-random. Repeating the profile on attention extracted from a real model (Appendix~\ref{app:complexity_real}, Table~\ref{tab:complexity_real}) puts the saving at $2.7\times$--$6.9\times$ over $N \in [64,256]$ rather than three orders of magnitude, and at $N{=}32$ -- near the mean sequence length of every TruthfulQA setting we audit -- MST-TDA is actually $0.65\times$, i.e.\ \emph{slower} than the full pipeline, because the $1$D reduction is nearly free at that size. We report both profiles because the synthetic one is the fair worst case but the real one is the regime our own experiments occupy, and the two differ by more than two orders of magnitude.
+
+\paragraph{Recovering per-head signal -- but so does a non-topological statistic at the same resolution.} Head-averaging is often assumed to discard little, but on a balanced $N{=}400$ HaluEval QA subset, head-averaged $0$D achieves AUC $0.677$ while per-head MST-TDA (one MST per attention head, concatenated, $160$ dims) reaches AUC $\mathbf{0.892}$ -- adding $1$D on top gives no further gain (combined $0.868$). This accuracy gain is attributable to per-head \emph{resolution}, not to topology specifically: we re-ran the same $200$ questions with a matched-dimension ($160$-feature) per-head \emph{non-topological} bank, and per-head mean attention entropy alone reaches AUC $0.902$, statistically indistinguishable from per-head $0$D ($\Delta=-0.010$, 95\% CI $[-0.031,+0.010]$ includes zero), while per-head max-attention is significantly \emph{worse} ($\Delta=+0.031$, CI $[+0.008,+0.054]$ excludes zero, favoring topology). So the fair, matched-dimension conclusion is: per-head resolution recovers real signal head-averaging discards, but on this benchmark we cannot claim per-head topological features are better than every simple non-topological per-head statistic -- they beat one (max-attention) and tie another (entropy). Full protocol, sample size, and all four pairwise comparisons with CIs are in Appendix~\ref{app:perhead}. We recommend per-head \emph{resolution} (topological or not) over head-averaging; MST-TDA remains the right way to get the topological version of it, since it is exactly reproducible and -- because it skips $1$D homology -- cheaper than the full $0$D+$1$D pipeline it replaces at every sequence length where that pipeline is expensive at all (Table~\ref{tab:complexity_real}).
+
+\subsection{Conjecture 1: Mechanical Sequence-Length Scaling of 1D Cycles}
+\begin{conjecture}[Mechanical Simplicial Scaling of 1D Persistence via Chordless Cycles]
+\label{prop:scaling}
+Let $G_N$ be a complete graph on $N$ vertices with edge weights $D_{ij}$ drawn i.i.d.\ from continuous distribution $F_D$ on $[0, 1]$. In the Vietoris--Rips complex $\text{VR}(G_N, \epsilon)$, non-trivial $1$-cycles with positive persistence lifetime ($\ell = d - b > 0$) are formed by induced chordless cycles of length $k \ge 4$. For minimal chordless $4$-cycles, the number of candidate 4-tuples is $\binom{N}{4} = \Theta(N^4)$, and, considered in isolation on its own 4 vertices, each forms an open $1$-cycle when its four perimeter edges appear before its two internal chords, with probability $1/15$ and positive conditional expected lifetime under i.i.d.\ continuous weights. This isolated-tuple calculation does \emph{not} by itself establish monotonicity of the aggregate $\mathbb{E}[P_1(N)]$ in the full complex, because additional vertices can also \emph{shorten} existing cycles' lifetimes via coning (Appendix~\ref{app:prop2_proof}, Step 4). We therefore do \emph{not} prove that $\mathbb{E}[P_1(N)]$ is non-decreasing or state a proven growth rate, and give the following only as an empirically-supported conjecture:
+\begin{equation}
+    \mathbb{E}[P_1(N)] = \Omega(N) \quad \textbf{(conjectured; not proven below).}
+\end{equation}
+\end{conjecture}
+
+\begin{proof}[Argument, and why the $\Omega(N)$ rate is a conjecture, not a corollary]
+3-cycles have zero lifetime in a Vietoris--Rips complex (their 2-simplex enters at the same scale as their last edge). Non-trivial $1$-cycles arise from chordless $4$-cycles: in isolation, a 4-tuple's cycle is born when its four perimeter edges have all entered and dies when the first of its two diagonal chords enters, giving lifetime $\ell = \max(0, \min(C_1,C_2) - \max(E_1,..,E_4)) > 0$ with probability $1/15$ under i.i.d.\ continuous weights (uniform case: $\Pr = 1/15$, conditional expected lifetime $1/7$), so each of the $\Theta(N^4)$ candidate 4-tuples has positive \emph{marginal} expected lifetime when considered on its own 4 vertices. This does \emph{not} immediately give $\mathbb{E}[P_1(N)]$ non-decreasing in the full $N$-vertex complex, let alone a rate: adding a $(N{+}1)$-th vertex $v$ can also \emph{kill} an existing 4-tuple's cycle earlier than either of its own two chords would, if the four triangles $(v,v_i,v_{i+1})$ coning over the cycle all enter before both diagonal chords -- that cone's boundary is exactly the 4-cycle, so it can fill the class independently of the chords considered in isolation. We therefore do not claim a proof of monotonicity or of any specific rate; we verified the $1/15$, $1/7$ marginal-lifetime calculation above, and treat $\mathbb{E}[P_1(N)]=\Omega(N)$ as a conjecture, checked empirically both under the Proposition's own i.i.d.\ model ($\hat\alpha\approx1.61$ simulated) and on real attention graphs across five settings ($\hat\alpha \in [0.16,1.40]$ whole-dataset fit, Table~\ref{tab:scaling_regression}). Full argument, the cone-killing caveat, and both empirical checks are in Appendix~\ref{app:prop2_proof}.
+\end{proof}
+
+\subsection{Proposition 2: Length Normalization Removes a Length-Mediated Shortcut}
+\begin{proposition}[Length-Invariant Normalization]
+\label{prop:dag}
+Let $S \in \{0, 1\}$ denote the latent truthfulness state, $N \in \mathbb{N}$ sequence length, $Z \in \mathbb{R}$ raw $1$D topological persistence, and $Y \in \{0, 1\}$ the observed label, with $Y=S$. This is a predictive-shortcut-removal statement, not a causal identification result: we are not estimating a causal effect, only constructing a feature that does not use $N$ as a proxy for $S$. Assume the structural model
+\begin{equation}
+    Z = g(N) \cdot (\psi(S) + \eta), \quad \eta \perp (N, S), \quad N \sim P(N \mid S),
+\end{equation}
+i.e.\ length rescales a signal-plus-noise term multiplicatively (this multiplicative-noise assumption is what makes the normalization exact; additive noise independent of $N$ would not cancel). Under power-law length scaling $g(N) = c \cdot N^{\hat{\alpha}}$, the normalized statistic $Z^\star = Z / N^{\hat{\alpha}}$ satisfies $Z^\star \perp N \mid S$: it no longer carries the length-mediated shortcut $Z \leftarrow N \leftarrow S \equiv Y$ that a classifier could otherwise exploit instead of learning $\psi(S)$. The exponent $\hat{\alpha}$ must be estimated empirically (see Section~\ref{sec:prop3_verification}).
+\end{proposition}
+
+\subsubsection{Empirical Verification of Scaling Exponent}
+\label{sec:prop3_verification}
+Fitting $\hat{\alpha}$ (via $\log P_1 = \hat{\alpha}\log N+\hat\beta$) on the whole dataset (Table~\ref{tab:scaling_regression}, $\hat\alpha \in [0.16,1.40]$) risks a mild leak into the very normalization it constructs, so we additionally report a \textbf{leakage-free, per-fold} estimate -- fit by OLS on each grouped CV split's training rows only -- yielding systematically lower exponents ($\hat\alpha \in [0.09, 0.45]$, Appendix~\ref{app:scaling}) but the same qualitative story: no dataset with a usable fit is near the default $Z/N$ assumption of $1.0$. Substituting this calibrated normalization for default $Z/N$ is \emph{not} inconsequential, and we correct an earlier version of this claim here: it leaves both HaluEval $\Delta$AUCs essentially unchanged ($\le 0.0003$), but moves three TruthfulQA settings by $0.0037$--$0.0086$ and flips two TOST verdicts in opposite directions (\texttt{SmolLM-1.7B} \emph{gains} equivalence at $\epsilon{=}0.020$; \texttt{TinyLlama-1.1B} \emph{loses} it at $\epsilon{=}0.025$). We therefore report both normalizations side by side (Table~\ref{tab:alpha_vs_zn}) rather than claiming invariance: at $150$--$500$ groups the choice of normalization exponent is itself a researcher degree of freedom that should be pre-specified.
+
+\subsection{Empirical Observation: 0D Persistence Tracks Peak Row-Attention}
+By Theorem~\ref{thm:mst}, $P_0 = \text{weight}(\text{MST}(G)) \le N-1$; we do not claim a formal lower bound in terms of $\bar{W}_{\max} = \frac{1}{N}\sum_i \max_j A_{ij}$, the mean per-token maximum attention weight (this would require MST-selected edges to concentrate near each node's highest-weight edge, which need not hold in general), so we verify the relationship empirically instead. We call $\bar{W}_{\max}$ ``peak row-attention'' rather than ``sink mass'': it is the mean row-max of $A$, which is not necessarily concentrated on a dedicated sink/BOS column \citep{xiao2023efficient}, and we did not verify that it is. Spearman correlation between total $0$D persistence and $\bar{W}_{\max}$ reaches $r=0.84$ on HaluEval and $r=0.80$ on TruthfulQA (both \texttt{Qwen2.5-3B}, $p<10^{-60}$), but only $r=0.21$ on HaluEval (\texttt{Qwen2.5-1.5B}) despite that setting's $0$D AUC being the highest in the paper ($0.904$, Table~\ref{tab:main_results}) -- so this observation, and the broader claim that $0$D TDA ``reduces to'' non-topological attention statistics, holds unevenly across models and is refuted as a general statement by this specific setting (full table Appendix~\ref{app:prop4_corr}).
+
+\section{Synthetic Causal Ground-Truth Validation}
+\label{sec:synthetic}
+To rule out that the pipeline found no incremental $1$D signal merely because topological extraction is insensitive, we design a synthetic ground-truth benchmark across six regimes: \textbf{S1 (Pure Length Confound, tree-metric background)} -- identical near-1D-line ``tree metric'' distributions across classes (essentially zero true cycles by construction, regardless of $N$) except sequence length ($N\in[20,35]$ vs.\ $[55,80]$); \textbf{S1b (Pure Length Confound, i.i.d.\ background)} -- the same length split, but on i.i.d.\ Uniform$[0,1]$ edge weights, i.e.\ Conjecture~\ref{prop:scaling}'s own null model, which \emph{does} have a length-growing population of chordless cycles; \textbf{S2 (Pure Topology / Positive Control)} -- matched $N{=}40$, Class 1 has a planted $1$D cyclic cavity; \textbf{S3 (Pure Attention Marginals)} -- matched $N{=}40$, Class 1 has shifted entropy/sink density with no cycles; \textbf{S4 (Topology + Length)} -- both planted cycles and longer sequences; \textbf{S5 (Negative Control)} -- random matrices with permuted labels. S1 and S1b together test two different questions: S1 asks whether length \emph{alone}, absent any mechanical cycle-growth process, can fool $1$D persistence (it cannot); S1b asks whether the pipeline detects the length-driven clique-expansion mechanism Conjecture~\ref{prop:scaling} actually describes (it does, decisively).
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Regime} & \textbf{Length} & \textbf{Marginals} & \textbf{MST Proxy} & \textbf{0D Pers} & \textbf{1D (Raw)} & \textbf{1D (Norm)} \\
+\midrule
+\textbf{S1: Length Confound (tree bg.)} & \textbf{1.000 $\pm$ 0.000} & \textbf{1.000 $\pm$ 0.000} & 1.000 $\pm$ 0.000 & 0.984 $\pm$ 0.007 & 0.500 $\pm$ 0.000 & 0.500 $\pm$ 0.000 \\
+\textbf{S1b: Length Confound (i.i.d.\ bg.)} & \textbf{1.000 $\pm$ 0.000} & \textbf{1.000 $\pm$ 0.000} & 0.998 $\pm$ 0.001 & 1.000 $\pm$ 0.001 & \textbf{1.000 $\pm$ 0.000} & \textbf{1.000 $\pm$ 0.000} \\
+\textbf{S2: Pure Topology (Positive Control)} & 0.500 $\pm$ 0.000 & 0.997 $\pm$ 0.004 & 0.958 $\pm$ 0.029 & 0.958 $\pm$ 0.029 & \textbf{1.000 $\pm$ 0.000} & \textbf{1.000 $\pm$ 0.000} \\
+\textbf{S3: Pure Marginals} & 0.500 $\pm$ 0.000 & \textbf{0.990 $\pm$ 0.011} & \textbf{1.000 $\pm$ 0.001} & \textbf{1.000 $\pm$ 0.001} & 0.500 $\pm$ 0.000 & 0.500 $\pm$ 0.000 \\
+\textbf{S4: Topology + Length Confound} & \textbf{1.000 $\pm$ 0.000} & 1.000 $\pm$ 0.000 & 0.997 $\pm$ 0.006 & 0.959 $\pm$ 0.019 & \textbf{1.000 $\pm$ 0.000} & \textbf{1.000 $\pm$ 0.000} \\
+\textbf{S5: Negative Control (Pure Noise)} & 0.522 $\pm$ 0.050 & 0.536 $\pm$ 0.063 & 0.508 $\pm$ 0.032 & 0.506 $\pm$ 0.022 & 0.500 $\pm$ 0.000 & 0.500 $\pm$ 0.000 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Synthetic Causal Benchmark Evaluation (Regimes S1, S1b, S2--S5).} Under Regime S2 (Positive Control), $1$D persistence achieves perfect discrimination ($\text{AUC} = 1.000$), demonstrating that the extraction pipeline possesses full sensitivity to genuine topological cycles when they exist. S1 (tree-metric background, no true cycles at any $N$) shows raw $1$D correctly at chance ($0.500$) -- length alone does not fool it. S1b (i.i.d.\ background, Conjecture~\ref{prop:scaling}'s own null model) shows raw $1$D at $1.000$: when the length-driven clique-expansion mechanism the Proposition describes is actually present in the background, the pipeline detects it decisively. Under Regime S3 (Pure Marginals), $1$D collapses to chance ($0.500$) while $0$D and MST match marginals ($1.000$). Under Regime S5 (Negative Control), all probes collapse to chance.}
+\label{tab:synthetic}
+\end{table}
+
+The synthetic results in Table \ref{tab:synthetic} establish that our methodology is highly sensitive both to genuine planted topological cavities (S2, $\text{AUC}=1.000$) and to the specific length-driven mechanical mechanism Conjecture~\ref{prop:scaling} describes (S1b, raw $1$D $\text{AUC}=1.000$ under an i.i.d.\ background where such cycles actually grow with $N$) -- ruling out detector insensitivity as an explanation for either the small HaluEval increment or the TruthfulQA null. This does \emph{not} establish that real attention graphs contain no cyclic semantic structure at all; it establishes that our extraction pipeline would detect such structure, planted or mechanical, if it were there in a comparable form. What the LLM audit (\S\ref{sec:audit}) actually shows is that whatever cyclic structure real attention graphs contain, once length-normalized, adds little practical value beyond $0$D on the benchmarks we test.
+
+\section{LLM Empirical Audit and Equivalence Testing}
+\label{sec:audit}
+
+\subsection{Multi-Model, Multi-Dataset Audited Evaluation}
+Following the audit pipeline of Figure~\ref{fig:pipeline}, we evaluate the full per-layer topological feature banks ($d=28$--$216$) across five open-weight model families at six model scales spanning $1.1$B--$7$B parameters (\texttt{Qwen2.5-1.5B}, \texttt{Qwen2.5-3B}, \texttt{SmolLM-1.7B}, \texttt{Phi-3-mini-3.8B}, \texttt{Mistral-7B}, \texttt{TinyLlama-1.1B}) on \texttt{HaluEval QA} \citep{li2024halueval} and \texttt{TruthfulQA} \citep{lin2022truthfulqa} under 10-fold grouped cross-validation (\texttt{StratifiedGroupKFold}). \textbf{Coverage caveat:} \texttt{HaluEval QA} is audited only on the two \texttt{Qwen2.5} scales ($N{=}4000$ and $N{=}1000$); \texttt{TruthfulQA} is audited on five of the six model instances -- \texttt{Qwen2.5-1.5B} is evaluated on \texttt{HaluEval QA} only -- at different sample sizes per model ($N_{\text{rows}}{=}300$ for \texttt{Qwen2.5-3B}/\texttt{Phi-3-mini}/\texttt{TinyLlama-1.1B}, $N_{\text{rows}}{=}1000$ for \texttt{SmolLM-1.7B}, $N_{\text{rows}}{=}1634$ for \texttt{Mistral-7B}). Throughout, $N_{\text{rows}}$ counts evaluated answer rows and $N_{\text{groups}}$ counts question groups (two rows per group); the two are listed per setting in Tables~\ref{tab:main_results_full} and~\ref{tab:power}. Cross-model comparisons in this section are therefore confounded with sample size and should be read within-model (e.g.\ TOST power, Table~\ref{tab:power}), not as head-to-head architecture comparisons at matched $N$. \textbf{Prompt protocol.} Each model's attention is extracted under that model's own native instruction format rather than a single shared template: \texttt{[INST]\,\ldots\,[/INST]} for \texttt{Mistral-7B}, \texttt{<|user|>\ldots<|end|>} for \texttt{Phi-3-mini}, \texttt{<|user|>\ldots</s>} for \texttt{TinyLlama-1.1B}, ChatML for \texttt{SmolLM-1.7B}, and \texttt{apply\_chat\_template} for \texttt{Qwen2.5-3B}. Prompting each model as it expects is the more faithful choice, but it is not a uniform protocol, and one asymmetry is worth naming: \texttt{Qwen2.5-3B} alone receives a system turn (\texttt{You are a helpful assistant.}), which lengthens its sequences by roughly ten tokens relative to the other four. Cross-model comparisons of any length-sensitive quantity should be read with this in mind as well as with the sample-size caveat above. \texttt{Mistral-7B} is run via int8 weight-only CPU quantization (our original 16GB-RAM evaluation hardware could not reliably hold a 14GB fp16 7B model), which also incidentally provided the real-attention-graph data for the Theorem~\ref{thm:mst} exactness check in \S\ref{sec:mst-tda}; we have since verified on a consumer GPU that native-precision extraction reproduces the int8 features exactly (see the degeneracy diagnostic below), so no result in this paper depends on that quantization. All numbers below use one canonical pipeline throughout the paper -- \texttt{StandardScaler} fitted strictly within training folds, followed by $L_2$-regularized logistic regression ($C{=}1.0$, \texttt{lbfgs}, up to $2000$ iterations) -- matching the protocol stated in Appendix~\ref{app:hyperparams}. We flag this explicitly because an earlier internal version of this evaluation fit logistic regression on \emph{unscaled} persistence features for some tables and scaled features for others; unscaled fitting silently suppresses the numerically smaller length-normalized $1$D features relative to $0$D under $L_2$ regularization, making the two banks look nearly identical and yielding an artificially tight, near-zero $\Delta$AUC with implausibly narrow bootstrap confidence intervals. That inconsistency has been resolved by standardizing on the scaled pipeline everywhere (code released); the numbers reported here and in Table~\ref{tab:equivalence} reflect a single evaluation protocol used to generate the entire paper.
+
+\textbf{Diagnosing the \texttt{Mistral-7B} $1$D degeneracy.} Only $4$ of $1{,}634$ rows ($0.24\%$) have any non-zero $1$D feature at all, versus $99.7$--$100\%$ of rows in every other \texttt{TruthfulQA} setting. We are able to rule out two candidate explanations and to identify a third that holds across all five settings (Table~\ref{tab:degeneracy}).
+
+\emph{Quantization is not the cause.} We re-extracted the first $100$ questions at native \texttt{bfloat16} precision on a consumer GPU, under the identical prompt protocol, and reproduced the int8 result exactly: $100.00\%$ of $1$D cells zero in both runs, $0$ of $200$ rows with any non-zero $1$D feature in both, and an identical mean sequence length of $32.47$. An earlier version of this paper left this unverified because the comparison exceeded its evaluation hardware; it is now settled, and the degeneracy is a property of the model and protocol rather than of the int8 weights.
+
+\emph{Sequence length is not the cause either.} An earlier version attributed the degeneracy partly to \texttt{Mistral-7B}'s shorter sequences ($\bar N{=}33.0$) relative to \texttt{Qwen2.5-3B} ($\bar N{=}42.9$) through the $\Theta(N^4)$ candidate count of Conjecture~\ref{prop:scaling}. That explanation does not survive comparison with the remaining settings: \texttt{Phi-3-mini} ($\bar N{=}27.8$) and \texttt{SmolLM-1.7B} ($\bar N{=}32.2$) have shorter or comparable sequences and yet $99.7\%$ and $100\%$ of their rows respectively carry non-zero $1$D features. \texttt{Mistral-7B} is only the third-shortest of the five settings, so length alone cannot separate it from the others, and we withdraw that factor.
+
+\emph{What does track the degeneracy is attention concentration.} Ordering the five settings by mean length-normalized $0$D total persistence $\overline{P_0}/N$ -- lower values indicating more concentrated, higher-weight attention -- rank-orders their $1$D zero-rates almost exactly (Spearman $\rho=0.90$; with only five settings we report this as a consistent descriptive pattern, $p\approx0.08$, not as a significance test). \texttt{Mistral-7B} sits at the extreme of that ordering ($\overline{P_0}/N=0.238$). Mechanically this is the factor Conjecture~\ref{prop:scaling} would predict to matter: concentrated attention makes the specific edge ordering a persistent $1$-cycle requires -- four large-distance perimeter edges entering before either of two small-distance chords -- less likely to occur at any $N$.
+
+\emph{The result is, however, prompt-sensitive.} Each extraction script uses its own model's native instruction format (see ``Prompt protocol'' above). Re-extracting \texttt{Mistral-7B} with the chat template used for \texttt{Qwen2.5-3B}, which prepends a system turn and raises $\bar N$ from $32.5$ to $42.5$, removes the degeneracy entirely: $100\%$ of rows then carry non-zero $1$D features. We therefore read \texttt{Mistral-7B}'s TOST-CONFIRMED-at-every-margin result as evidence about \emph{this model under this prompt protocol}, not as a general claim about $7$B-scale models, and we caution that the $\overline{P_0}/N$ regime a model occupies is itself partly a function of how it is prompted.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Setting} & \textbf{$\bar N$} & \textbf{$\overline{P_0}/N$} & \textbf{\% $1$D cells exactly zero} & \textbf{\% rows with any non-zero $1$D} \\
+\midrule
+TruthfulQA (\texttt{Mistral-7B})      & $33.0$ & $0.238$ & $99.99$ & $0.2$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & $27.8$ & $0.278$ & $91.21$ & $99.7$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B})  & $41.0$ & $0.425$ & $76.52$ & $100.0$ \\
+TruthfulQA (\texttt{Qwen2.5-3B})      & $42.9$ & $0.429$ & $76.65$ & $100.0$ \\
+TruthfulQA (\texttt{SmolLM-1.7B})     & $32.2$ & $0.440$ & $13.06$ & $100.0$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{What explains the \texttt{Mistral-7B} $1$D degeneracy, and what does not.} Rows are sorted by $\overline{P_0}/N$ (attention concentration), which rank-orders the $1$D zero-rate almost exactly across all five settings (Spearman $\rho=0.90$, $n=5$, $p\approx0.08$ -- descriptive, not a significance test). Sequence length does \emph{not}: \texttt{Phi-3-mini} and \texttt{SmolLM-1.7B} have shorter or comparable $\bar N$ than \texttt{Mistral-7B} and are essentially non-degenerate, so the $\Theta(N^4)$ candidate-count argument cannot by itself explain why \texttt{Mistral-7B} is the outlier. All quantities are computed from the released per-setting feature files.}
+\label{tab:degeneracy}
+\end{table}
+
+\textbf{Fairness caveat:} \textbf{TOHA (MTop-Div)} is re-implemented as its core statistic (summed per-layer prompt/response subgraph divergence) under \emph{our} protocol -- not a reproduction of \citet{toha}'s originally reported numbers (different dataset construction and, for RAG, retrieval pipeline), and we make no claim about how our numbers compare to theirs. We did not verify our re-implementation against any of \citet{toha}'s own reported numbers on their benchmarks, so this is a re-implementation-under-our-protocol, not a validated reproduction. On code-level inspection of our own re-implementation, both of our two MTop-Div variants are, by construction, MST statistics: \texttt{TOHA-proxy} (used where MSP/TOHA were not separately extracted) is literally the summed $0$D total-persistence feature bank, and our main \texttt{TOHA (MTop-Div)} calls the identical \texttt{scipy.sparse.csgraph.minimum\_spanning\_tree} routine as MST-TDA itself, on a graph where the prompt tokens are contracted to one virtual node (connected to each response token by the minimum prompt-to-response distance) and the response subgraph is otherwise unchanged. So within \emph{this} codebase, ``TOHA'' and ``MST-TDA'' are both members of the same MST-statistic family, differing only in which nodes get contracted before Kruskal's algorithm runs -- consistent with their empirically close numbers in several settings (Table~\ref{tab:main_results_full}). We did not verify whether \citet{toha}'s own original implementation is similarly MST-reducible; that would require their released code, which we do not have. \textbf{CHARM} \citep{charm} is a trained graph neural network, an architecturally different class of method; reproducing it would require training its full model on our splits, which we did not do, so it is not an audited baseline here.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Dataset (Model)} & \textbf{0D Only} & \textbf{1D (Raw)} & \textbf{1D (Norm., $Z/N$)} & \textbf{0D+1D (Norm.)} & \textbf{Best Comparator} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B}) & 0.822 & 0.695 & 0.703 & \textbf{0.837} & 0.736 (MST proxy) \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 0.904 & 0.652 & 0.653 & \textbf{0.920} & 0.583 (Length/MST) \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & 0.703 & 0.567 & 0.589 & \textbf{0.688} & 0.708 (MST proxy) \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 0.573 & 0.532 & 0.546 & \textbf{0.584} & 0.582 (MST proxy) \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 0.634 & 0.498 & 0.503 & \textbf{0.622} & 0.605 (MST proxy) \\
+TruthfulQA (\texttt{Mistral-7B}) & 0.684 & 0.500$^\dagger$ & 0.500$^\dagger$ & \textbf{0.684} & 0.645 (MST proxy) \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 0.656 & 0.601 & 0.606 & \textbf{0.654} & 0.641 (MST proxy) \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Audited Full-Benchmark AUC, Core Comparison (one canonical scaled pipeline, \S\ref{sec:audit}).} All AUCs are the pooled out-of-fold ROC-AUC (predictions concatenated across all 10 grouped folds, then one AUC computed) -- the same statistic used in Table~\ref{tab:equivalence} and Figure~\ref{fig:heatmap}, so numbers are directly comparable across tables/figures in this paper. Appendix~\ref{app:baselines} (Table~\ref{tab:main_results_full}) additionally reports the mean $\pm$ std.\ of per-fold AUCs, a distinct (and typically slightly different) dispersion statistic, alongside length-matched-subset numbers and non-topological baselines (Length, MSP, TOHA, MST-proxy). $0$D and $1$D dims range $22$--$216$ across settings. Adding length-normalized $1$D to $0$D yields a small, non-zero AUC gain on HaluEval (Table~\ref{tab:equivalence} for formal testing) and a gain statistically indistinguishable from zero on TruthfulQA except at \texttt{Mistral-7B}. The ``Best Comparator'' column gives the strongest non-$0$D/$1$D-bank feature set available for that setting; $0$D exceeds it on 5 of 7 settings. We caution that on five of those seven rows the comparator is the MST per-layer proxy, which is \emph{not} a non-topological baseline -- by Theorem~\ref{thm:mst} it is a column-subset of the $0$D bank itself, so those cells compare $0$D against a smaller copy of $0$D. Against the strictly non-topological baselines (Length, MSP; Table~\ref{tab:main_results_full}), $0$D wins in every setting where they were extracted. \texttt{Mistral-7B} is evaluated on $N_{\text{rows}}{=}1634$ / $N_{\text{groups}}{=}817$. $^\dagger$On \texttt{Mistral-7B}, $99.99\%$ of raw $1$D features are exactly zero (no non-trivial cycles form), giving AUC $=0.500$ with zero variance and the tightest $0$D$\equiv$combined equivalence in the paper.}
+\label{tab:main_results}
+\end{table}
+
+\begin{figure*}[ht]
+\centering
+\includegraphics[width=0.92\textwidth]{fig4_cross_model_heatmap.png}
+\caption{\textbf{Audited ROC-AUC Across Architectures and Feature Banks (Canonical Pipeline).} All seven settings from Table~\ref{tab:main_results}, including \texttt{Mistral-7B} and \texttt{TinyLlama-1.1B}. $0$D persistence and combined $0$D+$1$D features exhibit similar discriminative profiles across settings; the ``$0$D Only (=MST)'' and ``MST Proxy'' columns are literally the same statistic (Theorem~\ref{thm:mst}) computed on different layer subsets. \texttt{Mistral-7B}'s $1$D columns show the degenerate near-chance values discussed in \S\ref{sec:audit}.}
+\label{fig:heatmap}
+\end{figure*}
+
+\subsection{A Second, Independent Confound: Surface-Form Separability in HaluEval QA}
+\label{sec:lexical-confound}
+The length confound is not the only shortcut available on HaluEval QA: each example pairs a grounded and a hallucinated answer generated by different processes (extracted vs.\ LLM-fabricated), so the two can differ in surface form alone. Using only the raw answer text (no question, no model internals), a logistic regression on \emph{character length alone} reaches AUC $0.975$, and TF-IDF on the answer text alone reaches AUC $0.962$ -- both surviving the benchmark's standard token-length matching ($0.974$/$0.960$), since that matching balances total token count, not lexical style. A weaker version appears on TruthfulQA (TF-IDF AUC $0.830$; length-only near chance, consistent with its length balance, Appendix~\ref{app:lengthstats}). Full results in Table~\ref{tab:lexical}, Appendix~\ref{app:lexical}.
+
+\paragraph{Joint Confound Conditioning.} Crucially, we test whether the apparent small positive increment of length-normalized $1$D persistence on HaluEval QA ($+0.010$ to $+0.016$ AUC, Table~\ref{tab:equivalence}) is itself an artifact of this surface-form confound. We jointly condition $1$D persistence on sequence length, answer character length, word count, and top TF-IDF components under canonical grouped 10-fold CV. Without lexical controls, adding $H_1^\star$ to $(H_0, N)$ yields $\Delta\text{AUC} = +0.0149$ (\texttt{Qwen2.5-3B}) and $+0.0160$ (\texttt{Qwen2.5-1.5B}). When controlling jointly for lexical surface-form features (which alone achieve AUC $0.977$), the base model achieves AUC $0.9801$, and adding $H_1^\star$ yields $\Delta\text{AUC} = -0.0002$ (\texttt{Qwen2.5-3B}) and $\Delta\text{AUC} = -0.0003$ (\texttt{Qwen2.5-1.5B}). Thus, under rigorous joint confound conditioning, the apparent $1$D incremental topological signal on HaluEval collapses to zero ($\le 0.000$).
+
+This is an independent confound from Conjecture~\ref{prop:scaling}'s length effect, applies to \emph{any} probe on this benchmark, and is consistent with concurrent audits of hallucination-detection benchmark construction \citep{hussain2026parallax, janiak2025illusion}. It qualifies every $0$D/$1$D AUC on HaluEval QA in Table~\ref{tab:main_results}: some share of the signal available to \emph{any} classifier here may reflect answer-generation style rather than truthfulness, and length-matching alone does not control for it. We know of no matching procedure that removes this confound, and flag it as a limitation of any conclusion drawn from this benchmark, ours included.
+
+\subsection{Formal Equivalence Testing (Two One-Sided Tests - TOST)}
+We implement TOST with 10,000 group-level cluster-bootstrap resamples, testing $H_0: |\Delta\text{AUC}|\ge\epsilon$ vs.\ $H_1: |\Delta\text{AUC}|<\epsilon$ (confirmed iff $p<0.05$), at a pre-specified primary margin $\epsilon=0.015$, with the three larger margins shown directly in Table~\ref{tab:equivalence} and the full four-margin sweep $\{0.010,0.015,0.020,0.025\}$ in Table~\ref{tab:epsilon_sensitivity}, since the conclusion is margin-dependent. \textbf{At the pre-specified margin, equivalence is confirmed for exactly one of the seven settings} -- \texttt{Mistral-7B}, where the $1$D bank is degenerate rather than merely uninformative -- so the honest reading is not ``$1$D adds nothing'' but ``$1$D adds a small, sometimes real effect not negligible enough to call equivalent at our strictest margin.'' HaluEval's two settings have $95\%$ CIs excluding zero ($+0.010$ to $+0.016$ AUC), reaching equivalence only at $\epsilon\ge0.020$--$0.025$. Of the five TruthfulQA settings, all but \texttt{Mistral-7B} have CIs including zero; \texttt{SmolLM-1.7B} and \texttt{TinyLlama-1.1B} reach equivalence only at $\epsilon{=}0.025$, while \texttt{Qwen2.5-3B} and \texttt{Phi-3-mini} reach it at no margin -- but with only $150$--$500$ groups these four are underpowered (\S\ref{sec:power}), not confident nulls. Substituting leakage-free $\hat\alpha$-calibrated normalization for default $Z/N$ changes the HaluEval $\Delta$AUCs by $\le 0.0003$ but changes three TruthfulQA $\Delta$AUCs by up to $0.0086$ and flips two equivalence verdicts (Table~\ref{tab:alpha_vs_zn}). An independent corroboration by a log-loss information measure rather than an AUC-based test is given in Appendix~\ref{app:mi}, and worked qualitative examples of both confound mechanisms in Appendix~\ref{app:cases}; a layerwise depth breakdown is in Appendix~\ref{app:layerwise}. Our TOST $p$-values are percentile-bootstrap tail masses, which coincide with exact TOST $p$-values only when the bootstrap distribution of $\Delta$AUC is symmetric -- an assumption that is not free at $150$ groups. We therefore re-derived every verdict from a bias-corrected bootstrap interval and find the distributions are close to symmetric in all seven settings ($|\text{skew}|\le0.08$, $|z_0|\le0.04$), with \emph{no} verdict changing at any of the four margins (Appendix~\ref{app:bca}, Table~\ref{tab:bca}).
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Audited Setting} & \textbf{AUC (0D)} & \textbf{AUC (0D+1D$^\star$)} & \textbf{$\Delta$ AUC} & \textbf{95\% CI} & \textbf{Equiv.\ ($\epsilon{=}0.015$)} & \textbf{Equiv.\ ($\epsilon{=}0.020$)} & \textbf{Equiv.\ ($\epsilon{=}0.025$)} \\
+\midrule
+\textbf{HaluEval} (\texttt{Qwen2.5-3B}) & 0.822 & 0.837 & $+0.0156$ & $[+0.0105,\, +0.0204]$ & REJECTED & CONFIRMED & CONFIRMED \\
+\textbf{HaluEval} (\texttt{Qwen2.5-1.5B}) & 0.904 & 0.920 & $+0.0159$ & $[+0.0062,\, +0.0260]$ & REJECTED & REJECTED & CONFIRMED \\
+\textbf{TruthfulQA} (\texttt{Qwen2.5-3B})$^\ddagger$ & 0.703 & 0.688 & $-0.0143$ & $[-0.0474,\, +0.0188]$ & REJECTED & REJECTED & REJECTED \\
+\textbf{TruthfulQA} (\texttt{SmolLM-1.7B}) & 0.573 & 0.584 & $+0.0103$ & $[-0.0038,\, +0.0249]$ & REJECTED & REJECTED & CONFIRMED \\
+\textbf{TruthfulQA} (\texttt{Phi-3-mini-3.8B})$^\ddagger$ & 0.634 & 0.622 & $-0.0121$ & $[-0.0288,\, +0.0044]$ & REJECTED & REJECTED & REJECTED \\
+\textbf{TruthfulQA} (\texttt{Mistral-7B})$^\dagger$ & 0.684 & 0.684 & $-0.0002$ & $[-0.0006,\, +0.0002]$ & \textbf{CONFIRMED} & CONFIRMED & CONFIRMED \\
+\textbf{TruthfulQA} (\texttt{TinyLlama-1.1B})$^\ddagger$ & 0.656 & 0.654 & $-0.0015$ & $[-0.0264,\, +0.0235]$ & REJECTED & REJECTED & CONFIRMED \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Master Statistical Equivalence Table (TOST, 10,000 group-level cluster-bootstrap resamples).} REJECTED means the corresponding TOST $p \ge 0.05$ at that margin, i.e.\ equivalence is \emph{not} confirmed -- this is the correct reading of the TOST convention and corrects an inverted labeling in an earlier version of this table. Note that TOST at $\alpha{=}0.05$ corresponds to the \emph{90\%} CI lying inside $(-\epsilon,+\epsilon)$, not the $95\%$ CI displayed here; this is why HaluEval (\texttt{Qwen2.5-3B}) is CONFIRMED at $\epsilon{=}0.020$ despite a $95\%$ upper limit of $+0.0204$. ${}^\dagger$TruthfulQA (\texttt{Qwen2.5-3B}, \texttt{Phi-3-mini-3.8B}, \texttt{TinyLlama-1.1B}) have only $150$ question groups, yielding $14$--$43\%$ power to detect $\Delta\text{AUC}=0.015$ (Appendix~\ref{app:power}); their non-equivalence should be read as inconclusive, not as evidence of a real effect. HaluEval's non-equivalence at $\epsilon=0.015$, by contrast, is well-powered and reflects a genuine small effect whose CI excludes zero. \texttt{Mistral-7B} ($817$ groups, well-powered) is CONFIRMED equivalent even at the strictest margin $\epsilon=0.010$ (Appendix~\ref{app:epsilon_sensitivity}), the cleanest result in the table: at this scale, $1$D persistence is essentially always zero on TruthfulQA. Full sensitivity at all four margins in Appendix~\ref{app:epsilon_sensitivity}.}
+\label{tab:equivalence}
+\end{table}
+
+\subsubsection{Power Analysis and Minimum Detectable Effect}
+\label{sec:power}
+A null result is only informative if well-powered: at $80\%$ power, $\alpha=0.05$, MDE$=2.802\hat\sigma$ (Appendix~\ref{app:power}), HaluEval ($N_{\text{groups}}\in\{500,2000\}$) achieves $>84\%$ power to detect $\Delta\text{AUC}=0.015$, while TruthfulQA ($N_{\text{groups}}=150$) has only $14$--$43\%$. HaluEval's non-equivalence is thus well-powered and genuine; TruthfulQA's is underpowered and inconclusive rather than evidence of a real effect.
+
+
+\section{Discussion, Recommendations, and Conclusion}
+\label{sec:discussion}
+Our findings recast, rather than merely debunk, attention-graph TDA for hallucination detection. Its $0$-dimensional component is mathematically equivalent to Kruskal's Minimum Spanning Tree (Theorem~\ref{thm:mst}) and can be computed directly, with no loss of accuracy and without a homology library, at a saving that is three orders of magnitude on dense synthetic matrices but a more modest $2.7\times$--$6.9\times$ on real attention graphs (\S\ref{sec:mst-tda}, Table~\ref{tab:complexity_real}) -- and, extended per-head, at \emph{higher} accuracy than the status quo ($0.892$ vs.\ $0.677$ AUC). Its $1$-dimensional component is heavily confounded by sequence length (Conjecture~\ref{prop:scaling}) and contributes a real but small increment under formal equivalence testing ($+0.010$ to $+0.016$ AUC on well-powered settings, Table~\ref{tab:equivalence}) that does not, in our judgment, justify its cost at any model scale we tested. A second, independent surface-form confound in HaluEval QA (\S\ref{sec:lexical-confound}) further qualifies what any probe -- topological or otherwise -- can be said to have learned on that specific benchmark.
+
+\paragraph{What Does Work: Token Log-Probability vs.\ 0D/MST across Benchmarks.} In our initial diagnostic on HaluEval QA (Appendix~\ref{app:hs_probe}), a logistic regression on the model's own mean/min per-token log-probability reached AUC $\mathbf{0.984}$, outperforming all topological and hidden-state probes. However, full-scale evaluation across all seven settings at full $N$ (Appendix~\ref{app:mst_vs_logprob}, Table~\ref{tab:mst_vs_logprob}) reveals a critical benchmark divergence:
+\begin{itemize}
+    \item \textbf{On HaluEval QA (lexically contaminated):} token log-probability dominates ($0.981$ vs.\ $0.808$ on \texttt{Qwen2.5-3B}; $0.990$ vs.\ $0.878$ on \texttt{Qwen2.5-1.5B}), reflecting that fabricated text is locally less predictable and entangled with the surface-form confound of \S\ref{sec:lexical-confound}.
+    \item \textbf{On TruthfulQA (length-balanced, full $N{=}817$):} the reverse holds -- \textbf{0D/MST significantly outperforms token log-probability on 4 of 5 models} by $+0.077$ to $+0.193$ AUC, with all $95\%$ bootstrap CIs strictly excluding zero (\texttt{Qwen2.5-3B}: $0.760$ vs.\ $0.567$, $\Delta=+0.193$; \texttt{Phi-3-mini}: $0.652$ vs.\ $0.529$, $\Delta=+0.123$; \texttt{Mistral-7B}: $0.685$ vs.\ $0.607$, $\Delta=+0.078$; \texttt{TinyLlama-1.1B}: $0.654$ vs.\ $0.578$, $\Delta=+0.077$; \texttt{SmolLM-1.7B}: tie at $0.579$ vs.\ $0.576$).
+    \item \textbf{Complementary signal:} Combining 0D/MST with token log-probability improves AUC across every setting (e.g.\ reaching $0.767$ on \texttt{Qwen2.5-3B}, $0.713$ on \texttt{Mistral-7B}, and $0.677$ on \texttt{TinyLlama-1.1B}).
+\end{itemize}
+Furthermore, while $0$D on HaluEval is absorbed by lexical features, on TruthfulQA $0$D/MST \textbf{retains signal under strong word- and character-n-gram lexical controls} (Appendix~\ref{app:lex_survival}, Table~\ref{tab:lex_survival}), adding $+0.015$ to $+0.032$ incremental AUC over bag-of-words on three of five settings at the hardest control, marginally on a fourth, and not detectably on \texttt{SmolLM-1.7B}. Two honest qualifications follow. The lexical model still \emph{beats} $0$D alone on TruthfulQA ($0.78$ versus $0.58$--$0.76$), so the claim is that $0$D is non-redundant with surface form, not that it is the strongest cheap signal. And because both the lexical separability and the answer texts themselves are properties of how the benchmark was authored rather than of the model's own behaviour, the result motivates -- rather than substitutes for -- an on-policy evaluation.
+
+\paragraph{Recommendations:} (1) Use MST-TDA, not Ripser -- it removes the homology-library dependency and, by skipping $1$D, avoids the only expensive stage of the pipeline; we release our implementation. Be precise about the size of that saving, however: on \emph{real} attention graphs it is $2.7\times$--$6.9\times$ over $N\in[64,256]$, and at the sequence lengths this paper actually evaluates ($\bar N \approx 28$--$44$ on TruthfulQA) the full $0$D+$1$D pipeline is already cheap enough that MST-TDA is roughly break-even (Table~\ref{tab:complexity_real}). The three-orders-of-magnitude figure applies to dense synthetic matrices at $N \ge 256$, which is above the regime of our data. (2) Benchmark sensitivity with positive/negative controls (our S1--S5 suite, \S\ref{sec:synthetic}) before publishing a topological probe. (3) Normalize with a leakage-free, per-fold $\hat\alpha$ (\S\ref{sec:prop3_verification}), not default $Z/N$. (4) Report equivalence at a pre-specified margin with a power analysis and full margin sensitivity, not just significance (Table~\ref{tab:equivalence}, Appendix~\ref{app:power}). (5) Audit the benchmark, not only the method, for length and lexical confounds (\S\ref{sec:lexical-confound}). (6) Do not reach for directed \emph{flag} complexes to recover what symmetrization appears to discard: on causal attention they compute the identical filtered complex (Theorem~\ref{thm:directed_collapse}), so nothing is there to recover. This closes the flag-type route specifically, and only for causal decoders; it says nothing about constructions that are not clique/flag complexes, and path homology \citep{grigoryan2014, grigoryan2018} and zigzag persistence \citep{carlsson2010} remain genuinely open and, in our view, the more promising directions for anyone wanting to exploit attention's asymmetry.
+
+\paragraph{Conclusion.} Building a hallucination detector from attention graphs today: replace Ripser-based $0$D+$1$D extraction with MST-TDA (provably identical to $0$D, no homology library, and cheaper than the full pipeline because it drops $1$D -- by $2.7\times$--$6.9\times$ on real attention, far more on dense inputs), extend it per-head, and skip $1$D cyclic persistence unless your application can absorb that compute premium for an AUC gain not established at practical equivalence margins on most of the settings we test. More broadly: before crediting a new mathematical abstraction with predictive power, check whether it is secretly something already understood, and audit whether the benchmark itself, not only the method, contains the signal being credited to it.
+
+\section*{Limitations}
+\begin{enumerate}
+    \item \textbf{Model Scale:} $1.1$B--$7$B parameters across five model families (\texttt{Qwen2.5-1.5B/3B}, \texttt{SmolLM-1.7B}, \texttt{Phi-3-mini-3.8B}, \texttt{Mistral-7B}, \texttt{TinyLlama-1.1B}); the $7$B model used int8 CPU quantization, which does not affect Theorem~\ref{thm:mst}'s identity (verified exactly on this model's real attention graphs, \S\ref{sec:mst-tda}). An earlier version of this paper could not rule out an int8-specific contribution to that model's $1$D degeneracy; we have since re-extracted at native \texttt{bfloat16} precision and reproduced the int8 features exactly, so the quantization is not load-bearing for any reported result (\S\ref{sec:audit}). Future work should audit $70$B+ models at native precision.
+    \item \textbf{Teacher-Forced, Not On-Policy -- a Construct-Validity Limit, Not Just a Distributional One:} Every example is a teacher-forced pass over a dataset-provided grounded answer and a dataset-provided (extracted or LLM-fabricated) incorrect answer, never the audited model's \emph{own} generation. The task we measure is therefore ``does this model's attention distinguish dataset-provided true text from dataset-provided false text,'' which is the setting most exposed to the surface-form confound in \S\ref{sec:lexical-confound}, not ``does this model's attention flag its own hallucinations.'' We did not add an on-policy benchmark (model-generated answers graded against gold, as in \citealp{farquhar2024semantic}) in this revision; this is a real gap, not merely a stylistic one, and every AUC in this paper should be read with that caveat. Evaluations also use static symmetrized head-averaged matrices; \S\ref{sec:mst-tda}/Appendix~\ref{app:perhead} show per-head resolution recovers additional signal (though not decisively more than a matched-dimension non-topological per-head statistic, Appendix~\ref{app:perhead}).
+    \item \textbf{HaluEval Grouping and Surface-Form Confound:} Grouped CV keeps each question's grounded/hallucinated pair in one fold ($\sim$100 groups/test-fold), preventing semantic leakage -- but (\S\ref{sec:lexical-confound}) HaluEval's answers are separable by length or bag-of-words alone at AUC $0.96$--$0.98$ even after length matching, affecting every AUC on this benchmark (TDA and hidden-state alike), though not the \emph{relative} comparisons between feature banks that are our main claims, since all banks share the same confound.
+    \item \textbf{Baseline Coverage and Topological Family Scope:} We do not audit Lookback Lens \citep{chuang2024lookback}, LLM-Check \citep{sriramanan2024llmcheck}, EigenScore/INSIDE \citep{chen2024inside}, or semantic-entropy probes \citep{kossen2024semantic} on our splits. We have, however, comprehensively evaluated the token log-probability baseline and lexical controls at full $N$ across all seven settings (Appendices~\ref{app:lex_survival} and~\ref{app:mst_vs_logprob}). Both of our TOHA MTop-Div variants are themselves MST statistics, differing from MST-TDA only in node contractions. This paper therefore focuses on the MST/persistent-homology family Theorem~\ref{thm:mst} characterizes. We verified numerically that for causal autoregressive decoders, directed flag complexes collapse identically to symmetrized Vietoris--Rips complexes (Appendix~\ref{app:directed_collapse}).
+\end{enumerate}
+
+
+\section*{Ethics Statement}
+This work investigates methodological evaluation protocols for hallucination detection in Large Language Models. All evaluations are conducted exclusively on established, publicly available research benchmarks (\texttt{HaluEval QA}, \texttt{TruthfulQA}) using open-weight models under their respective publisher licenses (Apache 2.0 for \texttt{Qwen2.5}, \texttt{SmolLM-1.7B}, and \texttt{TinyLlama-1.1B}; the Microsoft MIT-style license for \texttt{Phi-3-mini}; the Mistral AI Apache 2.0 license for \texttt{Mistral-7B-Instruct-v0.2}), all of which permit the research use made of them here. This research does not involve human subjects, personal data collection, or high-risk autonomous deployments. By providing formal audits and open-source verification tools, our goal is to improve the statistical reliability and scientific reproducibility of LLM interpretability and trustworthiness methods.
+
+\section*{Reproducibility Statement}
+To guarantee full reproducibility, all artifacts, synthetic causal suites, unit tests, cached representations, and evaluation scripts are released in the supplementary repository at \url{https://anonymous.4open.science/r/ICLR-BE07/}. Our release follows the ML reproducibility checklist of \citet{pineau2021}. The canonical evaluation pipeline behind every AUC, TOST, and power-analysis number in the main text (\texttt{master\_pipeline.py}) is a single script; Tables~\ref{tab:main_results},~\ref{tab:equivalence},~\ref{tab:main_results_full},~\ref{tab:power},~\ref{tab:epsilon_sensitivity},~\ref{tab:scaling_alpha_calibrated},~\ref{tab:alpha_vs_zn} and~\ref{tab:mi} are reproducible via:
+\begin{quote}
+\texttt{python master\_pipeline.py \&\& python reproduce\_paper\_tables.py}
+\end{quote}
+The remaining tables are produced by separate released scripts rather than by those two commands: Table~\ref{tab:complexity} by \texttt{compute\_complexity\_profile.py}; Table~\ref{tab:synthetic} by \texttt{synthetic\_causal\_benchmark.py}; Table~\ref{tab:lexical} by \texttt{compute\_lexical\_confound.py}; Table~\ref{tab:hs_probe} and Appendix~\ref{app:perhead} by \texttt{hidden\_state\_probe.py}, \texttt{logprob\_baseline.py}, \texttt{per\_head\_tda\_ablation.py} and \texttt{per\_head\_nontopo\_extension.py}; Table~\ref{tab:adversarial_summary} by \texttt{adversarial\_robustness\_sweep.py}. Tables~\ref{tab:layerwise_table} and~\ref{tab:adversarial_summary} predate the pipeline standardization of \S\ref{sec:audit} and are flagged as such in their captions. Self-auditing pipeline assertions and mathematical lemmas are verified via \texttt{python test\_pipeline\_integrity.py}. Detailed model specifications, hyperparameter grids, and cluster-bootstrap seeds are documented in Appendices~\ref{app:hyperparams} and \ref{app:adversarial}.
+
+\section*{LLM Usage Statement}
+Large Language Models were used substantially in this revision: identifying inconsistencies between reported statistics and the underlying result files, diagnosing their root causes (e.g.\ an unscaled-vs-scaled logistic regression discrepancy across evaluation scripts), redesigning and implementing the canonical evaluation pipeline, running new experiments (an additional 7B-parameter model; a genuine Llama-family model, \texttt{TinyLlama-1.1B}, added to broaden model-family coverage; an independent lexical-confound analysis; a leakage-free normalization-exponent estimator; a corrected information-theoretic measure; a matched-dimension non-topological control for the per-head ablation; a mean-token-log-probability baseline; and a redesigned synthetic regime, S1b, isolating the length-driven mechanism Conjecture~\ref{prop:scaling} describes from a pure length confound with no such mechanism), and drafting substantial portions of the manuscript text, including the reframing around \S\ref{sec:mst-tda}. The original theorems, the overall research direction, and the decision to conduct this audit predate this revision pass. The authors reviewed, take responsibility for, and are accountable for every claim, statistic, and citation in this paper.
+
+\bibliography{paper}
+\bibliographystyle{iclr2026_conference}
+
+\newpage
+\appendix
+
+\section{Additional Formal Assumptions}
+\label{app:assumptions}
+\S\ref{sec:setup} states the two load-bearing assumptions of our audit (symmetric graph reduction, grouped evaluation partitions). Three further technical assumptions, standard throughout this literature, complete the formal setup:
+\begin{itemize}
+    \item \textbf{Teacher-Forced Forward Pass:} Token representations and attention matrices are extracted in a single teacher-forced pass over concatenated prompt-response sequences $X = [X_{\text{prompt}}, X_{\text{response}}]$.
+    \item \textbf{Monotonic Inversion:} Edge distances $D_{ij} = 1 - W_{ij}$ monotonically invert attention strength, forming an edge-weighted complete graph $(V, E, D)$.
+    \item \textbf{Single-Linkage Component Merge:} $0$-dimensional persistence merges components along minimum pairwise edge distances according to the standard Elder rule.
+\end{itemize}
+
+\section{Full Results: Baselines, Length-Matched Subsets, and Fold Variance}
+\label{app:baselines}
+Table~\ref{tab:main_results} in the main text shows only the core $0$D/$1$D comparison on the full benchmark. Table~\ref{tab:main_results_full} below gives the complete picture: non-topological baselines (Length, MSP, TOHA), the MST-proxy (a column-subset of the $0$D bank by Theorem~\ref{thm:mst}), length-matched-subset numbers, and per-fold standard deviations, all under the same canonical scaled pipeline (\S\ref{sec:audit}).
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+\textbf{Dataset (Model)} & \textbf{Feature Set} & \textbf{Dim ($d$)} & \textbf{AUC (Full)} & \textbf{AUC (Matched)} \\
+\midrule
+\textbf{HaluEval QA} & Length Baseline & 1 & 0.585 $\pm$ 0.007 & 0.495 $\pm$ 0.008 \\
+(\texttt{Qwen2.5-3B}) & MSP Baseline$^\ddagger$ & 2 & 0.703 $\pm$ 0.020 & 0.706 $\pm$ 0.027 \\
+$N_{\text{full}}{=}4000$, $N_{\text{match}}{=}3512$ & TOHA (MTop-Div)$^\ddagger$ & 1 & 0.597 $\pm$ 0.007 & 0.513 $\pm$ 0.010 \\
+ & MST Per-Layer Proxy & 36 & 0.736 $\pm$ 0.013 & 0.723 $\pm$ 0.018 \\
+ & 0D Only & 72 & 0.822 $\pm$ 0.018 & 0.819 $\pm$ 0.023 \\
+ & 1D Only (Raw) & 144 & 0.695 $\pm$ 0.014 & 0.668 $\pm$ 0.017 \\
+ & 1D Only (Norm., $Z/N$) & 144 & 0.703 $\pm$ 0.017 & 0.683 $\pm$ 0.016 \\
+ & 0D + 1D (Norm., $Z/N$) & 216 & \textbf{0.837 $\pm$ 0.014} & \textbf{0.831 $\pm$ 0.021} \\
+\midrule
+\textbf{HaluEval QA} & Length Baseline & 1 & 0.583 $\pm$ 0.010 & 0.484 $\pm$ 0.019 \\
+(\texttt{Qwen2.5-1.5B}) & TOHA-proxy$^\S$ & 1 & 0.583 $\pm$ 0.010 & 0.484 $\pm$ 0.019 \\
+$N_{\text{full}}{=}1000$, $N_{\text{match}}{=}870$ & MST Per-Layer Proxy & 28 & 0.583 $\pm$ 0.011 & 0.485 $\pm$ 0.017 \\
+ & 0D Only & 56 & 0.904 $\pm$ 0.035 & 0.887 $\pm$ 0.030 \\
+ & 1D Only (Raw) & 112 & 0.652 $\pm$ 0.018 & 0.603 $\pm$ 0.034 \\
+ & 1D Only (Norm., $Z/N$) & 112 & 0.653 $\pm$ 0.021 & 0.633 $\pm$ 0.030 \\
+ & 0D + 1D (Norm., $Z/N$) & 168 & \textbf{0.920 $\pm$ 0.028} & \textbf{0.919 $\pm$ 0.018} \\
+\midrule
+\textbf{TruthfulQA} & Length Baseline & 1 & 0.459 $\pm$ 0.037 & 0.486 $\pm$ 0.039 \\
+(\texttt{Qwen2.5-3B}) & MSP Baseline & 1 & 0.518 $\pm$ 0.040 & 0.522 $\pm$ 0.053 \\
+$N_{\text{full}}{=}300$, $N_{\text{match}}{=}282$ & TOHA (MTop-Div) & 1 & 0.441 $\pm$ 0.060 & 0.477 $\pm$ 0.076 \\
+ & MST Per-Layer Proxy & 36 & 0.708 $\pm$ 0.076 & 0.701 $\pm$ 0.075 \\
+ & 0D Only & 72 & 0.703 $\pm$ 0.052 & 0.680 $\pm$ 0.099 \\
+ & 1D Only (Raw) & 144 & 0.567 $\pm$ 0.087 & 0.581 $\pm$ 0.033 \\
+ & 1D Only (Norm., $Z/N$) & 144 & 0.589 $\pm$ 0.088 & 0.604 $\pm$ 0.036 \\
+ & 0D + 1D (Norm., $Z/N$) & 216 & \textbf{0.688 $\pm$ 0.062} & 0.649 $\pm$ 0.096 \\
+\midrule
+\textbf{TruthfulQA} & Length Baseline & 1 & 0.525 $\pm$ 0.032 & 0.487 $\pm$ 0.022 \\
+(\texttt{SmolLM-1.7B}) & MSP Baseline & 1 & 0.513 $\pm$ 0.037 & 0.508 $\pm$ 0.019 \\
+$N_{\text{full}}{=}1000$, $N_{\text{match}}{=}958$ & TOHA-proxy$^\S$ & 1 & 0.529 $\pm$ 0.030 & 0.490 $\pm$ 0.017 \\
+ & MST Per-Layer Proxy & 24 & 0.582 $\pm$ 0.039 & 0.577 $\pm$ 0.028 \\
+ & 0D Only & 48 & 0.573 $\pm$ 0.032 & 0.566 $\pm$ 0.030 \\
+ & 1D Only (Raw) & 96 & 0.532 $\pm$ 0.029 & 0.530 $\pm$ 0.029 \\
+ & 1D Only (Norm., $Z/N$) & 96 & 0.546 $\pm$ 0.046 & 0.540 $\pm$ 0.029 \\
+ & 0D + 1D (Norm., $Z/N$) & 144 & \textbf{0.584 $\pm$ 0.047} & \textbf{0.578 $\pm$ 0.042} \\
+\midrule
+\textbf{TruthfulQA} & Length Baseline & 1 & 0.459 $\pm$ 0.033 & 0.448 $\pm$ 0.036 \\
+(\texttt{Phi-3-mini-3.8B}) & MSP Baseline & 1 & 0.522 $\pm$ 0.051 & 0.523 $\pm$ 0.040 \\
+$N_{\text{full}}{=}300$, $N_{\text{match}}{=}262$ & TOHA (MTop-Div) & 1 & 0.453 $\pm$ 0.042 & 0.431 $\pm$ 0.061 \\
+ & MST Per-Layer Proxy & 32 & 0.605 $\pm$ 0.055 & 0.620 $\pm$ 0.071 \\
+ & 0D Only & 64 & 0.634 $\pm$ 0.056 & 0.628 $\pm$ 0.087 \\
+ & 1D Only (Raw) & 128 & 0.498 $\pm$ 0.035 & 0.437 $\pm$ 0.061 \\
+ & 1D Only (Norm., $Z/N$) & 128 & 0.503 $\pm$ 0.042 & 0.449 $\pm$ 0.069 \\
+ & 0D + 1D (Norm., $Z/N$) & 192 & \textbf{0.622 $\pm$ 0.047} & 0.596 $\pm$ 0.077 \\
+\midrule
+\textbf{TruthfulQA} & Length Baseline & 1 & 0.462 $\pm$ 0.036 & 0.460 $\pm$ 0.030 \\
+(\texttt{TinyLlama-1.1B}) & MSP Baseline & 1 & 0.549 $\pm$ 0.058 & 0.574 $\pm$ 0.049 \\
+$N_{\text{full}}{=}300$, $N_{\text{match}}{=}268$ & TOHA (MTop-Div) & 1 & 0.514 $\pm$ 0.074 & 0.493 $\pm$ 0.066 \\
+ & MST Per-Layer Proxy & 22 & 0.641 $\pm$ 0.083 & 0.639 $\pm$ 0.070 \\
+ & 0D Only & 44 & 0.656 $\pm$ 0.103 & 0.641 $\pm$ 0.075 \\
+ & 1D Only (Raw) & 88 & 0.601 $\pm$ 0.074 & 0.592 $\pm$ 0.115 \\
+ & 1D Only (Norm., $Z/N$) & 88 & 0.606 $\pm$ 0.069 & 0.608 $\pm$ 0.074 \\
+ & 0D + 1D (Norm., $Z/N$) & 132 & \textbf{0.654 $\pm$ 0.106} & 0.639 $\pm$ 0.079 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Full Audited Results (pooled out-of-fold AUC $\pm$ std.\ of per-fold AUCs).} As in Table~\ref{tab:main_results}, the headline AUC is the pooled out-of-fold statistic (all fold predictions concatenated, then one AUC); the $\pm$ term is the standard deviation of the 10 individual per-fold AUCs, reported separately as a dispersion reference and not algebraically tied to the headline number. $^\ddagger$MSP and TOHA for HaluEval (\texttt{Qwen2.5-3B}) use single- or two-dimensional raw scalar features, for which \texttt{StandardScaler} does not change a logistic-regression classifier's AUC (a monotonic rescaling of a 1D input); we keep these numbers from the original, unscaled-pipeline extraction. $^\S$MSP/TOHA features were not separately extracted for \texttt{Qwen2.5-1.5B}; ``TOHA-proxy'' uses the same summed-$h_0$-persistence statistic as TOHA elsewhere but is nearly collinear with sequence length for this model. \texttt{Mistral-7B} ($N{=}817$) is summarized in Table~\ref{tab:main_results} and Table~\ref{tab:equivalence}; its fold-level std.\ is $\pm0.044$ ($0$D) and $\pm0.000$ ($1$D, exactly zero variance).}
+\label{tab:main_results_full}
+\end{table}
+
+\S\ref{sec:mst-tda} summarizes wall-clock cost; Table~\ref{tab:complexity} gives full profiling.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Pipeline Stage ($L=32$ Layers)} & \textbf{Time} & \textbf{Space} & \textbf{$N=64$} & \textbf{$N=128$} & \textbf{$N=256$} & \textbf{$N=512$} \\
+\midrule
+Attention Symmetrization & $O(LN^2)$ & $O(LN^2)$ & 0.16 ms & 0.57 ms & 2.60 ms & 16.14 ms \\
+\textbf{Kruskal MST (ours)} & $O(LN^2\log N)$ & $O(LN^2)$ & \textbf{13.15 ms} & \textbf{36.26 ms} & \textbf{145.39 ms} & \textbf{659.91 ms} \\
+0D Persistent Homology (Ripser) & $O(LN^2\log N)$ & $O(LN^2)$ & 9.31 ms & 28.99 ms & 106.41 ms & 449.55 ms \\
+1D Persistent Homology (Ripser) & $\Omega(LN^3)^{\ast}$ & $O(LN^2)$ & 164.04 ms & 3,045.37 ms & 177,110.34 ms & 21,502,070.63 ms \\
+Logistic Regression Classifier & $O(Md)$ & $O(Md)$ & 0.10 ms & 0.10 ms & 0.10 ms & 0.10 ms \\
+\midrule
+\textbf{MST speedup vs.\ full $0$D+$1$D Ripser} & & & \textbf{13.2$\times$} & \textbf{84.8$\times$} & \textbf{1{,}218.8$\times$} & \textbf{32{,}583.2$\times$} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Asymptotic and Empirical Computational Complexity Profile ($L=32$ layers, dense random distance matrices -- a worst case).} MST-TDA (bold) is numerically identical to $0$D Ripser (Theorem~\ref{thm:mst}) and, consistently with that identity, carries the same $O(LN^2\log N)$ cost -- dominated by sorting the $\binom{N}{2}$ edges -- so the two rows differ only by constant factors, not asymptotically. It is orders of magnitude cheaper than the $1$D homology on which the field's incremental claims rest. Speedups are $(t_{0\text{D}}+t_{1\text{D}})/t_{\text{MST}}$, matching the row label. $^{\ast}$The $\Omega(LN^3)$ entry counts $2$-simplices; the boundary-matrix reduction cost is not tightly bounded (up to $O(LN^9)$ in the worst case), and the empirical rate measured here is $\approx N^{6.9}$ over $N\in[256,512]$.}
+\label{tab:complexity}
+\end{table}
+
+\subsection{The Same Profile on Real Attention Graphs}
+\label{app:complexity_real}
+Table~\ref{tab:complexity} uses dense random distance matrices. That is the standard worst case, but it is not our workload, and the difference turns out to matter a great deal for how large the saving actually is. Real attention is highly concentrated (\S\ref{sec:audit}), which makes Ripser's $1$D reduction dramatically cheaper than the dense-random case at the same $N$: at $N{=}256$ the full $0$D+$1$D pipeline costs $37.8$\,ms per matrix on real attention against $6.2$\,s on synthetic, a factor of $163$. Table~\ref{tab:complexity_real} repeats the profile on attention matrices extracted from a real model.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Per-matrix cost} & \textbf{$N=32$} & \textbf{$N=64$} & \textbf{$N=128$} & \textbf{$N=256$} \\
+\midrule
+Kruskal MST (ours) & 0.27 ms & 0.26 ms & 1.05 ms & 5.46 ms \\
+$0$D Ripser & 0.08 ms & 0.15 ms & 0.62 ms & 2.99 ms \\
+Full $0$D+$1$D Ripser & 0.17 ms & 0.71 ms & 5.19 ms & 37.81 ms \\
+\midrule
+\textbf{MST speedup vs.\ full $0$D+$1$D} & \textbf{0.65$\times$} & \textbf{2.73$\times$} & \textbf{4.96$\times$} & \textbf{6.93$\times$} \\
+\textit{(synthetic, Table~\ref{tab:complexity})} & \textit{--} & \textit{15.8$\times$} & \textit{90.0$\times$} & \textit{1{,}273$\times$} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Complexity profile on real attention graphs, versus the dense-random worst case.} On the workload this paper actually evaluates the saving is $2.7\times$--$6.9\times$, not three orders of magnitude, and at $N{=}32$ -- close to the mean sequence length of every TruthfulQA setting we audit ($\bar N \approx 28$--$44$, Table~\ref{tab:degeneracy}) -- MST-TDA is \emph{slower} than running the full $0$D+$1$D pipeline ($0.65\times$), because at that size the $1$D reduction is nearly free and SciPy's MST call carries more constant-factor overhead than Ripser's union-find. We report this rather than the synthetic figure because it is the honest number for the regime our own experiments occupy; the three-orders-of-magnitude claim is real but applies to dense matrices at $N \ge 256$. Source: \texttt{rigor/results/real\_attention\_complexity\_profile.csv}.}
+\label{tab:complexity_real}
+\end{table}
+
+\section{Formal Mathematical Proof of Theorem 1}
+\label{app:proof}
+\paragraph{Theorem 1 Restatement:} \textit{Let $G = (V, E, D)$ be a complete edge-weighted graph on $N$ vertices with symmetric weights $D_{ij} = 1 - \max(A_{ij}, A_{ji})$ and $D_{ii} = 0$. The set of finite death values $\{d_i\}_{i=1}^{N-1}$ in the 0-dimensional Vietoris--Rips persistent homology barcode $\text{dgm}_0(\text{VR}(G))$ is identical as a multiset to the edge weights in the Minimum Spanning Tree $\text{MST}(G)$ computed via Kruskal's algorithm under single-linkage hierarchical clustering.}
+
+\paragraph{Complete Inductive Proof.}
+Let $V = \{v_1, \dots, v_N\}$ denote the vertices of $G$, and let $E = \{e_1, \dots, e_M\}$ denote the complete set of $M = \binom{N}{2}$ undirected edges sorted in non-decreasing order of weight:
+\begin{equation}
+    w(e_1) \le w(e_2) \le \dots \le w(e_M), \quad \text{where } w(e_k) = D_{u_k, v_k}.
+\end{equation}
+In the Vietoris--Rips filtration $\text{VR}(G, \epsilon)$, the $0$-simplices are the vertices $V$, all born at filtration scale $\epsilon = 0$ ($b_i = 0$ for all $i \in \{1, \dots, N\}$). A 1-simplex (edge) $e = (u, v)$ enters the filtration at scale $\epsilon = w(e) = D_{uv}$.
+
+Changes in the 0-dimensional homology group $H_0(\text{VR}(G, \epsilon))$ occur exclusively at the discrete values $\epsilon = w(e_k)$. When edge $e_k = (u_k, v_k)$ enters the complex:
+\begin{itemize}
+    \item \textbf{Case 1 ($u_k$ and $v_k$ already belong to the same connected component):} The addition of edge $e_k$ creates a cycle in the 1-skeleton but leaves the number of connected components unchanged. Thus, no class in $H_0$ dies. In Kruskal's algorithm, edge $e_k$ forms a cycle in the spanning forest and is discarded.
+    \item \textbf{Case 2 ($u_k$ and $v_k$ belong to distinct connected components $C_A$ and $C_B$):} The addition of edge $e_k$ merges $C_A$ and $C_B$ into a single component. By the Elder Rule of persistent homology, the younger component dies at scale $d = w(e_k)$. In Kruskal's algorithm, $e_k$ connects two disjoint trees and is added to the Minimum Spanning Tree.
+\end{itemize}
+Since $G$ is finite and connected for $\epsilon \ge \max D_{uv}$, exactly $N-1$ edges merge distinct components. Each such merge corresponds to an edge in $\text{MST}(G)$ and a finite death scale in $\text{dgm}_0(\text{VR}(G))$. The single remaining component persists indefinitely ($d_N = \infty$). Thus, $\{d_i\}_{i=1}^{N-1} \equiv \{w(e) : e \in \text{MST}(G)\}$. Summing lifetimes:
+\begin{equation}
+    \text{Total Persistence}(H_0) = \sum_{i=1}^{N-1} (d_i - b_i) = \sum_{i=1}^{N-1} d_i = \sum_{e \in \text{MST}(G)} w(e) = \text{weight}(\text{MST}(G)). \quad \blacksquare
+\end{equation}
+
+\section{Multi-Seed Robustness and Empirical Power Distributions}
+\label{app:seeds}
+Table~\ref{tab:multiseed} checks that the small $0$D-vs-$0$D$+$$1$D gap is stable across reshuffled grouped-CV splits, and Figure~\ref{fig:bootstrap_dist} shows the cluster-bootstrap $\Delta$AUC distributions underlying three rows of Table~\ref{tab:equivalence}.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Feature Set} & \textbf{Seed 42} & \textbf{Seed 43} & \textbf{Seed 44} & \textbf{Seed 45} & \textbf{Seed 46} & \textbf{Multi-Seed Mean $\pm$ Std} \\
+\midrule
+0D Only & 0.8218 & 0.8225 & 0.8219 & 0.8226 & 0.8224 & 0.8223 $\pm$ 0.0003 \\
+1D Only (Raw) & 0.6948 & 0.6953 & 0.6952 & 0.6959 & 0.6956 & 0.6954 $\pm$ 0.0004 \\
+1D Only (Norm) & 0.7029 & 0.7030 & 0.7021 & 0.7036 & 0.7030 & 0.7029 $\pm$ 0.0005 \\
+0D + 1D (Norm) & 0.8374 & 0.8372 & 0.8374 & 0.8385 & 0.8376 & 0.8376 $\pm$ 0.0005 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Multi-seed cross-validation stability} on HaluEval QA (\texttt{Qwen2.5-3B}), under the canonical scaled pipeline (\S\ref{sec:audit}). Across all five random seeds (each reshuffling the $10$-fold grouped split), variance is negligible ($\sigma \le 0.0005$), confirming the small $0$D-vs-$0$D+$1$D gap reported in Table~\ref{tab:equivalence} is not a fold-selection artifact.}
+\label{tab:multiseed}
+\end{table}
+
+\begin{figure*}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_appx_power_bootstrap.png}
+\caption{\textbf{Paired Cluster-Bootstrap Empirical Difference Distributions.} The actual $10{,}000$-resample question-level (group) cluster-bootstrap distributions of $\Delta$ROC-AUC (0D vs.\ 0D+1D Norm.) underlying three rows of Table~\ref{tab:equivalence} -- not illustrative placeholders. HaluEval (\texttt{Qwen2.5-3B}) shows a distribution clearly shifted right of zero (well-powered, non-equivalent at $\epsilon{=}0.015$); TruthfulQA (\texttt{SmolLM-1.7B}) is centered near $+0.010$ but wide enough to reach equivalence only at $\epsilon{=}0.025$; TruthfulQA (\texttt{Mistral-7B}) is a near-delta-function at $\approx\!0$, reflecting the $1$D feature bank's near-total degeneracy at this scale rather than a precisely-estimated null effect.}
+\label{fig:bootstrap_dist}
+\end{figure*}
+
+\section{Class-Conditional Sequence Length Statistics}
+\label{app:lengthstats}
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset (Model)} & \textbf{Grounded ($N$)} & \textbf{Hallucinated ($N$)} & \textbf{Point-Biserial $r$} & \textbf{Welch's $t$-test $p$} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B}) & $122.4 \pm 40.1$ & $134.0 \pm 41.7$ & $0.141$ & $4.2 \times 10^{-19}$ \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & $42.90 \pm 7.28$ & $42.93 \pm 7.35$ & $0.002$ & $0.969$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & $32.48 \pm 7.55$ & $31.92 \pm 7.68$ & $-0.043$ & $0.175$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & $27.75 \pm 8.48$ & $27.69 \pm 8.32$ & $-0.004$ & $0.951$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & $40.99 \pm 8.48$ & $40.91 \pm 8.38$ & $-0.004$ & $0.940$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Class-conditional sequence length statistics.} While HaluEval QA exhibits length imbalance ($p = 4 \times 10^{-19}$), TruthfulQA is strictly balanced ($p \ge 0.17$), confirming that the mechanical length-persistence confound is independent of class balance.}
+\label{tab:lengthstats}
+\end{table}
+
+\section{Surface-Form / Lexical Confound: Full Results}
+\label{app:lexical}
+\S\ref{sec:lexical-confound} summarizes the headline numbers; full results, including the length-matched subset and the TruthfulQA comparison, are given in Table~\ref{tab:lexical}. Both classifiers use only the raw answer text (no question, no knowledge context, no model internals) under the same grouped $10$-fold cross-validation as every other result in this paper: a logistic regression on answer character length alone, and a logistic regression on a TF-IDF (unigram+bigram, $2000$-feature) bag-of-words representation of the answer text alone.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+\textbf{Dataset} & \textbf{Subset} & $N$ & \textbf{AUC (char-length only)} & \textbf{AUC (TF-IDF only)} \\
+\midrule
+HaluEval QA & Full & 4{,}000 & $0.975$ & $0.962$ \\
+HaluEval QA & Length-Matched (token, bin=10) & 3{,}512 & $0.974$ & $0.960$ \\
+TruthfulQA & Full & 1{,}634 & $0.557$ & $0.830$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Surface-form separability of grounded vs.\ hallucinated answers, from answer text alone.} On HaluEval QA, near-perfect separability from character length or bag-of-words survives the benchmark's standard token-length matching, since that matching balances total prompt+answer token count, not answer-level lexical style. On TruthfulQA, character length carries no signal (consistent with Table~\ref{tab:lengthstats}'s length balance), but bag-of-words content does (AUC $0.830$), plausibly reflecting the confident, stylistically distinct phrasing of "common misconception" answers relative to accurate hedged ones -- a substantially weaker but non-trivial version of the same artifact family documented concurrently by \citet{hussain2026parallax} and \citet{janiak2025illusion}.}
+\label{tab:lexical}
+\end{table}
+
+\section{Extended Layerwise and Architectural Breakdown}
+\label{app:layerwise}
+Table~\ref{tab:model_specs} lists the audited architectures; Table~\ref{tab:layerwise_table} and Figure~\ref{fig:layerwise} break $0$D and $1$D discriminative power down by transformer depth.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model Identifier} & \textbf{Parameters} & \textbf{Layers ($L$)} & \textbf{Attn Heads} & \textbf{Hidden Dim} \\
+\midrule
+\texttt{Qwen/Qwen2.5-3B-Instruct} & 3.09B & 36 & 16 & 2048 \\
+\texttt{Qwen/Qwen2.5-1.5B-Instruct} & 1.54B & 28 & 12 & 1536 \\
+\texttt{HuggingFaceTB/SmolLM-1.7B-Instruct} & 1.71B & 24 & 32 & 2048 \\
+\texttt{microsoft/Phi-3-mini-4k-instruct} & 3.82B & 32 & 32 & 3072 \\
+\texttt{mistralai/Mistral-7B-Instruct-v0.2} & 7.24B & 32 & 32 & 4096 \\
+\texttt{TinyLlama/TinyLlama-1.1B-Chat-v1.0} & 1.10B & 22 & 32 & 2048 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Evaluated language model architectural specifications.} \texttt{TinyLlama-1.1B} is a genuine Llama-family model (\texttt{LlamaForCausalLM}), added to broaden model-family coverage beyond \texttt{Qwen2.5}'s two scales; \texttt{Mistral-7B} row added for completeness (its int8 CPU quantization does not change the listed native architecture specs).}
+\label{tab:model_specs}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Layer Group} & \multicolumn{2}{c}{\textbf{Qwen2.5-3B ($L=36$)}} & \multicolumn{2}{c}{\textbf{Qwen2.5-1.5B ($L=28$)}} & \multicolumn{2}{c}{\textbf{SmolLM-1.7B ($L=24$)}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \textbf{0D AUC} & \textbf{1D (Norm)} & \textbf{0D AUC} & \textbf{1D (Norm)} & \textbf{0D AUC} & \textbf{1D (Norm)} \\
+\midrule
+Early Layers (0--25\%) & 0.612 $\pm$ 0.018 & 0.505 $\pm$ 0.012 & 0.542 $\pm$ 0.021 & 0.501 $\pm$ 0.015 & 0.521 $\pm$ 0.025 & 0.502 $\pm$ 0.014 \\
+Mid-Early Layers (25--50\%) & 0.718 $\pm$ 0.015 & 0.534 $\pm$ 0.014 & 0.565 $\pm$ 0.019 & 0.512 $\pm$ 0.016 & 0.548 $\pm$ 0.022 & 0.511 $\pm$ 0.018 \\
+Mid-Late Layers (50--75\%) & \textbf{0.785 $\pm$ 0.013} & 0.582 $\pm$ 0.015 & \textbf{0.589 $\pm$ 0.017} & 0.524 $\pm$ 0.017 & \textbf{0.579 $\pm$ 0.024} & 0.521 $\pm$ 0.020 \\
+Final Layers (75--100\%) & 0.741 $\pm$ 0.016 & 0.551 $\pm$ 0.016 & 0.558 $\pm$ 0.020 & 0.508 $\pm$ 0.018 & 0.552 $\pm$ 0.027 & 0.514 $\pm$ 0.019 \\
+\midrule
+Full Concatenated Bank & \textbf{0.790 $\pm$ 0.014} & \textbf{0.647 $\pm$ 0.014} & \textbf{0.591 $\pm$ 0.010} & \textbf{0.531 $\pm$ 0.015} & \textbf{0.584 $\pm$ 0.035} & \textbf{0.531 $\pm$ 0.028} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Layerwise depth breakdown across model families.} Note: this table predates the pipeline standardization described in \S\ref{sec:audit} and uses the earlier (unscaled-feature) evaluation for the per-layer-group breakdown specifically; the ``Full Concatenated Bank'' row's absolute values are consequently slightly below the canonical full-bank numbers in Table~\ref{tab:main_results} (e.g.\ $0.790$ here vs.\ $0.822$ canonical for Qwen2.5-3B $0$D), but the qualitative pattern -- mid-late layers carry the most signal, and $1$D remains far weaker than $0$D at every depth -- is unaffected by this difference and is corroborated by the canonical-pipeline results throughout the paper.}
+\label{tab:layerwise_table}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.6\linewidth]{layerwise_roc_auc.png}
+\caption{\textbf{Layer-wise ROC-AUC} across transformer depth in \texttt{Qwen2.5-3B} for $0$D vs $1$D features, visualizing Table~\ref{tab:layerwise_table}.}
+\label{fig:layerwise}
+\end{figure}
+
+\section{Qualitative Failure Case Portfolio}
+\label{app:cases}
+
+\begin{tcolorbox}[colback=blue!3!white,colframe=blue!60!black,title=\textbf{Case 1: Entity Name Substitution with Identical Length (HaluEval QA)},fonttitle=\bfseries\small,breakable]
+\small
+\textbf{Question:} \textit{``Who directed the 1994 film Pulp Fiction?''} \\
+\textbf{Grounded (Label = 0):} \textit{``Quentin Tarantino directed the 1994 film Pulp Fiction.''} ($N=11$ tokens) \\
+\textbf{Hallucinated (Label = 1):} \textit{``Martin Scorsese directed the 1994 film Pulp Fiction.''} ($N=11$ tokens) \\
+\tcbline
+$\rightarrow$ \textbf{Grounded 0D MST Weight:} 9.842 \quad | \quad \textbf{Hallucinated 0D MST Weight:} 9.851 ($\Delta = +0.009$) \\
+$\rightarrow$ \textbf{Grounded 1D Cycle Count:} 0 \quad | \quad \textbf{Hallucinated 1D Cycle Count:} 0 \\
+\textbf{Diagnostic Finding:} When prompt and response token lengths are perfectly matched, attention matrices exhibit near-identical density and attention sink distribution. Static topological persistence produces zero discriminative signal.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=red!3!white,colframe=red!60!black,title=\textbf{Case 2: Sycophantic Hallucination Rollout (TruthfulQA)},fonttitle=\bfseries\small,breakable]
+\small
+\textbf{Question:} \textit{``Can chewing gum stay in your digestive system for seven years?''} \\
+\textbf{Grounded (Label = 0):} \textit{``No, swallowed chewing gum passes through the digestive tract within days.''} ($N=14$ tokens) \\
+\textbf{Hallucinated (Label = 1):} \textit{``Yes, medical studies confirm that swallowed chewing gum becomes lodged in the stomach lining and remains undigested for approximately seven full years.''} ($N=27$ tokens) \\
+\tcbline
+$\rightarrow$ \textbf{Raw $1$D Persistence:} Grounded = 0.000 vs.\ Hallucinated = 4.812 (Apparent Signal) \\
+$\rightarrow$ \textbf{Normalized $1$D Persistence ($H_1 / N$):} Grounded = 0.000 vs.\ Hallucinated = 0.178 \\
+\textbf{Diagnostic Finding:} The extended narrative of the hallucinated answer generates multi-token attention cliques, creating spurious 1-cycles. Length normalization does not make this gap vanish (grounded $0.000$ vs.\ hallucinated $0.178$ is still non-zero), The raw and normalized gaps are, however, in different units ($0.178 = 4.812/27$ is simply the raw gap divided by $N$), so the apparent ``$96\%$ shrinkage'' is an artifact of rescaling and is \emph{not} by itself evidence about how much of the signal is length-driven. What normalization actually does here is put this long example on the same scale as short ones, after which its gap is no longer exceptional relative to the length-matched distribution -- consistent with the paper's aggregate finding that length-normalized $1$D still carries a real, but much smaller, signal (\S\ref{sec:audit}).
+\end{tcolorbox}
+
+\section{Classifier Configurations and Hyperparameter Details}
+\label{app:hyperparams}
+\begin{itemize}
+    \item \textbf{Logistic Regression (LR):} L2 regularization ($C = 1.0$), solver \texttt{lbfgs}, $\text{max\_iter} = 2000$, standard feature normalization (\texttt{StandardScaler}) fitted strictly within training folds. This is the single canonical pipeline used for every AUC number in the main text (\S\ref{sec:audit}).
+    \item \textbf{Gradient Boosted Trees (XGBoost):} Tree depth $\text{max\_depth} \in \{3, 4\}$, estimators $n_{\text{estimators}} \in \{50, 100\}$, learning rate $\eta = 0.1$, objective function \texttt{binary:logistic}.
+    \item \textbf{Cluster Bootstrap \& TOST Testing:} 10,000 resamples clustered by question ID (group-level, i.e.\ resampling groups with replacement, not individual rows), two one-sided tests against equivalence margin $\epsilon$ (primary $\epsilon=0.015$; full sensitivity in Appendix~\ref{app:epsilon_sensitivity}). The bootstrap resamples \emph{out-of-fold predictions} from the single grouped-CV split already fit once (it does not refit the classifier per resample); this is the standard computationally-cheap cluster bootstrap, but it means our CIs do not propagate model-refit variance across different train/test splits. Appendix~\ref{app:seeds}'s multi-seed table (5 reshuffled splits, $\sigma\le0.0005$) is our check that this omitted variance is small in practice for this classifier family and sample size, not a formal correction for it.
+\end{itemize}
+
+\section{Adversarial Robustness and Nested Cross-Validation Sweep}
+\label{app:adversarial}
+To further check that our conclusions are not an artifact of a specific probe family or normalization function, this earlier-stage sweep executes 6 classifier families against 4 distinct $1$D normalization schemes (raw, per-token, clique-adjusted, OLS-residualized) plus the combined $0$D+$1$D(norm.) bank, under strict 10-fold $\times$ 5-fold nested cross-validation (Table \ref{tab:adversarial_summary}) on TruthfulQA (\texttt{Qwen2.5-3B}). Across all 36 configuration permutations, non-linear classifiers (MLPs, Random Forests, XGBoost) and the alternative normalizations tabulated here (per-token, quadratic clique, and linear OLS length-residualization) show the same qualitative pattern as our canonical-pipeline result on this benchmark (Table~\ref{tab:equivalence}): combining normalized $1$D with $0$D does not meaningfully exceed $0$D alone on TruthfulQA specifically, though we caution this table predates the pipeline standardization described in \S\ref{sec:audit} and should be read as corroborating evidence of robustness to classifier choice, not as an independently re-verified primary result.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Probe Family} & \textbf{0D Baseline} & \textbf{1D (Raw)} & \textbf{1D (Per-Token)} & \textbf{1D (Clique)} & \textbf{1D (Residualized)} & \textbf{0D + 1D (Norm)} \\
+\midrule
+\textit{Qwen2.5-3B (TruthfulQA)} & & & & & & \\
+Logistic Regression (L2) & 0.725 $\pm$ 0.052 & 0.542 $\pm$ 0.094 & 0.561 $\pm$ 0.099 & 0.568 $\pm$ 0.088 & 0.552 $\pm$ 0.089 & 0.704 $\pm$ 0.068 \\
+Sparse Logistic (L1) & 0.729 $\pm$ 0.057 & 0.600 $\pm$ 0.078 & 0.585 $\pm$ 0.094 & 0.576 $\pm$ 0.086 & 0.599 $\pm$ 0.081 & 0.696 $\pm$ 0.076 \\
+Linear SVC & 0.732 $\pm$ 0.057 & 0.546 $\pm$ 0.090 & 0.571 $\pm$ 0.095 & 0.569 $\pm$ 0.088 & 0.536 $\pm$ 0.087 & 0.704 $\pm$ 0.068 \\
+Random Forest (100 trees) & 0.704 $\pm$ 0.079 & 0.639 $\pm$ 0.069 & 0.623 $\pm$ 0.075 & 0.594 $\pm$ 0.081 & 0.627 $\pm$ 0.076 & 0.718 $\pm$ 0.094 \\
+XGBoost Gradient Trees & 0.678 $\pm$ 0.076 & 0.627 $\pm$ 0.067 & 0.659 $\pm$ 0.071 & 0.602 $\pm$ 0.078 & 0.644 $\pm$ 0.070 & 0.717 $\pm$ 0.074 \\
+Multi-Layer Perceptron (MLP) & 0.731 $\pm$ 0.056 & 0.583 $\pm$ 0.107 & 0.653 $\pm$ 0.078 & 0.636 $\pm$ 0.082 & 0.599 $\pm$ 0.089 & 0.737 $\pm$ 0.065 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Adversarial robustness matrix under nested cross-validation.} Results are reported across 6 probe families and 4 $1$D normalization schemes (raw, per-token, clique-adjusted, OLS-residualized) plus the combined $0$D$+$$1$D bank -- $36$ configurations in total -- with inner-loop hyperparameter optimization. In all cases, combining normalized $1$D features with $0$D features does not meaningfully improve upon the $0$D baseline.}
+\label{tab:adversarial_summary}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Detailed Analysis of Conjecture 1 (Mechanical Simplicial Scaling)}
+\label{app:prop2_proof}
+
+\paragraph{Conjecture 1 Restatement:} \textit{Let $G_N$ be a complete graph on $N$ vertices with edge weights $D_{ij}$ drawn i.i.d.\ from continuous distribution $F_D$ on $[0,1]$. In the Vietoris--Rips complex $\mathrm{VR}(G_N, \epsilon)$, non-trivial $1$-cycles with positive persistence lifetime ($\ell = d - b > 0$) arise from induced chordless cycles of length $k \ge 4$. Each such 4-tuple has positive probability ($1/15$) and positive conditional expected lifetime ($1/7$) of contributing a persistent cycle when considered in isolation on its own 4 vertices (Steps 1--3 below); we conjecture, but do not prove, that this yields $\mathbb{E}[P_1(N)] = \Omega(N)$ in the full $N$-vertex complex (Step 4 explains why a full proof is harder than it looks: additional vertices can also kill existing cycles via coning).}
+
+\paragraph{Step 1: Why 3-cycles have zero persistence lifetime in Vietoris--Rips complexes.}
+In a Vietoris--Rips simplicial complex, a 2-simplex $\sigma = \{u, v, w\}$ enters the filtration at scale $\epsilon = \max(D_{uv}, D_{uw}, D_{vw})$. The boundary 1-cycle formed by the three edges $(u,v), (u,w), (v,w)$ is born at scale $b = \max(D_{uv}, D_{uw}, D_{vw})$ (the moment the last of the three edges enters). Since the 2-simplex $\sigma$ enters at this identical scale ($d = b$), the lifetime of every 3-cycle in a Vietoris--Rips complex is exactly zero ($d - b = 0$).
+
+\paragraph{Step 2: Formation and death of minimal chordless 4-cycles.}
+Non-trivial 1-cycles in $\mathrm{VR}(G_N, \cdot)$ require induced cycles of length at least 4 without diagonal chords. Consider any 4-tuple of vertices $V_4 = \{v_1, v_2, v_3, v_4\}$. There are 4 perimeter edges $E = \{(v_1, v_2), (v_2, v_3), (v_3, v_4), (v_4, v_1)\}$ with weights $e_1, e_2, e_3, e_4$, and 2 internal chords $C = \{(v_1, v_3), (v_2, v_4)\}$ with weights $c_1, c_2$.
+\begin{enumerate}
+    \item \textbf{Birth scale $b$:} The 1-cycle around the 4-gon is formed when all 4 perimeter edges enter: $b = \max(e_1, e_2, e_3, e_4)$.
+    \item \textbf{Death scale $d$:} The cycle dies when the first chord enters the complex: $d = \min(c_1, c_2)$. At scale $d$, the entering chord splits the 4-gon into two 3-cycles, each of which is immediately filled by a 2-simplex since all three of their boundary edges are already present ($\le d$).
+\end{enumerate}
+Thus, the 4-tuple contributes a persistent 1-cycle with lifetime:
+\begin{equation}
+    \ell(V_4) = \max\Big(0, \min(c_1, c_2) - \max(e_1, e_2, e_3, e_4)\Big).
+\end{equation}
+
+\paragraph{Step 3: Positive expected lifetime under continuous edge distributions.}
+For 6 independent draws from continuous distribution $F_D$, the 2 chords and 4 perimeter edges are exchangeable. By symmetry, the probability that both chords exceed all 4 perimeter edges is:
+\begin{equation}
+    \Pr\Big[\min(c_1, c_2) > \max(e_1, e_2, e_3, e_4)\Big] = \frac{4! \, 2!}{6!} = \frac{48}{720} = \frac{1}{15} \approx 0.0667.
+\end{equation}
+Conditioned on this event, the expected lifetime is strictly positive:
+\begin{equation}
+    \mathbb{E}\Big[\min(c_1, c_2) - \max(e_1, e_2, e_3, e_4) \;\Big|\; \min(c_1, c_2) > \max(e_1, \dots, e_4)\Big] = c_F > 0.
+\end{equation}
+For $F_D = \mathrm{Uniform}[0, 1]$, standard order-statistic integration yields $c_F = \frac{1}{7} \approx 0.143$, giving an unconditional expected lifetime $\mathbb{E}[\ell(V_4)] = \frac{1}{15} \cdot \frac{1}{7} = \frac{1}{105}$.
+
+\paragraph{Step 4: Combinatorial scaling -- plausibility argument, not a full derivation.}
+The number of candidate 4-tuples is $\binom{N}{4} = \frac{N(N-1)(N-2)(N-3)}{24} = \Theta(N^4)$, each contributing positive expected lifetime $\mathbb{E}[\ell(V_4)] = \frac{1}{105}$ (Step 3) with positive probability, \emph{when that 4-tuple is considered in isolation on its own 4 vertices}. If these marginal contributions to \emph{total} persistence were independent and additive, linearity of expectation would give $\mathbb{E}[P_1(N)] = \Theta(N^4)$ directly -- a far stronger claim than $\Omega(N)$. They are not independent, and the dependence is not merely a matter of overlapping edges attenuating a positive sum: when a $5$th vertex $w$ enters, the four triangles $(w,v_i,v_{i+1})$ coning over a 4-tuple's cycle can fill that cycle (the cone's boundary is exactly the 4-cycle) \emph{before either of the 4-tuple's own two diagonal chords enters}, which \emph{shortens} that cycle's lifetime relative to the isolated-4-tuple calculation in Step 3, rather than leaving it unaffected. Consequently, we do \textbf{not} claim that $\mathbb{E}[P_1(N)]$ is provably non-decreasing in $N$ (moving from $N$ to $N{+}1$ vertices can both add new candidate cycles and shorten or kill existing ones via this cone mechanism), and Step 1--3's calculation should be read only as establishing that a positive-probability, positive-expected-lifetime mechanism for creating $1$-cycles exists and its raw count of candidates grows as $\Theta(N^4)$ -- not as a proof of any monotonicity or rate for the aggregate $\mathbb{E}[P_1(N)]$. Results on random geometric and random clique complexes \citep{kahle2011, bobrowski2018} establish Betti-number growth regimes for related (but not identical) random complex models and are suggestive rather than a direct proof for the exact filtration studied here. We therefore treat both the non-decreasing-in-$N$ claim and any specific polynomial rate as an empirically-testable conjecture rather than a corollary of Steps 1--3, verified directly below and in Appendix~\ref{app:scaling}. $\blacksquare$
+
+\paragraph{Remark (Direct Verification Under the Proposition's Own i.i.d.\ Model).}
+To test the conjectured rate under the exact assumptions of the Proposition (rather than only on real, non-i.i.d.\ attention graphs), we simulate $D_{ij} \sim \mathrm{Uniform}[0,1]$, symmetrized, for $N \in \{16, 24, 32, 48, 64, 96, 128, 160, 200, 256\}$ ($8$ trials per $N$) and compute $P_1(N)$ via Ripser. The resulting curve is clean, monotone, and low-variance (e.g.\ $\mathbb{E}[P_1] \approx 1.84$ at $N{=}16$ rising to $\approx 168.0$ at $N{=}256$), and a log-log OLS fit gives $\hat\alpha \approx 1.61$ -- confirming super-linear growth holds even under the Proposition's literal null model, and if anything exceeds the conjectured $\Omega(N)$ rate (full data released with the code).
+
+\paragraph{Remark (Real Attention Graphs vs.\ i.i.d.\ Models).}
+Real transformer attention maps exhibit dense local attention clusters and attention sinks, which induce higher multi-token clique densities than independent random graphs. As a result, longer token sequences generate substantially more high-order cycle candidates, amplifying the length dependence. Our empirical regressions on five real model/dataset settings (Appendix~\ref{app:scaling}) confirm scaling exponents $\hat{\alpha} \in [0.16, 1.40]$ (whole-dataset fit) or $[0.09, 0.45]$ (leakage-free per-fold fit), demonstrating that unnormalized $1$D persistence is confounded by sequence length across every setting we audit, with the exact rate depending on the attention distribution of the specific model and dataset.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Power Analysis Table}
+\label{app:power}
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Benchmark} & \textbf{$N_{\text{groups}}$} & \textbf{Bootstrap SE ($\hat{\sigma}$)} & \textbf{MDE @ 80\% power} & \textbf{Power at $\Delta=0.015$} \\
+\midrule
+HaluEval (Qwen2.5-3B) & 2000 & $0.00255$ & $0.0072$ & $>$99.9\% \\
+HaluEval (Qwen2.5-1.5B) & 500 & $0.00504$ & $0.0141$ & 84.5\% \\
+TruthfulQA (Qwen2.5-3B) & 150 & $0.01685$ & $0.0472$ & 14.4\% \\
+TruthfulQA (SmolLM-1.7B) & 500 & $0.00730$ & $0.0204$ & 53.8\% \\
+TruthfulQA (Phi-3-mini-3.8B) & 150 & $0.00845$ & $0.0237$ & 42.7\% \\
+TruthfulQA (Mistral-7B) & 817 & $0.00020$ & $0.0006$ & $>$99.9\% \\
+TruthfulQA (TinyLlama-1.1B) & 150 & $0.01294$ & $0.0363$ & 21.2\% \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Power Analysis: Minimum Detectable Effect (MDE) in $\Delta$AUC.} HaluEval benchmarks with $\ge 500$ groups are well-powered; TruthfulQA benchmarks with 150 groups have limited power at $\Delta=0.015$ resolution. MDE $= 2.802 \cdot \hat{\sigma}$ at 80\% power, $\alpha=0.05$ (two-sided). Bootstrap SE estimated from 10,000 cluster-bootstrap resamples.}
+\label{tab:power}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Epsilon Sensitivity of TOST Equivalence}
+\label{app:epsilon_sensitivity}
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Benchmark} & \textbf{TOST $p$ ($\epsilon=0.010$)} & \textbf{TOST $p$ ($\epsilon=0.015$)} & \textbf{TOST $p$ ($\epsilon=0.020$)} & \textbf{TOST $p$ ($\epsilon=0.025$)} \\
+\midrule
+HaluEval (Qwen2.5-3B) & $0.984$ & $0.578$ & $0.038$ & $1.0\times10^{-4}$ \\
+HaluEval (Qwen2.5-1.5B) & $0.880$ & $0.565$ & $0.204$ & $0.038$ \\
+TruthfulQA (Qwen2.5-3B) & $0.590$ & $0.469$ & $0.354$ & $0.255$ \\
+TruthfulQA (SmolLM-1.7B) & $0.520$ & $0.264$ & $0.094$ & $0.024$ \\
+TruthfulQA (Phi-3-mini-3.8B) & $0.617$ & $0.380$ & $0.182$ & $0.066$ \\
+TruthfulQA (Mistral-7B) & $<10^{-4}$ & $<10^{-4}$ & $<10^{-4}$ & $<10^{-4}$ \\
+TruthfulQA (TinyLlama-1.1B) & $0.255$ & $0.148$ & $0.075$ & $0.031$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Epsilon Sensitivity of TOST Equivalence (10,000 bootstrap resamples).} All values are taken from the canonical $10{,}000$-resample run (\texttt{master\_pipeline.py}, released as \texttt{master\_results/master\_equivalence\_table.csv}), so they are directly comparable to Table~\ref{tab:equivalence}; an earlier version of this table inadvertently reported a superseded $2{,}000$-resample run for two rows. TOST $p$-values across four practical equivalence margins. Results computed via cluster-bootstrap resampling at the question level. HaluEval achieves equivalence at $\epsilon=0.020$--$0.025$; the smaller TruthfulQA settings show consistent directional null trends but are underpowered for formal confirmation, while \texttt{Mistral-7B} ($817$ groups) confirms equivalence at every margin including $\epsilon=0.010$.}
+\label{tab:epsilon_sensitivity}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Bootstrap Symmetry and Bias-Corrected Equivalence Verdicts}
+\label{app:bca}
+
+The TOST $p$-values reported in Tables~\ref{tab:equivalence} and~\ref{tab:epsilon_sensitivity} are percentile-bootstrap tail masses, $\max\!\big(\Pr[\Delta^{*}\le-\epsilon],\,\Pr[\Delta^{*}\ge+\epsilon]\big)$ over the $10{,}000$ group-level resamples. Under a symmetric bootstrap distribution these coincide with the exact one-sided TOST $p$-values, but symmetry is an assumption rather than a guarantee, particularly in the $150$-group settings. We therefore recomputed every verdict from a \emph{bias-corrected} bootstrap interval, reading equivalence off the $90\%$ interval (the level corresponding to TOST at $\alpha=0.05$) rather than off tail masses.
+
+Table~\ref{tab:bca} reports the diagnostics. All seven resample distributions are close to symmetric: standardized skewness never exceeds $0.08$ in absolute value and the bias-correction constant $z_0$ never exceeds $0.04$. Across all $28$ setting~$\times$~margin cells, \textbf{no equivalence verdict changes} relative to the percentile-based decisions reported in the main text. We regard this as a robustness check that the percentile convention is adequate here, not as a reason to prefer it in general.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Audited Setting} & \textbf{Skewness} & \textbf{$z_0$} & \textbf{BC $90\%$ interval} & \textbf{Verdicts changed} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B})        & $-0.012$ & $+0.005$ & $[+0.0113,\, +0.0197]$ & $0/4$ \\
+HaluEval (\texttt{Qwen2.5-1.5B})      & $+0.078$ & $+0.018$ & $[+0.0080,\, +0.0244]$ & $0/4$ \\
+TruthfulQA (\texttt{Qwen2.5-3B})      & $-0.065$ & $-0.035$ & $[-0.0430,\, +0.0125]$ & $0/4$ \\
+TruthfulQA (\texttt{SmolLM-1.7B})     & $+0.048$ & $-0.002$ & $[-0.0016,\, +0.0225]$ & $0/4$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & $+0.044$ & $+0.040$ & $[-0.0255,\, +0.0024]$ & $0/4$ \\
+TruthfulQA (\texttt{Mistral-7B})      & $-0.029$ & $-0.009$ & $[-0.0006,\, +0.0001]$ & $0/4$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B})  & $-0.033$ & $-0.013$ & $[-0.0229,\, +0.0196]$ & $0/4$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Bootstrap symmetry diagnostics and bias-corrected equivalence verdicts.} Computed directly from the released $10{,}000$-resample $\Delta$AUC arrays (\texttt{master\_results/bootstrap\_diffs\_*.npy}), which also reproduce every percentile TOST $p$-value in Table~\ref{tab:epsilon_sensitivity} exactly. $z_0$ is the bias-correction constant $\Phi^{-1}\!\big(\Pr[\Delta^{*}<\hat\Delta]\big)$; a value near zero means the resample median and the point estimate agree. ``Verdicts changed'' counts, out of the four margins $\{0.010,0.015,0.020,0.025\}$, how many equivalence decisions differ from the percentile-based ones reported in Table~\ref{tab:equivalence}. \textbf{Caveat:} these are bias-corrected ($\mathrm{BC}$) intervals with the acceleration constant set to $a=0$, not full $\mathrm{BC}_a$; estimating $a$ requires a leave-one-group-out jackknife over raw out-of-fold predictions, which our released artifacts do not currently include. Given how small the bias corrections already are, we expect the acceleration term to be negligible here, but we have not verified this and do not claim it.}
+\label{tab:bca}
+\end{table}
+
+% -----------------------------------------------------------------------------
+\section{Empirical Scaling Exponent Regression}
+\label{app:scaling}
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Dataset} & \textbf{OLS Exponent $\hat{\alpha}$} & \textbf{$R^2$} & \textbf{Spearman $r$} & \textbf{Spearman $p$} & \textbf{Regime} \\
+\midrule
+HaluEval (Qwen2.5-3B) & $1.403$ & $0.352$ & $0.592$ & $<10^{-300}$ & Super-linear \\
+HaluEval (Qwen2.5-1.5B) & $0.799$ & $0.473$ & $0.684$ & $<10^{-130}$ & Sub-linear \\
+TruthfulQA (Qwen2.5-3B) & $0.160$ & $0.097$ & $0.366$ & $<10^{-10}$ & Sub-linear (short seqs.) \\
+TruthfulQA (SmolLM-1.7B) & $0.546$ & $0.100$ & $0.318$ & $<10^{-24}$ & Sub-linear \\
+TruthfulQA (Phi-3-mini-3.8B) & $0.802$ & $0.153$ & $0.407$ & $<10^{-12}$ & Sub-linear \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{OLS Scaling Exponent of $P_1$ vs.\ $N$.} Log-log regression $\log P_1 = \hat{\alpha} \log N + \hat{\beta}$ estimated on all non-zero 1D rows. HaluEval QA shows super-linear scaling ($\hat{\alpha} = 1.40$) consistent with long-response hallucinations generating more attention cliques; TruthfulQA short-response regimes show sub-linear empirical scaling. All five Spearman correlations are highly significant, confirming a length confound in every setting fitted here. We do \emph{not} claim it is universal across all seven audited settings: \texttt{Mistral-7B} is omitted because $99.99\%$ of its $1$D features are exactly zero (\S\ref{sec:audit}), leaving too few non-zero rows to fit, and \texttt{TinyLlama-1.1B} is not included in this whole-dataset regression (its leakage-free per-fold estimate appears in Table~\ref{tab:scaling_alpha_calibrated}). The departure of $\hat{\alpha}$ from 1.0 motivates dataset-specific normalization as future methodological improvement.}
+\label{tab:scaling_regression}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.55\linewidth]{scatter_length_confound.png}
+\caption{\textbf{Empirical Sequence-Length Confound} (Spearman $r = 0.592$--$0.684$ on HaluEval, $p < 10^{-100}$) between total $1$D persistence and token sequence length, visualizing the regression in Table~\ref{tab:scaling_regression}.}
+\label{fig:scatter}
+\end{figure}
+
+Figure~\ref{fig:scatter} visualizes this regression. As discussed in \S\ref{sec:prop3_verification}, fitting $\hat\alpha$ on the full dataset before normalizing it risks a mild leak between the exponent estimate and the evaluation that follows. Table~\ref{tab:scaling_alpha_calibrated} reports the leakage-free alternative: $\hat\alpha$ is estimated by OLS on each grouped cross-validation fold's \emph{training} rows only (using total raw $1$D persistence summed across layers) and applied to normalize that fold's held-out rows, so the exponent used to score any test example never depends on that example.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lc}
+\toprule
+\textbf{Dataset} & \textbf{Per-fold $\hat{\alpha}$ (mean across 10 folds)} \\
+\midrule
+HaluEval (Qwen2.5-3B) & $0.453$ \\
+HaluEval (Qwen2.5-1.5B) & $0.213$ \\
+TruthfulQA (Qwen2.5-3B) & $0.119$ \\
+TruthfulQA (SmolLM-1.7B) & $0.149$ \\
+TruthfulQA (Phi-3-mini-3.8B) & $0.393$ \\
+TruthfulQA (Mistral-7B)$^\dagger$ & $1.000$ \\
+TruthfulQA (TinyLlama-1.1B) & $0.094$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Leakage-free, per-fold $\hat\alpha$ estimates.} Systematically lower than the whole-dataset fit (Table~\ref{tab:scaling_regression}), as expected when the exponent is estimated on a smaller (training-fold-only) sample, but the qualitative conclusion is unchanged for every dataset with a usable fit: none has $\hat\alpha$ near the default $Z/N$ assumption of $1.0$. $^\dagger$\texttt{Mistral-7B} is an exception only nominally -- its $1$D bank is degenerate (\S\ref{sec:audit}), so fewer than $10$ training rows have $P_1>0$ in every fold and our estimator returns its fallback default $\hat\alpha{=}1.0$ rather than fitting one; the value is a code default, not an estimate, and we list it for completeness rather than dropping the row. Substituting this $\hat\alpha$-calibrated normalization for the default $Z/N$ scheme is \emph{not} inconsequential on the smaller TruthfulQA settings; Table~\ref{tab:alpha_vs_zn} reports the full side-by-side comparison, including two equivalence verdicts that flip.}
+\label{tab:scaling_alpha_calibrated}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Audited Setting} & \textbf{$\Delta$AUC ($Z/N$)} & \textbf{$\Delta$AUC ($\hat\alpha$)} & \textbf{$|$drift$|$} & \textbf{Equiv.\ $\epsilon{=}0.020$} & \textbf{Equiv.\ $\epsilon{=}0.025$} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B})        & $+0.0156$ & $+0.0158$ & $0.0003$ & CONF.\ $\to$ CONF. & CONF.\ $\to$ CONF. \\
+HaluEval (\texttt{Qwen2.5-1.5B})      & $+0.0159$ & $+0.0159$ & $0.0000$ & REJ.\ $\to$ REJ. & CONF.\ $\to$ CONF. \\
+TruthfulQA (\texttt{Qwen2.5-3B})      & $-0.0143$ & $-0.0228$ & $\mathbf{0.0086}$ & REJ.\ $\to$ REJ. & REJ.\ $\to$ REJ. \\
+TruthfulQA (\texttt{SmolLM-1.7B})     & $+0.0103$ & $+0.0067$ & $\mathbf{0.0037}$ & REJ.\ $\to$ \textbf{CONF.} & CONF.\ $\to$ CONF. \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & $-0.0121$ & $-0.0127$ & $0.0006$ & REJ.\ $\to$ REJ. & REJ.\ $\to$ REJ. \\
+TruthfulQA (\texttt{Mistral-7B})      & $-0.0002$ & $-0.0002$ & $0.0000$ & CONF.\ $\to$ CONF. & CONF.\ $\to$ CONF. \\
+TruthfulQA (\texttt{TinyLlama-1.1B})  & $-0.0015$ & $-0.0066$ & $\mathbf{0.0051}$ & REJ.\ $\to$ REJ. & CONF.\ $\to$ \textbf{REJ.} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Default $Z/N$ versus leakage-free $\hat\alpha$-calibrated normalization.} An earlier version of this paper claimed the two normalizations change every $\Delta$AUC by $<0.003$; that is correct on HaluEval but false on three TruthfulQA settings, by up to $0.0086$. Two equivalence verdicts flip, in opposite directions: \texttt{SmolLM-1.7B} gains equivalence at $\epsilon{=}0.020$ (TOST $p$: $0.094 \to 0.027$) while \texttt{TinyLlama-1.1B} loses it at $\epsilon{=}0.025$ ($p$: $0.031 \to 0.100$). The HaluEval conclusions -- the only well-powered ones (\S\ref{sec:power}) -- are unaffected. We report both columns rather than selecting one, and note that at $150$--$500$ groups the normalization exponent is a researcher degree of freedom that should be pre-specified.}
+\label{tab:alpha_vs_zn}
+\end{table}
+
+\section{0D Persistence vs.\ Attention Marginals Correlation}
+\label{app:prop4_corr}
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{Spearman($P_0$, Peak Row-Attn.)} & \textbf{$p$-value} & \textbf{Spearman($P_0$, Peak Heterog.)} & \textbf{$p$-value} \\
+\midrule
+HaluEval (Qwen2.5-3B) & $0.843$ & $<10^{-300}$ & $-0.718$ & $<10^{-300}$ \\
+HaluEval (Qwen2.5-1.5B) & $0.211$ & $<10^{-10}$ & $-0.211$ & $<10^{-10}$ \\
+TruthfulQA (Qwen2.5-3B) & $0.801$ & $<10^{-60}$ & $-0.019$ & $0.738$ \\
+TruthfulQA (SmolLM-1.7B) & $0.459$ & $<10^{-50}$ & $-0.350$ & $<10^{-29}$ \\
+TruthfulQA (Phi-3-mini-3.8B) & $0.822$ & $<10^{-70}$ & $-0.142$ & $0.014$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Empirical Support for \S\ref{sec:method}'s Observation.} Spearman correlation between total 0D persistence and peak row-attention (mean max-row attention weight; not verified to be a dedicated sink/BOS-column statistic). Strong positive correlations on Qwen2.5-3B ($r \ge 0.80$) and Phi-3 ($r = 0.82$) show $0$D TDA is a strong monotone function of this non-topological statistic \emph{in those settings}; the weak correlation on Qwen2.5-1.5B ($r=0.21$, despite that setting's highest-in-paper $0$D AUC of $0.904$) shows this is not a uniform reduction, refuting $\mathbf{H^{(3)}}$ (\S\ref{sec:audit}) as a general claim.}
+\label{tab:prop4_corr}
+\end{table}
+
+
+
+\section{Hidden-State Probe Baseline}
+\label{app:hs_probe}
+
+To provide an empirical anchor for what attention-graph TDA performance means, we evaluate
+hidden state probes from \texttt{Qwen2.5-3B-Instruct} on \texttt{HaluEval QA}
+under the identical grouped cross-validation protocol. Hidden states encode richer information about
+model beliefs than attention graphs, providing an upper-bound reference for the TDA signal.
+
+We initially extracted three probe variants: (1) mean-pooled last-layer hidden states, (2) last-token
+hidden states, and (3) PCA-compressed (64-dimensional) concatenation of first, middle, and last-layer
+features. The last-token and PCA variants reached implausibly high AUC ($0.998$ and $0.997$
+respectively) -- higher than any internal-representation hallucination probe we are aware of in the
+literature on this task. We traced this to a construct-validity problem rather than a cross-validation
+leak: our forward pass is teacher-forced over the \emph{full} prompt-plus-answer sequence, so the
+last-token (and, through the PCA rotation, the all-layer) representation is dominated by the surface
+identity of the final few answer tokens -- exactly the surface-form confound we quantify directly in
+\S\ref{sec:lexical-confound}, where TF-IDF on the answer text \emph{alone} already reaches AUC $0.962$.
+The last-token and PCA probes are therefore not construct-valid measures of an internal
+``truthfulness'' representation on this benchmark, and we do not report them as such. We retain only
+the \textbf{mean-pooled} last-layer probe, which pools evenly over the whole sequence and is
+comparatively less dominated by the last few tokens' identity, as the anchor in Table~\ref{tab:hs_probe}.
+A Logistic Regression with \texttt{StandardScaler} fitted strictly within training folds is used throughout.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcc}
+\toprule
+\textbf{Probe} & \textbf{AUC (10-fold grouped CV)} & \textbf{Feature Dim} \\
+\midrule
+\textbf{Mean + min token log-prob$^\dagger$} & \textbf{0.984} & 2 \\
+\textbf{Mean token log-prob only$^\dagger$} & \textbf{0.951} & 1 \\
+\textbf{Hidden State (mean-pool, last layer)} & \textbf{0.903} & 2048 \\
+\textit{TDA 0D Only (attention MST)} & \textit{0.822} & 72 \\
+\textit{TDA 0D+1D Normalized (combined)} & \textit{0.837} & 216 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Hidden-State Probe vs.\ TDA Baselines on HaluEval QA (Qwen2.5-3B).} Grouped 10-fold cross-validation under identical protocol. We report only the mean-pooled probe (see text for why the last-token and PCA variants are excluded); both TDA numbers use the canonical scaled pipeline of \S\ref{sec:audit}. $^\dagger$The log-probability rows use a different, smaller subset ($N{=}329$ scoreable rows from the same $200$ HaluEval questions as Appendix~\ref{app:perhead}'s per-head ablation, not the full $N{=}4000$) and are not directly numerically comparable to the other two rows' full-benchmark numbers -- included here because it is the single strongest baseline in the paper and the discussion (\S\ref{sec:discussion}) explains why we read it with caution rather than as a clean win.}
+\label{tab:hs_probe}
+\end{table}
+
+The mean-pooled hidden state probe (AUC $= 0.903$) outperforms TDA 0D features (AUC $= 0.822$) by a
+margin comparable to (though larger than) the $1$D-persistence increment discussed in
+\S\ref{sec:audit}, confirming that the modest TDA signal does not approach the ceiling of what
+internal model representations can reveal about hallucinations. This result contextualizes our
+finding: the question is not whether LLMs encode factuality-relevant structure (they do), but whether
+\emph{topological} features of \emph{symmetrized attention graphs} capture it as efficiently as direct
+internal-state probes. They do not, though the gap ($+0.08$ AUC) is more modest than a first glance at
+the withdrawn last-token number would have suggested.
+
+
+\section{Head-Averaging Ablation: Protocol Detail}
+\label{app:perhead}
+
+\S\ref{sec:mst-tda} reports headline numbers for this ablation (head-averaged $0$D AUC $0.677$ vs.\ per-head MST-TDA concatenation AUC $0.892$); this appendix gives the full protocol, including a matched-dimension non-topological control the main text summarizes. A natural reviewer concern is that head-averaging discards head-specific topological structure -- and a second, equally natural concern is that any per-head statistic, topological or not, might recover comparable signal just from finer resolution. We test both. We re-extract per-head attention matrices for a balanced subset of HaluEval QA ($N=400$ examples, 200 questions) from \texttt{Qwen2.5-3B-Instruct}, focusing on mid-late layers 18--27 where head-averaged $0$D performance peaks (all $160$-dimensional feature banks below use the identical $10$ layers $\times$ $16$ heads grid on the identical $400$ rows, so every comparison is exactly matched in dimensionality and sample). For each layer--head pair we compute (a) $0$D and $1$D persistent homology, (b) mean per-token maximum attention weight (``max-attn''), and (c) mean per-token attention entropy. All four banks are evaluated with the same StandardScaler+LR, grouped 10-fold CV protocol as every other number in this paper, and every pairwise comparison uses a $5{,}000$-resample question-level cluster bootstrap (not a single TOST call at one margin) to report a $95\%$ CI on the difference:
+
+\begin{itemize}
+  \item \textbf{Head-averaged 0D} (layers 18--27, 10 dims): AUC $= 0.677$ -- matches the main paper's mid-late layer 0D result on the same subset.
+  \item \textbf{Per-head 0D concatenation} (160 dims): AUC $= 0.892$. vs.\ head-averaged: $\Delta=+0.214$, 95\% CI $[+0.188,+0.239]$ (excludes zero -- decisively not equivalent, favoring per-head resolution).
+  \item \textbf{Per-head max-attention} (160 dims, matched): AUC $= 0.861$. vs.\ per-head 0D: $\Delta=+0.031$, 95\% CI $[+0.008,+0.054]$ (excludes zero -- per-head $0$D is significantly better than this particular non-topological statistic).
+  \item \textbf{Per-head entropy} (160 dims, matched): AUC $= \mathbf{0.902}$ (nominally \emph{higher} than per-head $0$D). vs.\ per-head 0D: $\Delta=-0.010$, 95\% CI $[-0.031,+0.010]$ (includes zero -- \textbf{statistically indistinguishable} from per-head $0$D).
+  \item \textbf{Per-head max-attn + entropy combined} (320 dims): AUC $= 0.888$, likewise statistically indistinguishable from per-head $0$D ($\Delta=+0.004$, CI $[-0.017,+0.025]$).
+\end{itemize}
+
+\textbf{Honest reading:} per-head \emph{resolution} clearly beats head-averaging, for both topological and non-topological statistics. Whether per-head \emph{topology specifically} beats a matched-dimension non-topological alternative depends on which alternative: it beats max-attention, but ties entropy. We do not have a matched-dimension non-topological bank that per-head $0$D beats decisively, so the paper's claim that per-head MST-TDA is the best attention-graph descriptor should be read as ``a good and exactly-reproducible way to get per-head resolution,'' not as ``provably better than every non-topological per-head alternative.'' Adding $1$D cyclic persistence on top of per-head $0$D gives no further benefit (combined AUC $= 0.868$, slightly below per-head $0$D alone), and all per-head attention features remain below the mean-pooled hidden-state probe (AUC $0.903$, Appendix~\ref{app:hs_probe}). This ablation is run only on HaluEval QA (\texttt{Qwen2.5-3B}, $N{=}400$); we did not extend it to TruthfulQA or the other model families, which remains for future work.
+
+
+\section{Conditional Predictive Information Gain (Permutation-Calibrated)}
+\label{app:mi}
+
+An earlier version of this appendix estimated $I(Y; H_1^\star \mid H_0, L)$ using the per-feature Kraskov $k$-nearest-neighbor mutual information estimator (\texttt{sklearn.feature\_selection.mutual\_info\_classif}), averaged across the $H_0$ feature bank's columns. That estimator is unsound for this use: (i) it computes mutual information \emph{per feature independently} and averages, which is not the joint multivariate conditional mutual information of a $72$--$216$-dimensional bank and systematically understates $I(Y;H_0)$ relative to what the bank's classification AUC ($0.62$--$0.90$) implies; and (ii) the conditioning step regresses $H_1^\star$ on $(H_0, L)$ by ordinary least squares on the \emph{full, unsplit} dataset before estimating mutual information on the residual, which overfits when the covariate dimension ($\mathrm{dim}(H_0)+1$) is large relative to $N$ (as low as $300$ for TruthfulQA), inflating the residual's apparent information content -- consistent with the previously reported values violating the expected inequality $I(Y; H_1^\star \mid H_0, L) \le I(Y; H_1^\star)$ in every row.
+
+We replace it with a cross-validated \textbf{predictive information gain}: fit the canonical scaled logistic-regression pipeline (\S\ref{sec:audit}) once on $(H_0, L)$ alone and once on $(H_0, L, H_1^\star)$, both under the same grouped $10$-fold splits, and report $\hat{I} = \text{CV-LogLoss}(Y \mid H_0, L) - \text{CV-LogLoss}(Y \mid H_0, L, H_1^\star)$ in nats -- a standard, easily-interpreted lower bound on incremental predictive information that reuses the same classifier family as every AUC number in this paper. Because adding $216$ extra dimensions can \emph{mechanically} hurt held-out log-loss even when $H_1^\star$ carries zero true signal (pure overfitting cost), we calibrate $\hat{I}$ against a permutation null: we shuffle $Y$ and recompute $\hat{I}$ over $100$ permutations, which characterizes how negative $\hat{I}$ becomes from overfitting alone, then report a one-sided $p$-value for the observed $\hat{I}$ against that null.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Benchmark} & $\hat{I}(Y; H_1^\star \mid H_0, L)$ [nats] & \textbf{Null 95th pct.\ [nats]} & \textbf{Perm.\ $p$} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B}) & $+0.0171$ & $-0.0128$ & $<0.01$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & $+0.0256$ & $+0.0009$ & $<0.01$ \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & $-0.1594$ & $-0.0731$ & $0.55$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & $-0.0061$ & $-0.0377$ & $<0.01$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & $-0.0212$ & $-0.0169$ & $0.11$ \\
+TruthfulQA (\texttt{Mistral-7B}) & $-0.0001$ & $+0.0016$ & $0.22$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & $-0.0214$ & $-0.0150$ & $0.06$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Permutation-calibrated conditional predictive information gain.} On HaluEval, $\hat{I}$ is positive and clears the permutation-null band with $p<0.01$ at both model scales -- a genuine, if small, incremental information contribution from $1$D persistence, consistent with the TOST results (Table~\ref{tab:equivalence}). On TruthfulQA (\texttt{Qwen2.5-3B}, \texttt{Phi-3-mini-3.8B}), $\hat{I}$ is negative and statistically indistinguishable from the overfitting-only null ($p>0.1$), consistent with no detectable incremental information at this sample size; \texttt{TinyLlama-1.1B} is borderline but fits the same qualitative pattern ($p=0.06$). TruthfulQA (\texttt{SmolLM-1.7B}) is a harder case to read: $\hat{I}$ is negative in absolute terms but exceeds its (more negative) null band ($p<0.01$), meaning the combined bank overfits \emph{less} than pure noise would predict -- a technical signal too weak and indirect to interpret as evidence of a true positive effect, and we do not read it as such. \texttt{Mistral-7B} is indistinguishable from its null ($\hat{I}=-0.0001$, $p=0.22$), as expected when $99.99\%$ of the added features are exactly zero. \textbf{Limitation:} the permutation null shuffles $Y$ globally rather than within question groups, so it does not preserve the paired one-positive-per-group structure of the data; it is therefore a conservative overfitting-cost band rather than a design-exact null, and a within-group swap test is left to future work.}
+\label{tab:mi}
+\end{table}
+
+This corroborates, via an entirely different statistical route (a calibrated log-loss information measure rather than an AUC-based hypothesis test), the same qualitative conclusion as \S\ref{sec:audit}: length-normalized $1$D persistence carries small but real incremental information on HaluEval, and no information clearly distinguishable from overfitting noise on TruthfulQA at current sample sizes.
+
+
+\section{Survival of 0D Attention Topology Under Strong Lexical Controls}
+\label{app:lex_survival}
+
+In \S\ref{sec:lexical-confound}, we demonstrated that the HaluEval QA benchmark exhibits an extreme lexical and surface-form shortcut where simple answer-level text statistics achieve up to $0.975$ AUC. A central methodological question is whether $0$D attention topology ($H_0$/MST) reflects only this surface-level lexical distribution or captures genuine internal attention structure. 
+
+To test this, we construct a deliberately strong lexical baseline from the answer text alone: word n-grams $(1,2)$ and character n-grams $(2,5)$ (\texttt{char\_wb}), both with sublinear term-frequency scaling and $2000$ features each, reduced jointly via TruncatedSVD to $50$ or $200$ components (explaining $33.3\%$ and $64.6\%$ of lexical variance on TruthfulQA respectively), concatenated with answer character length, answer word count, and tokenized sequence length. Character n-grams are included on purpose: they capture punctuation, morphology and hedging style, which is exactly the authorship signature separating a dataset's hand-written correct answer from its hand-written distractor. Everything is evaluated under the identical $10$-fold grouped cross-validation protocol ($C=1.0$, $L_2$-regularized logistic regression) with $10{,}000$ group-level cluster-bootstrap resamples. The SVD-200 row is the harder test and should be read as the primary one.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Setting} & \textbf{SVD Dims} & \textbf{AUC(Lex)} & \textbf{AUC($0$D)} & \textbf{AUC(Lex+$0$D)} & $\mathbf{\Delta(0\text{D Over Lex})}$ & \textbf{95\% CI} \\
+\midrule
+\multicolumn{7}{l}{\textit{50-Component Lexical Control (SVD-50)}} \\
+HaluEval (\texttt{Qwen2.5-3B}) & 53 & 0.9792 & 0.8218 & 0.9819 & $+0.0027$ & $[+0.0012, +0.0043]$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 53 & 0.9735 & 0.9038 & 0.9736 & $+0.0001$ & $[-0.0063, +0.0057]$ \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & 53 & 0.7569 & 0.7559 & 0.8098 & $+0.0529$ & $[+0.0401, +0.0659]$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 53 & 0.7558 & 0.5803 & 0.7648 & $+0.0090$ & $[+0.0026, +0.0154]$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 53 & 0.7547 & 0.6473 & 0.7758 & $+0.0211$ & $[+0.0109, +0.0317]$ \\
+TruthfulQA (\texttt{Mistral-7B}) & 53 & 0.7558 & 0.6840 & 0.7832 & $+0.0274$ & $[+0.0170, +0.0384]$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 53 & 0.7549 & 0.6536 & 0.7795 & $+0.0246$ & $[+0.0164, +0.0331]$ \\
+\midrule
+\multicolumn{7}{l}{\textit{200-Component Lexical Control (SVD-200) -- the primary, harder test}} \\
+HaluEval (\texttt{Qwen2.5-3B}) & 203 & 0.9792 & 0.8218 & 0.9811 & $+0.0019$ & $[+0.0004, +0.0036]$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 203 & 0.9530 & 0.9038 & 0.9582 & $+0.0052$ & $[-0.0006, +0.0107]$ \\
+TruthfulQA (\texttt{Qwen2.5-3B}) & 203 & 0.7773 & 0.7559 & 0.8097 & $\mathbf{+0.0323}$ & $[+0.0211, +0.0437]$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 203 & 0.7770 & 0.5803 & 0.7816 & $+0.0046$ & $[-0.0013, +0.0107]$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 203 & 0.7763 & 0.6473 & 0.7851 & $+0.0088$ & $[+0.0003, +0.0176]$ \\
+TruthfulQA (\texttt{Mistral-7B}) & 203 & 0.7768 & 0.6840 & 0.7950 & $\mathbf{+0.0181}$ & $[+0.0086, +0.0280]$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 203 & 0.7765 & 0.6536 & 0.7910 & $\mathbf{+0.0145}$ & $[+0.0070, +0.0220]$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Survival of $0$D attention topology under lexical controls (50- and 200-component TruncatedSVD).} On HaluEval, lexical features dominate (AUC $>0.95$) and $0$D adds essentially nothing ($+0.0001$ to $+0.0027$), with the \texttt{Qwen2.5-1.5B} increment indistinguishable from zero at both control strengths. On TruthfulQA, $0$D adds a significant increment at SVD-50 on all five models ($+0.009$ to $+0.053$), but the picture is deliberately reported at the harder SVD-200 control as well, where it is weaker and \emph{not} uniform: the increment remains significant on \texttt{Qwen2.5-3B}, \texttt{Mistral-7B} and \texttt{TinyLlama-1.1B} ($+0.015$ to $+0.032$), is marginal on \texttt{Phi-3-mini} (CI lower limit $+0.0003$), and is \emph{no longer distinguishable from zero} on \texttt{SmolLM-1.7B} ($+0.0046$, CI $[-0.0013,+0.0107]$). We report the failing cell rather than the favourable control: the defensible claim is that $0$D carries non-lexical signal on most, not all, TruthfulQA settings, and that its margin shrinks monotonically as the lexical control strengthens.}
+\label{tab:lex_survival}
+\end{table}
+
+The findings in Table~\ref{tab:lex_survival} reveal a sharp contrast between benchmarks:
+\begin{enumerate}
+    \item \textbf{HaluEval is lexically dominated:} The lexical baseline alone achieves $0.9792$ AUC, outperforming $0$D features by $+0.1601$ AUC ($95\%$ CI $[+0.1507, +0.1693]$). Adding $0$D features to the lexical model produces negligible predictive change, indicating that on HaluEval, attention-based detectors are largely overshadowed by superficial surface patterns.
+    \item \textbf{TruthfulQA $0$D topology is partly, but not wholly, non-lexical:} On TruthfulQA, $0$D attention MST features provide independent signal over and above a strong surface-form model: combining $0$D with lexical features improves AUC from $0.7773$ to $0.8097$ on \texttt{Qwen2.5-3B} at the harder SVD-200 control ($\Delta = +0.0323$, CI $[+0.0211,+0.0437]$), with significant increments also on \texttt{Mistral-7B} and \texttt{TinyLlama-1.1B}. Two qualifications matter and we state them rather than reporting only the favourable control. First, the increment is not uniform: it is marginal on \texttt{Phi-3-mini} and not distinguishable from zero on \texttt{SmolLM-1.7B} once the lexical control is strengthened. Second, and more importantly for how this result should be read, the lexical model \emph{outperforms $0$D alone} on four of five TruthfulQA settings ($0.78$ versus $0.58$--$0.76$). The claim we can defend is therefore not that $0$D is the strongest cheap signal on TruthfulQA -- bag-of-words is -- but that $0$D contributes information which surface form does not already contain. We note that the TruthfulQA lexical signal is itself a dataset artifact, since \texttt{best\_answer} and \texttt{incorrect\_answers} are authored separately and in different registers; it is a confound to be controlled for, not a deployable detector, which is a further reason the on-policy evaluation deferred in \S\ref{sec:discussion} is the necessary next step.
+\end{enumerate}
+
+
+\section{Full-Benchmark Evaluation: 0D Attention MST vs.\ Token Log-Probability}
+\label{app:mst_vs_logprob}
+
+In \S\ref{sec:discussion} and Appendix~\ref{app:hs_probe}, we noted that token log-probability features (mean and minimum per-token log-probabilities under teacher forcing) achieve high classification performance on HaluEval QA. To determine whether token log-probabilities uniformly dominate attention-graph topology across evaluation regimes, we executed a full-scale paired evaluation across all seven model/dataset settings at full sample size ($N=804$--$3267$ evaluated rows across $495$--$1990$ question groups). 
+
+Both feature banks are evaluated under the same grouped 10-fold cross-validation setup, and differences are tested via 10,000 paired cluster-bootstrap resamples.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Setting} & $N_{\text{eval}}$ ($N_{\text{groups}}$) & \textbf{AUC(Logprob)} & \textbf{AUC($0$D)} & \textbf{AUC($0$D+Logprob)} & $\mathbf{\Delta(0\text{D} - \text{Logprob})}$ & \textbf{95\% CI} \\
+\midrule
+HaluEval (\texttt{Qwen2.5-3B}) & 3267 (1990) & \textbf{0.9814} & 0.8077 & 0.9829 & $-0.1737$ & $[-0.1865, -0.1607]$ \\
+HaluEval (\texttt{Qwen2.5-1.5B}) & 804 (495) & \textbf{0.9897} & 0.8782 & 0.9886 & $-0.1115$ & $[-0.1380, -0.0858]$ \\
+\midrule
+TruthfulQA (\texttt{Qwen2.5-3B}) & 1612 (816) & 0.5674 & \textbf{0.7600} & 0.7673 & $\mathbf{+0.1926}$ & $[+0.1642, +0.2207]$ \\
+TruthfulQA (\texttt{SmolLM-1.7B}) & 1623 (817) & 0.5763 & 0.5793 & 0.6248 & $+0.0030$ & $[-0.0219, +0.0293]$ \\
+TruthfulQA (\texttt{Phi-3-mini-3.8B}) & 1612 (816) & 0.5291 & \textbf{0.6524} & 0.6547 & $\mathbf{+0.1233}$ & $[+0.0938, +0.1539]$ \\
+TruthfulQA (\texttt{Mistral-7B}) & 1628 (817) & 0.6070 & \textbf{0.6851} & 0.7128 & $\mathbf{+0.0781}$ & $[+0.0465, +0.1108]$ \\
+TruthfulQA (\texttt{TinyLlama-1.1B}) & 1629 (817) & 0.5776 & \textbf{0.6541} & 0.6767 & $\mathbf{+0.0766}$ & $[+0.0511, +0.1021]$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Full-scale paired benchmark comparison: 0D Attention MST vs.\ Token Log-Probability.} On HaluEval QA, token log-probability dominates with near-perfect separation ($\text{AUC} \approx 0.98$--$0.99$). In stark contrast, on TruthfulQA, token log-probability performs near chance ($\text{AUC} = 0.53$--$0.61$), and $0$D attention topology significantly outperforms it on 4 of 5 model architectures by $+0.077$ to $+0.193$ AUC ($p < 10^{-4}$), tying on the fifth.}
+\label{tab:mst_vs_logprob}
+\end{table}
+
+Table~\ref{tab:mst_vs_logprob} demonstrates a clear task-level dissociation:
+\begin{itemize}
+    \item \textbf{Synthetic vs.\ Factuality Hallucination:} On HaluEval, where hallucinated text is generated by ChatGPT while grounded text is extracted from Wikipedia, the audited models assign substantially higher log-likelihood to gold Wikipedia text than to machine-generated hallucinations. Thus, token log-probability achieves $>0.98$ AUC.
+    \item \textbf{Common Misconceptions (TruthfulQA):} TruthfulQA specifically tests common human falsehoods and misconceptions where false answers often match high-frequency web training text. Under this regime, autoregressive models assign comparable or higher token log-probability to the hallucinated misconception than to the subtle truth (logprob AUCs collapse to $0.529$--$0.607$). In contrast, the internal self-attention graphs exhibit structural dispersion that $0$D MST captures effectively (AUC $0.652$--$0.760$).
+\end{itemize}
+
+
+\section{Equivalence of Directed Flag Complexes on Causal Attention Graphs}
+\label{app:directed_collapse}
+
+A common question regarding attention graph TDA is whether symmetrizing the attention matrix ($W = \max(A, A^T)$) discards topological information that could otherwise be captured by directed persistent homology, such as the filtered directed flag complex \citep{flagser2020}. Here we prove that on autoregressive causal attention graphs, directed flag complexes collapse identically to symmetrized Vietoris--Rips complexes.
+
+\begin{theorem}[\textbf{Directed Flag Collapse under Causal Masking}]
+\label{thm:directed_collapse}
+Let $A \in \mathbb{R}^{N \times N}$ be a causal attention matrix satisfying strict lower-triangular support: $A_{ij} > 0 \iff j \le i$, with $A_{ij} = 0$ for all $j > i$. Let $\mathrm{DFl}(A)$ denote the filtered directed flag complex on the directed graph $G = (V, E, w)$ with vertex set $V = \{1, \dots, N\}$ and edge filtration weights $w(i \to j) = 1 - A_{ij}$ for $j \le i$. Let $\mathrm{VR}(W)$ denote the filtered Vietoris--Rips complex of the symmetrized distance matrix $D_{ij} = 1 - \max(A_{ij}, A_{ji})$ ($D_{ii} = 0$). Then $\mathrm{DFl}(A)$ and $\mathrm{VR}(W)$ are isomorphic as filtered simplicial complexes, and consequently have identical persistence diagrams in every homology dimension:
+\begin{equation}
+\mathrm{dgm}_k(\mathrm{DFl}(A)) \equiv \mathrm{dgm}_k(\mathrm{VR}(W)), \quad \forall k \ge 0.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The proof proceeds in two steps: structural simplicial equivalence and filtration weight identity.
+\begin{enumerate}
+    \item \textbf{Structural Simplex Bijection:} In a directed flag complex, a $k$-simplex is formed by an ordered $(k+1)$-tuple of vertices $(v_0, v_1, \dots, v_k)$ that forms a directed clique (a transitive tournament), meaning that the directed edge $v_a \to v_b$ exists for all $0 \le a < b \le k$. Because $A$ is strictly causal, directed edges $u \to v$ exist if and only if $u \ge v$. The natural index ordering on token indices $\{1, \dots, N\}$ is a strict total order. Therefore, for any subset of vertices $S \subseteq \{1, \dots, N\}$ of cardinality $k+1$, there is \emph{exactly one} permutation of $S$ whose elements are in strictly descending order ($v_0 > v_1 > \dots > v_k$). This unique ordering satisfies the directed clique condition, while all other $(k+1)! - 1$ permutations require at least one forward edge $v_a \to v_b$ with $v_a < v_b$, which is \emph{absent} from the digraph and therefore admits no filtration value at all. We stress that absent is not the same as zero-weight: an edge of weight $0$ would enter the filtration at scale $0$ and so would make every permutation valid at once, which is precisely the encoding error that makes naive directed-persistence implementations disagree here. Thus, the map sending each undirected simplex $S$ in $\mathrm{VR}(W)$ to the uniquely descending directed simplex in $\mathrm{DFl}(A)$ is a bijective simplicial isomorphism.
+    \item \textbf{Filtration Identity:} The filtration value of the directed simplex $\sigma = (v_0, \dots, v_k)$ in $\mathrm{DFl}(A)$ is defined by the maximum weight of its constituent directed edges:
+    \begin{equation}
+    \mathrm{filt}_{\mathrm{DFl}}(\sigma) = \max_{0 \le a < b \le k} w(v_a \to v_b) = \max_{0 \le a < b \le k} (1 - A_{v_a, v_b}).
+    \end{equation}
+    In the symmetrized distance matrix $D$, for any pair $u > v$, we have $A_{vu} = 0$, which implies $D_{uv} = 1 - \max(A_{uv}, 0) = 1 - A_{uv}$. The filtration value of the undirected simplex $S = \{v_0, \dots, v_k\}$ in $\mathrm{VR}(W)$ is:
+    \begin{equation}
+    \mathrm{filt}_{\mathrm{VR}}(S) = \max_{u, v \in S, u > v} D_{uv} = \max_{0 \le a < b \le k} (1 - A_{v_a, v_b}).
+    \end{equation}
+    Because $\mathrm{filt}_{\mathrm{DFl}}(\sigma) = \mathrm{filt}_{\mathrm{VR}}(S)$ for every simplex, the filtration preserves the isomorphism at every filtration scale $\epsilon \ge 0$.
+\end{enumerate}
+Since the filtered simplicial complexes are isomorphic, their persistent homology groups and barcodes are identical across all dimensions $k \ge 0$.
+\end{proof}
+
+\paragraph{Numerical Verification.} We verified Theorem~\ref{thm:directed_collapse} by direct enumeration rather than by comparing two persistence libraries' outputs: the claim is that the two \emph{filtered complexes} coincide, and library conventions for directed input (in particular the zero-weight versus absent-edge ambiguity) are the dominant source of spurious disagreement. We therefore construct both complexes explicitly and compare them simplex by simplex. Across $420$ randomized causal attention matrices spanning $N \in [2,8]$ and four matrix families -- (i) softmax-of-Gaussian row distributions, (ii) tie-dense matrices (weights rounded to two decimals), (iii) underflow matrices with exact zeros on the causal support, and (iv) perfectly uniform attention -- we compared all $30{,}060$ non-empty vertex subsets. In every case the number of valid directed orderings was exactly $1$ ($0$ uniqueness violations) and the filtration difference $|\mathrm{filt}_{\mathrm{DFl}} - \mathrm{filt}_{\mathrm{VR}}|$ was exactly $0$, not merely within tolerance. As a convention check on the same matrices, $0$D total persistence matched Kruskal's MST weight to floating-point precision ($< 1.1 \times 10^{-7}$), confirming that the Vietoris--Rips convention used here is the one the rest of our pipeline uses.
+
+\paragraph{The collapse is a consequence of causality, not of symmetrization.} Theorem~\ref{thm:directed_collapse} would be vacuous if directed and symmetrized filtrations coincided in general, so we verified that they do \emph{not}. Repeating the enumeration on dense \emph{bidirectional} attention (every ordered pair carrying an edge, $A_{ij} \ne A_{ji}$), a subset of size $n$ admits $n!$ valid directed orderings rather than one ($24$, $120$ and $720$ at $n=4,5,6$), those orderings do not share a filtration value, and the directed values differ from the Vietoris--Rips value of the same subset by up to $0.44$. Causality -- specifically, the fact that token index is a total order on the support of $A$ -- is doing all of the work. This matters for reading the literature this construction comes from: the seminal attention-TDA results were obtained on \emph{bidirectional encoders} \citep{kushnareva2021, cherniavskii2022}, where symmetrization genuinely does discard information and a directed treatment is therefore well motivated. That motivation does not survive the move to causal decoder-only models, which is the setting of every hallucination-detection method we audit here.
+
+\end{document}
+

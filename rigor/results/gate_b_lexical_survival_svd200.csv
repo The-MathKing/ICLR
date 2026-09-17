@@ -1,8 +1,8 @@
-Setting,Benchmark,N_rows,N_groups,dim_0D,dim_lex,tfidf_var_explained,AUC_Lex,AUC_0D,AUC_Lex_0D,Delta_0D_over_Lex,CI95_low,CI95_high,bootstrap_se,survives_lexical_control,Delta_Lex_over_0D,Lex_over_0D_CI95_low,Lex_over_0D_CI95_high
-HaluEval (Qwen2.5-3B),halueval,4000,2000,72,202,0.4425,0.9703,0.8218,0.9731,0.0028,0.0008,0.0048,0.00101,True,0.1513,0.1413,0.1605
-HaluEval (Qwen2.5-1.5B),halueval,1000,500,56,202,0.5459,0.9457,0.9038,0.9545,0.0088,0.0027,0.0148,0.00312,True,0.0507,0.0313,0.0708
-TruthfulQA (Qwen2.5-3B),truthfulqa,1634,817,72,202,0.5946,0.7768,0.7559,0.8185,0.0417,0.0302,0.0538,0.00606,True,0.0626,0.0459,0.0794
-TruthfulQA (SmolLM-1.7B),truthfulqa,1634,817,48,202,0.5946,0.7768,0.5803,0.792,0.0153,0.008,0.0226,0.0037,True,0.2118,0.1903,0.2338
-TruthfulQA (Phi-3-mini-3.8B),truthfulqa,1634,817,64,202,0.5946,0.7768,0.6473,0.7935,0.0167,0.008,0.0258,0.00459,True,0.1462,0.1271,0.1653
-TruthfulQA (Mistral-7B),truthfulqa,1634,817,64,202,0.5946,0.7768,0.684,0.8027,0.026,0.0162,0.0372,0.00543,True,0.1188,0.0988,0.1382
-TruthfulQA (TinyLlama-1.1B),truthfulqa,1634,817,44,202,0.5946,0.7768,0.6536,0.7945,0.0177,0.0106,0.0255,0.00378,True,0.1408,0.1221,0.16
+Setting,svd_components,Benchmark,N_rows,N_groups,dim_0D,dim_lex,tfidf_var_explained,AUC_Lex,AUC_0D,AUC_Lex_0D,Delta_0D_over_Lex,CI95_low,CI95_high,bootstrap_se,survives_lexical_control,Delta_Lex_over_0D,Lex_over_0D_CI95_low,Lex_over_0D_CI95_high
+HaluEval (Qwen2.5-3B),200,halueval,4000,2000,72,203,0.4878,0.9792,0.8218,0.9811,0.0019,0.0004,0.0036,0.00081,True,0.1593,0.1498,0.1684
+HaluEval (Qwen2.5-1.5B),200,halueval,1000,500,56,203,0.5848,0.953,0.9038,0.9582,0.0052,-0.0006,0.0107,0.00288,False,0.0544,0.0343,0.0746
+TruthfulQA (Qwen2.5-3B),200,truthfulqa,1634,817,72,203,0.6458,0.7773,0.7559,0.8097,0.0323,0.0211,0.0437,0.00576,True,0.0538,0.0374,0.0699
+TruthfulQA (SmolLM-1.7B),200,truthfulqa,1634,817,48,203,0.6458,0.777,0.5803,0.7816,0.0046,-0.0013,0.0107,0.00309,False,0.2013,0.18,0.2223
+TruthfulQA (Phi-3-mini-3.8B),200,truthfulqa,1634,817,64,203,0.6458,0.7763,0.6473,0.7851,0.0088,0.0003,0.0176,0.0044,True,0.1378,0.1175,0.1571
+TruthfulQA (Mistral-7B),200,truthfulqa,1634,817,64,203,0.6458,0.7768,0.684,0.795,0.0181,0.0086,0.028,0.00491,True,0.111,0.0924,0.1294
+TruthfulQA (TinyLlama-1.1B),200,truthfulqa,1634,817,44,203,0.6458,0.7765,0.6536,0.791,0.0145,0.007,0.022,0.00383,True,0.1373,0.1183,0.1558
