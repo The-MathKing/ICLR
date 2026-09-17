@@ -15,7 +15,7 @@ only on the Windows box, under `ICLR/sinktda_out/`, in these directories:
     truthfulqa_tinyllama_cuda   truthfulqa_tinyllama_fp32
     truthfulqa_qwen1.5b_cuda    truthfulqa_qwen1.5b_fp32
 
-That is roughly 350 MB and it is the only copy. **Copy it off that machine before wiping
+That is **634 MB** and it is the only copy. **Copy it off that machine before wiping
 it.** Everything else — code, result CSVs, docs — is in this push.
 
 ## What is in this push
