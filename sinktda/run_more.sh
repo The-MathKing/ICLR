@@ -1,8 +1,8 @@
 #!/bin/bash
 # Follow-up queue: waits for run_all.sh, then reruns the Qwen2.5-1.5B settings in bf16
 # (fp16 on MPS gives non-finite logits for this model).
-export HF_HOME=${HF_HOME:-/Volumes/2TB/hf_cache}
-export TOKENIZERS_PARALLELISM=false TMPDIR=/Volumes/2TB/iclr/.tmp JOBLIB_TEMP_FOLDER=/Volumes/2TB/iclr/.tmp
+export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
+export TOKENIZERS_PARALLELISM=false TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 PY=${PY:-.venv/bin/python}
 while pgrep -f "sinktda/run_all.sh" >/dev/null; do sleep 20; done
 run() { echo "=== $* ($(date +%H:%M:%S))"; $PY -m sinktda.extract "$@" 2>&1 | grep --line-buffered -v -i "warn\|Loading weights" ; }

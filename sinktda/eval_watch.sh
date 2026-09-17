@@ -1,6 +1,6 @@
 #!/bin/bash
 # Evaluate every finished extraction that has no results yet; loop until the queue is done.
-export TMPDIR=/Volumes/2TB/iclr/.tmp JOBLIB_TEMP_FOLDER=/Volumes/2TB/iclr/.tmp
+export TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 while true; do
   for d in sinktda_out/*/; do
     n=$(basename $d)

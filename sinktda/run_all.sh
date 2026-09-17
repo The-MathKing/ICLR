@@ -1,8 +1,8 @@
 #!/bin/bash
 # Sequential extraction queue for the Mac (one model in memory at a time).
-export HF_HOME=${HF_HOME:-/Volumes/2TB/hf_cache}
+export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
 export TOKENIZERS_PARALLELISM=false
-export TMPDIR=/Volumes/2TB/iclr/.tmp JOBLIB_TEMP_FOLDER=/Volumes/2TB/iclr/.tmp
+export TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 PY=${PY:-.venv/bin/python}
 run() { echo "=== $* ($(date +%H:%M:%S))"; $PY -m sinktda.extract "$@" 2>&1 | grep --line-buffered -v -i "warn\|Loading weights" ; }
 run --bench truthfulqa --model qwen3b

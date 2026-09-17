@@ -10,7 +10,7 @@ phase10_phi3_eval.py exactly (same TruthfulQA subset construction, same
 """
 import os
 # HF_HOME intentionally not set here: honour the environment.
-# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+# (was hardcoded to "<an external drive>", an external drive on the
 #  authors' Mac, which does not exist on other machines.)
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig

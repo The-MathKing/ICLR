@@ -1,8 +1,8 @@
 #!/bin/bash
 # TOHA reduction (Proposition 3): per-head MTop-Div and its first-order counterparts for all
 # 11 settings, then evaluation. One heavy job at a time; no ripser, so each pass is short.
-export HF_HOME=${HF_HOME:-/Volumes/2TB/hf_cache}
-export TOKENIZERS_PARALLELISM=false TMPDIR=/Volumes/2TB/iclr/.tmp JOBLIB_TEMP_FOLDER=/Volumes/2TB/iclr/.tmp
+export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
+export TOKENIZERS_PARALLELISM=false TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 export SINKTDA_JOBS=2 OMP_NUM_THREADS=4
 PY=${PY:-.venv/bin/python}
 MINFREE=${MINFREE:-35}

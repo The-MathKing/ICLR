@@ -15,7 +15,7 @@ Outputs:
 
 import os, gc, time
 # HF_HOME intentionally not set here: honour the environment.
-# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+# (was hardcoded to "<an external drive>", an external drive on the
 #  authors' Mac, which does not exist on other machines.)
 
 import numpy as np
@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 # ── Config ────────────────────────────────────────────────────────────────────
 import os
 # HF_HOME intentionally not set here: honour the environment.
-# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+# (was hardcoded to "<an external drive>", an external drive on the
 #  authors' Mac, which does not exist on other machines.)
 
 MODEL_NAME   = "Qwen/Qwen2.5-3B-Instruct"

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Causal probe: shift the first-token logit by b in every attention head (teacher-forced
 # TruthfulQA, labels unchanged) and re-measure how close TOHA is to its sink counterpart.
-export HF_HOME=${HF_HOME:-/Volumes/2TB/hf_cache}
-export TOKENIZERS_PARALLELISM=false TMPDIR=/Volumes/2TB/iclr/.tmp JOBLIB_TEMP_FOLDER=/Volumes/2TB/iclr/.tmp
+export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
+export TOKENIZERS_PARALLELISM=false TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 export SINKTDA_JOBS=2 OMP_NUM_THREADS=4
 PY=${PY:-.venv/bin/python}
 MINFREE=${MINFREE:-35}

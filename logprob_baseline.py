@@ -15,7 +15,7 @@ use (e.g. as a component of MSP-style baselines).
 """
 import os, gc
 # HF_HOME intentionally not set here: honour the environment.
-# (was hardcoded to "/Volumes/2TB/hf_cache", an external drive on the
+# (was hardcoded to "<an external drive>", an external drive on the
 #  authors' Mac, which does not exist on other machines.)
 import numpy as np
 import pandas as pd

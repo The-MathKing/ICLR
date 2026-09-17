@@ -6,8 +6,8 @@
 # without polling this shell directly.
 
 set -uo pipefail
-cd /Volumes/2TB/iclr
-LOG=/Volumes/2TB/iclr/rerun_4stat.log
+cd "$(dirname "$0")"
+LOG=${LOG:-$PWD/rerun_4stat.log}
 MIN_FREE_MB=8000   # require ~8GB free before loading a 3.8B-class model in fp16
 MAX_WAIT_SECS=36000  # 10 hours safety cap
 POLL_SECS=300
