@@ -129,3 +129,23 @@ TinyLlama-1.1B & $+4$ & 86\% & 83\% & 0.996 & 0.665 & 0.616 & 0.844 & 0.842 \\
 \bottomrule
 \end{tabular}
 }
+\newcommand{\SinkTableNative}{%
+\begin{tabular}{lrrrr}
+\toprule
+Setting & head graphs & max $|\Delta|$ & mean $|\Delta|$ & Pearson $r$ \\
+\midrule
+TQA Mis7B & 12,288 & $0$ & $0$ & 1.00000000 \\
+TQA Qw7B & 9,408 & $1.2\times10^{-8}$ & $1.1\times10^{-11}$ & 1.00000000 \\
+\bottomrule
+\end{tabular}
+}
+\newcommand{\SinkTableAudit}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Setting & judged & disagree & match$\,$0/judge$\,$1 & match$\,$1/judge$\,$0 & max $|\Delta$AUC$|$ \\
+\midrule
+TrQA Mis7B & 200 & 14.0\% & 8 & 20 & 0.058 \\
+TrQA Qw7B & 200 & 5.5\% & 7 & 4 & 0.027 \\
+\bottomrule
+\end{tabular}
+}

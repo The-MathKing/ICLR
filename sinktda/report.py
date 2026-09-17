@@ -843,6 +843,47 @@ def numbers_toha():
     return m
 
 
+def table_native():
+    """Our TOHA score against the authors' released MTop-Div routine, per setting."""
+    f = f"{RES}/toha_native.csv"
+    if not os.path.exists(f):
+        return ""
+    d = pd.read_csv(f)
+    rows = [r"\begin{tabular}{lrrrr}", r"\toprule",
+            r"Setting & head graphs & max $|\Delta|$ & mean $|\Delta|$ & Pearson $r$ \\", r"\midrule"]
+    for s, g in d.groupby("setting", sort=False):
+        mx, mn = g["abs_diff"].max(), g["abs_diff"].mean()
+        r = g["ours"].corr(g["native"])
+        e = lambda v: "$0$" if v <= 0 else f"${v / 10 ** int(np.floor(np.log10(v))):.1f}" \
+                                           f"\\times10^{{{int(np.floor(np.log10(v)))}}}$"
+        rows.append(f"{short(s)} & {len(g):,} & {e(mx)} & {e(mn)} & {r:.8f} \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+def table_audit():
+    """LLM-judge audit of the on-policy labels, per setting."""
+    f = f"{RES}/label_audit.csv"
+    if not os.path.exists(f):
+        return ""
+    d = pd.read_csv(f)
+    d = d[d["judge"] >= 0]
+    sens = pd.read_csv(f"{RES}/label_audit_sensitivity.csv") if os.path.exists(
+        f"{RES}/label_audit_sensitivity.csv") else pd.DataFrame()
+    rows = [r"\begin{tabular}{lrrrrr}", r"\toprule",
+            r"Setting & judged & disagree & match$\,$0/judge$\,$1 & match$\,$1/judge$\,$0 "
+            r"& max $|\Delta$AUC$|$ \\", r"\midrule"]
+    for s, g in d.groupby("setting", sort=False):
+        dis = (g["judge"] != g["string_match"]).mean() * 100
+        fn = int(((g["string_match"] == 0) & (g["judge"] == 1)).sum())
+        fp = int(((g["string_match"] == 1) & (g["judge"] == 0)).sum())
+        sh = sens[sens["setting"] == s]["delta"].abs().max() if len(sens) else np.nan
+        shs = "--" if pd.isna(sh) else f"{sh:.3f}"
+        rows.append(f"{short(s)} & {len(g):,} & {dis:.1f}\\% & {fn} & {fp} & {shs} \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
 def main():
     style()
     th = load("theory")
@@ -866,6 +907,9 @@ def main():
         fh.write(f"\\newcommand{{\\SinkTableOnpolicy}}{{%\n{table_onpolicy()}\n}}\n")
         fh.write(f"\\newcommand{{\\SinkTableToha}}{{%\n{table_toha()}\n}}\n")
         fh.write(f"\\newcommand{{\\SinkTableTohaCausal}}{{%\n{table_toha_causal()[0]}\n}}\n")
+        for name, body in [("Native", table_native()), ("Audit", table_audit())]:
+            if body:
+                fh.write(f"\\newcommand{{\\SinkTable{name}}}{{%\n{body}\n}}\n")
     write_numbers(th, auc, comp)
     fig_layers(lay)
     fig_synthetic()

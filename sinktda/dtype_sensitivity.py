@@ -63,8 +63,8 @@ def precision():
     lines += [r"\bottomrule", r"\end{tabular}"]
     with open("paper/sink_precision.tex", "w") as fh:
         fh.write(r"\newcommand{\PrecPlatformMax}{" + f"{df['platform'].abs().max():.3f}" + "}\n")
-        fh.write(r"\newcommand{\PrecFp32Max}{" + f"{df['precision'].abs().max():.3f}" + "}\n")
-        fh.write(r"\newcommand{\PrecFp32TopoMax}{"
+        fh.write(r"\newcommand{\PrecFpMax}{" + f"{df['precision'].abs().max():.3f}" + "}\n")
+        fh.write(r"\newcommand{\PrecFpTopoMax}{"
                  + f"{df[df.bank.isin(['0D', '1D', 'DEFL', 'SINK'])]['precision'].abs().max():.3f}" + "}\n")
         fh.write(r"\newcommand{\PrecSettings}{" + str(df['setting'].nunique()) + "}\n")
         fh.write(r"\newcommand{\SinkTablePrecision}{%" + "\n" + "\n".join(lines) + "\n}\n")
