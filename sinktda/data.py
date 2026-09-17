@@ -90,6 +90,22 @@ def triviaqa_questions(n=2000, seed=0):
     return df.sample(n=n, random_state=seed).reset_index(drop=True)
 
 
+def encode(tok, text, **kw):
+    """Tokenize `text`, avoiding a duplicated BOS.
+
+    Some chat templates (e.g. Mistral-7B-Instruct, Llama-3.1) emit the BOS token
+    themselves, and the tokenizer would then prepend a second one. A repeated BOS
+    splits the attention sink across two tokens, which changes every sink and
+    coning statistic. Only skip the automatic special tokens when the text already
+    starts with the BOS string, so behaviour is unchanged for every other template.
+    """
+    add = True
+    bos = getattr(tok, "bos_token", None)
+    if bos and tok.bos_token_id is not None and text.startswith(bos):
+        add = False
+    return tok(text, add_special_tokens=add, **kw)
+
+
 def onpolicy_prompt(tok, q):
     return tok.apply_chat_template([{"role": "user", "content": ONPOLICY_INSTR + q}],
                                    tokenize=False, add_generation_prompt=True)

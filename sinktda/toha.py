@@ -129,7 +129,7 @@ def extract(args):
     feats, meta = {}, []
     t0 = time.time()
     for i, r in enumerate(rows):
-        enc = tok(r["full"], return_tensors="pt").to(device)
+        enc = data.encode(tok, r["full"], return_tensors="pt").to(device)
         N = enc["input_ids"].shape[1]
         p = min(len(tok(r["prefix"].rstrip(" "))["input_ids"]), N - 1)
         if N > 1024:

@@ -1,0 +1,401 @@
+setting,row,question,pred,string_match,judge,judge_raw
+triviaqa_mistral,4,Which drink is known as ‘The Wine of Islam’?,"Answer: Kahwa or Arabic coffee, not a wine, is known as the ""Wine of Islam""",1,0,incorrect
+triviaqa_mistral,9,In which form of pool (pocket billiards) are the balls formed into a diamond pattern?,Eight-ball: Rack in a diamond shape before starting the game.,0,0,incorrect
+triviaqa_mistral,15,Which English rowing event is held every year on the River Thames for 5 days (Wednesday to Sunday) over the first weekend in July?,Henley Royal Regatta,1,1,correct
+triviaqa_mistral,29,What was invented in 1907 by Murray Spangler?,The vacuum cleaner was invented by Murray Spangler in 1907.,1,1,correct
+triviaqa_mistral,31,"What sort of noun are words such as ‘sadness’, ‘humour’, and ‘triumph’?",Emotions or feelings.,0,0,incorrect
+triviaqa_mistral,40,Ladon the dragon was killed by Heracles while guarding which of the twelve labours?,Ladon guarded the Apples of the Hesperides (the last labor of Heracles).,1,1,correct
+triviaqa_mistral,52,In Greek mythology who was the god of the north winds?,"Boreas, the god of the north wind in Greek mythology.",1,1,correct
+triviaqa_mistral,61,"Under which British monarch was Warren Hastings appointed first Governor of the Presidency of Fort William (Bengal) and the head of the Supreme Council of Bengal, effectively the first Governor-General of India?",King George III,1,1,correct
+triviaqa_mistral,73,Which country used to be called Southern Rhodesia?,Zimbabwe (prior to 1980),1,1,correct
+triviaqa_mistral,92,Who wrote and had a hit with the instrumental Classical Gas?,"Mason Williams wrote and had a hit with ""Classical Gas.""",1,1,correct
+triviaqa_mistral,94,What name is given to an alcoholic drink that is taken in an effort to cure a hangover?,Hair of the dog.,1,1,correct
+triviaqa_mistral,97,"Name the year; the Warrington bombings, Grand National cancelled after false starts and Arsenal beat Sheffield Wednesday in the finals of both major cup competitions?",The year is 1996.,0,0,incorrect
+triviaqa_mistral,99,The adjective “buccal” refers to which part of the body?,The buccal part refers to the inner lining of the cheeks in the mouth.,1,1,correct
+triviaqa_mistral,111,Which is the only non-European country to have hosted the Winter Olympics only once?,"Japan, in 1972 at Sapporo.",0,0,incorrect
+triviaqa_mistral,135,If a creature or figure is described as ‘trippant’ what is it doing?,A trippant creature or figure is hopping or leaping.,0,0,incorrect
+triviaqa_mistral,136,The American journalist Ida Tarbell is known for her expose of the corrupt practices of which giant company? John D. Rockefeller probably hated her!,Ida Tarbell is known for exposing the corrupt practices of Standard Oil.,1,1,correct
+triviaqa_mistral,147,Which spirit is the base of the cocktails Planter’s Punch and Sundowner?,Dark rum is the base spirit for both Planter's Punch and Sundowner cocktails.,1,0,incorrect
+triviaqa_mistral,151,How is the American singer Anna Mae Bullock better known?,Anna Mae Bullock is better known as Tina Turner.,1,1,correct
+triviaqa_mistral,153,Neil Kinnock's son Stephen is married to the Prime Minister of which Country?,Prime Minister of Denmark (Mette Frederiksen),1,0,incorrect
+triviaqa_mistral,159,Which World War 2 American general was known as 'Vinegar Joe'?,"General ""Vinegar Joe"" Stilwell.",1,1,correct
+triviaqa_mistral,163,"Captain of the Flying Dustman, what was the name of Captain Pugwash's mortal enemy?",Blackbeard the Pirate,0,0,incorrect
+triviaqa_mistral,174,Symphony number 104 by Joseph Haydn and symphony number 2 by Ralph Vaughan Williams are both named after which European capital city?,Vienna,0,0,incorrect
+triviaqa_mistral,204,Which Formula One racetrack is in the Ardennes?,Spa-Francorchamps.,0,0,incorrect
+triviaqa_mistral,227,What is the alcoholic ingredient of a Screwdriver cocktail?,Vodka,1,1,correct
+triviaqa_mistral,229,"A Caduceus, a staff with two serpents twined around it, is associated with which profession?",The Caduceus is associated with healthcare.,0,1,correct
+triviaqa_mistral,236,In which book of the bible is the story of Noah's Ark?,Genesis (Old Testament),1,1,correct
+triviaqa_mistral,252,"""""""The Sound of Music"""", in 1959, was the last Broadway musical of which famous duo?""",Richard Rodgers and Oscar Hammerstein II,1,1,correct
+triviaqa_mistral,261,"The first session of the United Nations General Assembly was convened in January 1946, in which city?","New York City, United States",0,0,incorrect
+triviaqa_mistral,287,"In 2001: A Space Odyssey, what was the name of the computer that took control of the spaceship Discovery?",The computer was named HAL 9000.,1,1,correct
+triviaqa_mistral,296,"Which Shakespeare play tells the story of Prospero, the rightful Duke of Milan?",The Tempest,1,1,correct
+triviaqa_mistral,317,"Which Australian Prime Minister went for a swim in 1967, never to be seen again?",There is no record of an Australian Prime Minister going for a swim and disappearing in 1967.,0,0,incorrect
+triviaqa_mistral,321,In which year was the Dambuster's raid,The Dambuster's raid was in 1943.,1,1,correct
+triviaqa_mistral,365,SS Ancon was the first ship to navigate what single-vowelled passage on 15 August 1914?,The Suez Canal,0,0,incorrect
+triviaqa_mistral,381,Which company produces the supermini car the Ypsilon?,Fiat produces the Ypsilon supermini car.,0,0,incorrect
+triviaqa_mistral,385,"What word describes making beautiful with ornaments, or to decorate, etc?","The word you're looking for is ""decorate."" Alternatively, you could use ""adorn"" or """,0,0,incorrect
+triviaqa_mistral,430,Who wrote the plays ‘The Cocktail Party’ and ‘The Family Reunion’?,T.S. Eliot wrote 'The Cocktail Party' and 'The Family Reunion'.,1,1,correct
+triviaqa_mistral,442,Who said sex is a bad thing it rumples the clothes?,"Mark Twain is often quoted as saying this, but there's no definitive evidence that he did.",0,0,incorrect
+triviaqa_mistral,452,Who declared the 1936 summer Olympic Games open? (Both names required.),Adolf Hitler and Jesse Owens declared the 1936 summer Olympic Games open. (Hitler opened,1,0,incorrect
+triviaqa_mistral,455,How long was swimmer Michelle Smith-de Bruin banned for attempting to manipulate a drugs test?,Michelle Smith-de Bruin was banned for 2 years.,0,0,incorrect
+triviaqa_mistral,475,When was the guillotine last used in France?,The guillotine last used in France was in 1977.,1,1,correct
+triviaqa_mistral,479,In which country is the region Dalmatia?,Croatia.,1,1,correct
+triviaqa_mistral,486,Which British comic included Desperate Dan and Korky the Cat?,Beano Comic,0,0,incorrect
+triviaqa_mistral,499,"Until the introduction of the Euro, what is the unit of currency in Austria?",The unit of currency in Austria prior to the Euro was the Austrian Schilling.,1,1,correct
+triviaqa_mistral,505,"Kingsley Amis, John Gardner and Raymond Benson have written novels about which character, after the death of the original author?",James Bond.,1,1,correct
+triviaqa_mistral,550,Carried out by a military man it’s called Seppuku. What other name is it known by?,Honorable suicide by disembowelment (Hara-kiri),1,0,incorrect
+triviaqa_mistral,555,The laburnum tree has what colour flowers?,The laburnum tree has golden-yellow flowers.,0,1,correct
+triviaqa_mistral,576,Who was the first NASA astronaut to conduct a spacewalk?,The first NASA astronaut to conduct a spacewalk was Ed White during the Gemini 4 mission in 1,1,1,correct
+triviaqa_mistral,580,What online travel agency uses The Roaming Gnome as its' TV spokesperson?,Expedia: The Roaming Gnome.,1,0,incorrect
+triviaqa_mistral,602,"On August 28, 1963, who stood on the steps of Lincoln Memorial and famously stated ""I have a dream""?","Martin Luther King Jr. made the ""I have a dream"" speech on August 28, 196",1,1,correct
+triviaqa_mistral,606,"What is the forename of Lewis Hamilton’s father, a prominent member of his entourage?",Anthony Hamilton,1,1,correct
+triviaqa_mistral,620,What is the name of Terence and Shirley Conran's dress designer son?,Mark Conran,0,0,incorrect
+triviaqa_mistral,637,"""Who was known as """"The Waltz King""""?""",Johann Strauss II,1,1,correct
+triviaqa_mistral,641,Which Parliamentary Act was abbreviated to DORA?,Defense of the Realm Act,1,1,correct
+triviaqa_mistral,672,What modern popular pet population originated entirely from single female found in Syria in 1930?,The Ragdoll cat breed.,0,0,incorrect
+triviaqa_mistral,683,"Who wrote the political treatise ‘The Prince’, published in 1532?",Niccolò Machiavelli wrote 'The Prince'.,1,1,correct
+triviaqa_mistral,702,Fiji Day is celebrated in Fiji during which month of the year?,Fiji Day is celebrated in October.,1,1,correct
+triviaqa_mistral,704,"""Who wrote the piece of music recognised in much of the Western world as """"The Wedding March"""" (or as """"Here Comes The Bride"""")?""","Richard Wagner: ""Bridal Chorus"" from ""Lohengrin"" (1850)",0,0,incorrect
+triviaqa_mistral,707,"In November 2011, Wigan rugby league player Sam Tomkins made his rugby union debut in a 'one-off' game playing for which team?",Aviva Premiership's Bath Rugby,0,0,incorrect
+triviaqa_mistral,710,"How is 'Cedric Errol' referred to in the title of a famous children's novel, published in 1886?","The title is ""The Secret Garden"" by Frances Hodgson Burnett. Cedric Errol is not",0,0,incorrect
+triviaqa_mistral,716,Which American city experienced an earthquake in the early hours of January 17th 1994?,"Los Angeles, California (experienced a major earthquake)",1,1,correct
+triviaqa_mistral,718,"Which group recorded the albums called 'Raintown', 'Fellow Hoodlums' and 'Homesick'?","TLC (T-Boz, Left Eye, Chilli)",0,0,incorrect
+triviaqa_mistral,719,What is the Japanese share index called?,Nikkei 225,1,1,correct
+triviaqa_mistral,724,If you were performing an orison what would you be doing?,Offering a prayer.,1,1,correct
+triviaqa_mistral,733,"London's city bike rental scheme, which launched in 2010, is based on the Bixi project which introduced bike rental to which city?","Montreal, Canada",1,1,correct
+triviaqa_mistral,740,"""In the film of the same name, what was the name of """"The Hustler""""?""","""Eddie 'The Hustler' Felson""",0,1,correct
+triviaqa_mistral,742,"""In the James Bond film """"The World Is Not Enough"""" who played Bond girl Elektra King?""","""Robert Carlyle portrayed Elektra King."" (Note: Robert Carlyle is not a",0,0,incorrect
+triviaqa_mistral,762,"When Jim Laker took 19 wickets in the Old Trafford Test Match in 1956, who was the Australian captain?",Richie Benaud (was the English captain),1,0,incorrect
+triviaqa_mistral,767,Iris Somerville was killed in London in 1982 by lightning - Lightning struck what?,Iris Somerville was killed by a lightning strike.,0,0,incorrect
+triviaqa_mistral,777,What type of leaves does a koala feed on?,Eucalyptus leaves.,1,1,correct
+triviaqa_mistral,792,"Which syndrome, a type of delusional jealousy of infidelity of a spouse or partner, is named after a Shakespearian character?",Green-eyed syndrome (Othello's jealousy),0,0,incorrect
+triviaqa_mistral,797,Which Italian demonstrated the first modern electric battery?,Alessandro Volta is known for the first modern electric battery.,1,1,correct
+triviaqa_mistral,799,What is Paris's largest airport?,Charles de Gaulle Airport,1,1,correct
+triviaqa_mistral,816,What company advertised itself with the slogan “We’ll leave a light on for you”?,Motel 6,1,1,correct
+triviaqa_mistral,825,Which English rowing event is held every year on the River Thames for 5 days (Wednesday to Sunday) over the first weekend in July?,Henley Royal Regatta,1,1,correct
+triviaqa_mistral,830,Who was famous for popularising the 'little black dress' in the 1920s?,Coco Chanel popularized the 'little black dress' in the 1920s.,1,1,correct
+triviaqa_mistral,854,How often does a national census take place in Britain?,A national census in Britain occurs every 10 years.,0,1,correct
+triviaqa_mistral,856,The prominent headland known as the Great Orme is close to which Welsh town?,Llandudno,1,1,correct
+triviaqa_mistral,861,"Whose summer residence is at Lake Gandalfo, a small town south-east of Rome?",Pope's summer residence. (Villa Papale di Castelgandolfo),1,0,incorrect
+triviaqa_mistral,884,"James Esdaile, John Elliotson, Jean-Martin Charcot, Hippolyte Bernheim, Pierre Janet, mile Cou, Morton Prince, Clark L. Hull, Andrew Salter, Theodore R. Sarbin, Ernest Hilgard, Martin Theodore Orne, and Nicholas Spanos are associated with what?",These individuals are associated with hypnosis and psychology.,1,1,correct
+triviaqa_mistral,901,What is the waxy secretion of the sperm whale used in perfume manufacturing,Sperm whale spermaceti is used in perfume manufacturing.,0,0,incorrect
+triviaqa_mistral,910,"Who designed the red telephone box, which first appeared in London in 1926?",Sir Giles Gilbert Scott designed the red telephone box.,1,1,correct
+triviaqa_mistral,913,Marilyn Monroe starred in the Seven Year Itch. Who directed it?,Billy Wilder directed The Seven Year Itch with Marilyn Monroe.,1,1,correct
+triviaqa_mistral,921,"Who, in November 2005, became the first ever female Chancellor of Germany?",Angela Merkel became the first female Chancellor of Germany in November 2005.,1,1,correct
+triviaqa_mistral,923,Torres Strait Islander Eddie Mabo became famous in Australian history for his role in campaigning for what?,Recognition of Indigenous land rights.,1,0,incorrect
+triviaqa_mistral,951,"Which spy was sentenced to 42 years in prison in 1961, but escaped from Wormwood Scrubs in 1966?","Guy Burgess: 42-year sentence (1961), escaped from Wormwood Scrubs",0,0,incorrect
+triviaqa_mistral,970,"'The Playboy Riots' occurred during and following the opening in 1907 of 'The Playboy Of The Western World' by J.M. Synge, at which Dublin theatre?",Abbey Theatre,1,1,correct
+triviaqa_mistral,974,On the banks of which river does the Welsh city of Carmarthenstand?,The city of Carmarthen stands on the River Towy.,1,1,correct
+triviaqa_mistral,976,To which animal does the adjective caprine refer?,"Caprine animals are those that belong to the Caprinae family, which includes goats and sheep.",1,0,incorrect
+triviaqa_mistral,982,On which island is Reina Sofia Airport?,Reina Sofia Airport is on the Spanish island of Gran Canaria.,0,0,incorrect
+triviaqa_mistral,988,Which vegetable is added to Lasagne to make 'Lasagne Verdi'?,Spinach is added to Lasagne to make 'Lasagne Verdi'.,1,0,incorrect
+triviaqa_mistral,990,"""What was the name of the dog in the children’s TV series """"The Herbs""""?""","I'm sorry, there seems to be a misunderstanding. The children's TV series you're referring to",0,0,incorrect
+triviaqa_mistral,994,What is connected to the European mainland by a sand Isthmus called the North Front?,Denmark (Jutland peninsula),0,0,incorrect
+triviaqa_mistral,998,For which trade is Saville Row best known?,Men's custom tailoring.,1,1,correct
+triviaqa_mistral,1012,"Who, with 84 goals in 85 games is Hungary’s highest international goal scorer?",Ferenc Puskás,1,1,correct
+triviaqa_mistral,1018,The Tinta Barroca grape is chiefly used to make which drink?,Port wine.,1,0,incorrect
+triviaqa_mistral,1031,"Alternatively known as Austrpphlebia Costalis, what type of insect is a Southern Giant Darner ?",Southern Giant Darners are a type of dragonfly.,1,1,correct
+triviaqa_mistral,1040,Which sporting trophy is made of melted silver rupees?,"Khel Garas Cup (in Bhuj, India)",0,0,incorrect
+triviaqa_mistral,1075,"Which cocktail comprises Tequila, Lime or Lemon juice, and Orange-flavoured liqueur?","Margarita with a twist: Tequila, Lime or Lemon juice, Triple Sec.",1,1,correct
+triviaqa_mistral,1080,"Ingvar Kamprad, one of the world's richest men, founded which company in the 1940's?",Ikea (Ingvar Kamprad founded it in the 1940s),1,1,correct
+triviaqa_mistral,1095,What is the name of the helicopter used to transport the President of the United States,Marine One (Sikorsky VH-3D or VH-60N),1,1,correct
+triviaqa_mistral,1096,Which aperitif is named for the Paris chemist who created it in 1846?,"The aperitif named for the Paris chemist who created it in 1846 is ""Absint",0,0,incorrect
+triviaqa_mistral,1100,The Free Officers Movement was composed of young junior army officers committed to unseating the monarchy of which African country?,Egypt,1,1,correct
+triviaqa_mistral,1118,"Which daily newspaper was founded in 1903 by Alfred Harmsworth as a 'newspaper for women, run by women'?",Daily Mail (Female's Daily),0,0,incorrect
+triviaqa_mistral,1120,What online travel agency uses The Roaming Gnome as its' TV spokesperson?,Expedia: The Roaming Gnome.,1,0,incorrect
+triviaqa_mistral,1138,"The Bell Rock Lighthouse, said to be the oldest surviving offshore lighthouse in the world, lies off the coast of which European country?","Scotland or Ireland (Both claim to have the oldest offshore lighthouse, with Bell Rock Lighthouse in",1,0,incorrect
+triviaqa_mistral,1147,Who became BBC Radio One Breakfast Show presenter in June 1973?,Tony Blackburn took over as BBC Radio One Breakfast Show presenter in June 1973.,0,0,incorrect
+triviaqa_mistral,1148,Which country singer/songwriter was known as the 'Man in Black' ?,Johnny Cash,1,1,correct
+triviaqa_mistral,1176,Which famous British actor is/was married to Anouk Aimee?,Laurence Harvey (was married),0,0,incorrect
+triviaqa_mistral,1181,"When is Labour Day in the USA, Bermuda and Canada?",USA: First Monday in September,1,1,correct
+triviaqa_mistral,1196,"Referring to the cause of a person's downfall, who is the Greek goddess of punishment?",The Greek goddess of punishment is Inexorible Fate (Inevitable Fate or Dike as,0,0,incorrect
+triviaqa_mistral,1200,Which vegetable was the first to be canned?,Corn was the first vegetable to be canned.,0,0,incorrect
+triviaqa_mistral,1209,"What, loosely translating as 'self-boiler', is a traditional metal Russian tea urn called?",Samovar. A traditional Russian metal tea urn called samovar functions as a self-boiler.,1,1,correct
+triviaqa_mistral,1211,"In the poem ‘Monday’s Child’, what is Wednesday’s child full of?",Wednesday's child is full of wonder.,0,0,incorrect
+triviaqa_mistral,1221,The stone Lapis Lazuli is used to make which shade of blue pigment for artists?,"Lapis Lazuli is used to make a deep, vibrant blue pigment for artists.",0,1,correct
+triviaqa_mistral,1223,The Siege Perilous was a vacant seat at what?,The Round Table.,1,1,correct
+triviaqa_mistral,1234,What name was given to a series of thirty evening radio speeches given by US President Franklin D. Roosevelt in 1933 and 1944?,Fireside Chats,1,1,correct
+triviaqa_mistral,1237,"The final carrier of the Olympic flame in the Olympic Torch Relay is often kept secret until the last moment, and is usually who?",The final carrier is typically the Olympic athlete or a prominent local figure at the Olympic Games.,0,0,incorrect
+triviaqa_mistral,1265,Who sang about 'Angie Baby' in 1975?,Helena Hohlmeier sang about 'Angie Baby' in 1975.,0,0,incorrect
+triviaqa_mistral,1273,"May 28, 1998 saw the death of what Saturday Night Live alum, and voice of Lionel Hutz and Troy McClure on The Simpsons, who was shot while he slept by his wife Brynn Omdahl?",Phil Hartman,1,1,correct
+triviaqa_mistral,1281,What colour is the inner ring of an Olympic archery target?,The inner ring of an Olympic archery target is white.,0,0,incorrect
+triviaqa_mistral,1298,What was the name of John Cabot’s ship which he sailed to North America in 1497?,The Matthew or Mathew. (The exact name is uncertain.),1,0,incorrect
+triviaqa_mistral,1311,What was the capital of West Germany from 1949 to 1990?,Bonn was the capital of West Germany from 1949 to 1990.,1,1,correct
+triviaqa_mistral,1324,What railway line is green on the traditional map of the London Underground (Tube)?,The District Line is green on the traditional map of the London Underground (Tube).,1,1,correct
+triviaqa_mistral,1325,Basutoland changed its name in 1966 to what current name?,Lesotho,1,1,correct
+triviaqa_mistral,1335,What kind of animal is a 'Suffolk Punch'?,The Suffolk Punch is a breed of horse.,1,1,correct
+triviaqa_mistral,1347,Which tennis player founded the fashion label Aneres?,Gerard Piqué (a Spanish tennis player turned footballer) and Shakira (a Colombian singer and,0,0,incorrect
+triviaqa_mistral,1352,What was the name of the teddy bear mascot of speed record holder Donald Campbell?,Bluebird mascot teddy: Campbell's record-breaking speed vehicle.,0,0,incorrect
+triviaqa_mistral,1353,Who played the role of Kate Flax in the 1990 film Mermaids?,Winona Ryder played the role of Kate Flax in Mermaids (1990).,0,0,incorrect
+triviaqa_mistral,1356,"At the beginning of 'Two Towers', the second book in 'The Lord Of The Rings' trilogy, who was apparently killed in the 'Mines of Moria'?",Boromir apparently kills Gandalf in the Mines of Moria (not true in actual story).,1,0,incorrect
+triviaqa_mistral,1398,Which singer had a number 1 hit album in 2008 entitled 'Hard Candy'?,"Madonna (answered in the form of a short phrase: ""Madonna - Hard Candy (20",1,1,correct
+triviaqa_mistral,1403,White Gem is a variety of which vegetable?,Cauliflower. White Gem is a type of cauliflower.,0,0,incorrect
+triviaqa_mistral,1414,Who played the lawyer Miranda Hobbes in the TV series 'Sex and the City'?,Cynthia Nixon played Miranda Hobbes in 'Sex and the City'.,1,1,correct
+triviaqa_mistral,1436,In which English country is the country house Dorneywood?,"Dorneywood is in England, Buckinghamshire.",1,1,correct
+triviaqa_mistral,1443,"At the time of the northern solstice, the sun is directly over which line of latitude around the Earth?",The Arctic Circle. (Northern Hemisphere's winter solstice),0,0,incorrect
+triviaqa_mistral,1448,"Name the fantasy movie directed by Terry Gilliam, where 6 dwarves have stolen a map.","""Six dwarves in 'Labyrinth' (1986) steal Jareth'",0,0,incorrect
+triviaqa_mistral,1467,Who discovered the two moons of Mars in 1877?,Asaph Hall discovered the two moons of Mars in 1877.,1,1,correct
+triviaqa_mistral,1471,What is the more common name for the white crystalline salt called hydrated sodium pyroborate?,Borax decahydrate,1,0,incorrect
+triviaqa_mistral,1472,What name was given to a trooper in the Parliamentarian cavalry formed by Oliver Cromwell during the English Civil War?,Parliamentarian Cromwellian cavalry trooper: Roundhead.,0,0,incorrect
+triviaqa_mistral,1478,Of which US rock band is Anthony Kiedis a founder member and lead singer?,Red Hot Chili Peppers,1,1,correct
+triviaqa_mistral,1484,"""Which country launched the space station """"Skylab"""" in 1973?""",United States,1,1,correct
+triviaqa_mistral,1486,The word sacerdotal means relating to what?,The word sacerdotal means relating to the priesthood.,1,1,correct
+triviaqa_mistral,1493,"When the egg is released from the ovary, what is left behind?",The follicle is left behind.,0,0,incorrect
+triviaqa_mistral,1497,What kind of flowers was the gunman holding when he shot Dirty Den in Eastenders,No such scene occurred in Eastenders with a gunman holding flowers while shooting Dirty Den.,0,0,incorrect
+triviaqa_mistral,1508,"What type of creature is a Lion's Mane, found in the Arctic'?",Jellyfish with long tentacles.,1,0,incorrect
+triviaqa_mistral,1525,The UK political Labour Party's famously controversial 1995 constitutional 'Clause IV' amendment mainly removed a commitment to?,The UK Labour Party's Clause IV amendment mainly removed a commitment to nationalizing industries.,1,1,correct
+triviaqa_mistral,1531,"In 1746, Scottish naval surgeon James Lind pioneered the treatment of which disease?",Scurvy treatment innovation (by James Lind in 1746),1,1,correct
+triviaqa_mistral,1546,"Which actor plays Cate Blanchett's father in the 2004 film ""The Missing"", a story set in 19th century New Mexico where the father works with estranged daughter Blanchett to get her kidnapped child back?","Tommy Lee Jones plays Cate Blanchett's father in ""The Missing.""",1,1,correct
+triviaqa_mistral,1550,Which teacher taught Helen Keller to communicate?,Anne Sullivan taught Helen Keller to communicate.,1,1,correct
+triviaqa_mistral,1563,Who wrote the poem The Dong With The Luminous Nose?,"Edward Lear wrote ""The Dong With The Luminous Nose.""",1,1,correct
+triviaqa_mistral,1565,"What name was collectively given to the sons of Poseidon, who dwelt with him at the bottom of the sea?","The sons of Poseidon living at the bottom of the sea are called the ""Tritons.""",1,1,correct
+triviaqa_mistral,1580,In which US state was the American Declaration of Independence signed on 4th July 1776?,"The American Declaration of Independence was not signed on July 4, 1776. It was adopted",0,0,incorrect
+triviaqa_mistral,1582,What bridge connects the two peninsulas of Michigan?,Mackinac Bridge,1,1,correct
+triviaqa_mistral,1583,What is the surname of the family in the BBC comedy series ‘Outnumbered’?,The surname is Brooks.,0,0,incorrect
+triviaqa_mistral,1632,Which town is home to the University of Ulster?,The town is Jordanstown. (Coleraine and Magee campuses are also part of the University of,1,0,incorrect
+triviaqa_mistral,1637,Where did the Shinning Path terrorists operate?,Peru: Shining Path terrorists operated in Peru.,1,1,correct
+triviaqa_mistral,1644,From what illness did Mary II die in 1694?,Mary II died of smallpox in 1694.,1,1,correct
+triviaqa_mistral,1645,"Which type of roof is pitched at two different angles, the lower part being steeper than the upper?",Mansard roof.,1,1,correct
+triviaqa_mistral,1647,What is the capital of the American state of Nevada?,The capital of Nevada is Carson City.,1,1,correct
+triviaqa_mistral,1653,The office of the President of which South American country is La Casa Rosada (The Pink House)?,Argentina,1,1,correct
+triviaqa_mistral,1668,"Breve, Mocha and Americano are all types of which drink?",Coffee beverages.,1,1,correct
+triviaqa_mistral,1670,"The Washington Post reporters, Carl Bernstein and Bob Woodward, wrote an account of the Watergate scandal, published in 1974. What was the book called?","""All the President's Men""",1,1,correct
+triviaqa_mistral,1684,"Who was the cartoon adversary of Pixie and Dixie, who would often say I hate those meeces to pieces?",The Grumpy Cat or Sourpuss was the adversary of Pixie and Dixie in the cart,0,0,incorrect
+triviaqa_mistral,1701,"Spider, Idiot’s Delight, Canfield, Pyramid and Clock are all forms of what card game?","These are all variations of the card game ""Solitaire."" However, Idiot's Delight and Sp",0,0,incorrect
+triviaqa_mistral,1713,Burnside was a spin off from which Australia series,"""Homicide: Life on the Street"" (US version)",0,0,incorrect
+triviaqa_mistral,1716,Who played the female lead in the 1957 film 'An Affair To Remember'?,Deborah Kerr played the female lead.,1,1,correct
+triviaqa_mistral,1721,"""What word refers to the period before """"The Great Flood"""" as described in the Old Testament of the Bible?""","""Pre-Flood era"" or ""Ante-Deluvian period""",1,1,correct
+triviaqa_mistral,1729,What is the plural of Winklevoss?,Winklevosses,0,0,incorrect
+triviaqa_mistral,1734,Diane Belmont became famous as who?,Diane Belmont became famous as a figure skater.,0,0,incorrect
+triviaqa_mistral,1741,"What country had a famine that killed over 400,000?","Ukraine (1932-1933, Holodomor)",0,0,incorrect
+triviaqa_mistral,1754,Where is the venue for the next Winter Olympics in 2010?,"Vancouver, Canada",1,1,correct
+triviaqa_mistral,1761,Who wrote the book 'LA Confidential'?,James Ellroy wrote 'LA Confidential'.,0,1,correct
+triviaqa_mistral,1766,In which Thomas Hardy novel does Michael Henchard appear?,The Mayor of Casterbridge,1,1,correct
+triviaqa_mistral,1778,Which late English singer released albums entitled ‘Frank’ and ‘Back to Black’?,Amy Winehouse,1,1,correct
+triviaqa_mistral,1802,Jimmy Wales and Larry Sanger founded which website in 2001?,Wikipedia,1,1,correct
+triviaqa_mistral,1820,"The pasta, farfalle, is named after which creature?",The pasta farfalle is named after butterflies.,0,1,correct
+triviaqa_mistral,1822,You have the right to remain silent and Anything you say or do can and will be held against you in a court of law are typical of the wording used by police officers to inform suspects of their rights following what landmark Supreme Court decision of 1966?,Miranda v. Arizona,1,1,correct
+triviaqa_mistral,1823,What synthetic opioid is used to help treat heroin addiction?,Buprenorphine or Suboxone.,0,0,incorrect
+triviaqa_mistral,1825,A merrythought is one of the popular names for which part of a bird?,A merrythought is a name for a bird's nest. It is not a part of a bird itself,0,0,incorrect
+triviaqa_mistral,1838,What epitaph is on Frank Sinatra's tombstone?,"""The Best is Yet to Come"" - Frank Sinatra's famous song lyric serves as his epitaph",1,0,incorrect
+triviaqa_mistral,1841,Denmark has a single land border; with which country?,With Germany.,1,1,correct
+triviaqa_mistral,1846,In which state of the US is it illegal to mis-pronounce the name of the state?,No state in the U.S. has a law against mispronouncing its name.,0,0,incorrect
+triviaqa_mistral,1848,What common substance has the chemical formula NaCl?,Table salt.,1,1,correct
+triviaqa_mistral,1858,"What, traditionally, would a Cordwainer make?",A Cordwainer traditionally makes shoes.,1,1,correct
+triviaqa_mistral,1859,"Founded in 1900, in what sport is the Davis Cup played for?",Tennis.,1,1,correct
+triviaqa_mistral,1874,"What formal menswear, often abbreviated to three letters, is named after a New York park where it was first worn in the 1880s?","The answer is ""tuxedo.""",1,1,correct
+triviaqa_mistral,1906,Milwaukee is the largest city in which American state?,Wisconsin,1,1,correct
+triviaqa_mistral,1908,"Which cult film, starring Harrison Ford, was based on the story Do Androids Dream of Electric Sheep?","""Blade Runner (1982)""",1,1,correct
+triviaqa_mistral,1916,What name is given to a figure of speech by means of which contradictory terms are combined?,Oxymoron,1,1,correct
+triviaqa_mistral,1920,What former diplomat and ambassador to Russia is generally considered the toughest questioner of the Chilcot Inquiry committee?,"Sir Roderic Lyne, the former British ambassador to Russia, is known for his robust questioning during the Ch",1,1,correct
+triviaqa_mistral,1921,"In 1216, English monarch King John was said to have lost the crown jewels while crossing which body of water?",The Wash (a estuary in East England),1,1,correct
+triviaqa_mistral,1922,"Name the year: American gangster AI Capone dies, Princess Elizabeth marries and India gains its independence?",The year is 1947.,1,1,correct
+triviaqa_mistral,1941,Erotology is the study of what?,Erotology is the study of sexuality and human sexual response.,0,1,correct
+triviaqa_mistral,1946,What was the name of the old Waddington’s game based on newspapers?,Newspaper Bingo or News Bingo.,0,0,incorrect
+triviaqa_mistral,1948,Who did Zola Budd accidentally trip during the LA Olympics in 1984?,"Myra Lamont, a British runner, was tripped by Zola Budd during the 3000m",0,0,incorrect
+triviaqa_mistral,1952,In which European country is the port of St Malo?,France,1,1,correct
+triviaqa_mistral,1956,Who wrote The Sea Wolf,"Jack London wrote ""The Sea Wolf.""",1,1,correct
+triviaqa_mistral,1961,What color golf balls are used on the golf course in Antarctica?,There are no golf courses in Antarctica with standardized golf ball colors.,0,0,incorrect
+triviaqa_mistral,1970,Where in England was actor Nigel Hawthorne born?,"Nigel Hawthorne was born in Sutton Coldfield, England.",0,0,incorrect
+triviaqa_mistral,1985,What is the name of the Welsh television producer and writer who created 'Torchwood'?,Russell T. Davies,1,1,correct
+triviaqa_mistral,1988,Marjorie Courtenay-Latimer discovered which rare fish in 1938?,Coelacanth discovery by Marjorie Courtenay-Latimer was in 1938.,1,1,correct
+triviaqa_qwen7b,4,Which drink is known as ‘The Wine of Islam’?,Ginawi,0,0,incorrect
+triviaqa_qwen7b,9,In which form of pool (pocket billiards) are the balls formed into a diamond pattern?,Nine-ball,1,1,correct
+triviaqa_qwen7b,15,Which English rowing event is held every year on the River Thames for 5 days (Wednesday to Sunday) over the first weekend in July?,Oxford and Cambridge Boat Race,0,0,incorrect
+triviaqa_qwen7b,29,What was invented in 1907 by Murray Spangler?,Electric vacuum cleaner,1,1,correct
+triviaqa_qwen7b,31,"What sort of noun are words such as ‘sadness’, ‘humour’, and ‘triumph’?",Abstract nouns,1,1,correct
+triviaqa_qwen7b,40,Ladon the dragon was killed by Heracles while guarding which of the twelve labours?,The Lernaean Hydra,0,0,incorrect
+triviaqa_qwen7b,52,In Greek mythology who was the god of the north winds?,Boreas,1,1,correct
+triviaqa_qwen7b,61,"Under which British monarch was Warren Hastings appointed first Governor of the Presidency of Fort William (Bengal) and the head of the Supreme Council of Bengal, effectively the first Governor-General of India?",George II,0,0,incorrect
+triviaqa_qwen7b,73,Which country used to be called Southern Rhodesia?,Zimbabwe,1,1,correct
+triviaqa_qwen7b,92,Who wrote and had a hit with the instrumental Classical Gas?,Jerry Baxter,0,0,incorrect
+triviaqa_qwen7b,94,What name is given to an alcoholic drink that is taken in an effort to cure a hangover?,Hair of the Dog,1,1,correct
+triviaqa_qwen7b,97,"Name the year; the Warrington bombings, Grand National cancelled after false starts and Arsenal beat Sheffield Wednesday in the finals of both major cup competitions?",1989,0,0,incorrect
+triviaqa_qwen7b,99,The adjective “buccal” refers to which part of the body?,Cheek,1,1,correct
+triviaqa_qwen7b,111,Which is the only non-European country to have hosted the Winter Olympics only once?,South Korea,0,0,incorrect
+triviaqa_qwen7b,135,If a creature or figure is described as ‘trippant’ what is it doing?,Jumping,0,0,incorrect
+triviaqa_qwen7b,136,The American journalist Ida Tarbell is known for her expose of the corrupt practices of which giant company? John D. Rockefeller probably hated her!,Standard Oil,1,1,correct
+triviaqa_qwen7b,147,Which spirit is the base of the cocktails Planter’s Punch and Sundowner?,Rum,1,1,correct
+triviaqa_qwen7b,151,How is the American singer Anna Mae Bullock better known?,As Tina Turner.,1,1,correct
+triviaqa_qwen7b,153,Neil Kinnock's son Stephen is married to the Prime Minister of which Country?,Ireland,0,0,incorrect
+triviaqa_qwen7b,159,Which World War 2 American general was known as 'Vinegar Joe'?,Joseph Stilwell,1,1,correct
+triviaqa_qwen7b,163,"Captain of the Flying Dustman, what was the name of Captain Pugwash's mortal enemy?",Scurvy Dog,0,0,incorrect
+triviaqa_qwen7b,174,Symphony number 104 by Joseph Haydn and symphony number 2 by Ralph Vaughan Williams are both named after which European capital city?,London,1,1,correct
+triviaqa_qwen7b,204,Which Formula One racetrack is in the Ardennes?,Spa-Francorchamps,0,0,incorrect
+triviaqa_qwen7b,227,What is the alcoholic ingredient of a Screwdriver cocktail?,Vodka,1,1,correct
+triviaqa_qwen7b,229,"A Caduceus, a staff with two serpents twined around it, is associated with which profession?",Medical profession,1,1,correct
+triviaqa_qwen7b,236,In which book of the bible is the story of Noah's Ark?,Genesis,1,1,correct
+triviaqa_qwen7b,252,"""""""The Sound of Music"""", in 1959, was the last Broadway musical of which famous duo?""",Rodgers and Hammerstein,1,1,correct
+triviaqa_qwen7b,261,"The first session of the United Nations General Assembly was convened in January 1946, in which city?",London,1,1,correct
+triviaqa_qwen7b,287,"In 2001: A Space Odyssey, what was the name of the computer that took control of the spaceship Discovery?",HAL 9000,1,1,correct
+triviaqa_qwen7b,296,"Which Shakespeare play tells the story of Prospero, the rightful Duke of Milan?",The Tempest,1,1,correct
+triviaqa_qwen7b,317,"Which Australian Prime Minister went for a swim in 1967, never to be seen again?",Gough Whitlam,0,0,incorrect
+triviaqa_qwen7b,321,In which year was the Dambuster's raid,1943,1,1,correct
+triviaqa_qwen7b,365,SS Ancon was the first ship to navigate what single-vowelled passage on 15 August 1914?,Suez,0,0,incorrect
+triviaqa_qwen7b,381,Which company produces the supermini car the Ypsilon?,Honda,0,0,incorrect
+triviaqa_qwen7b,385,"What word describes making beautiful with ornaments, or to decorate, etc?",Adorn,0,1,correct
+triviaqa_qwen7b,430,Who wrote the plays ‘The Cocktail Party’ and ‘The Family Reunion’?,T.S. Eliot,1,1,correct
+triviaqa_qwen7b,442,Who said sex is a bad thing it rumples the clothes?,Groucho Marx,0,0,incorrect
+triviaqa_qwen7b,452,Who declared the 1936 summer Olympic Games open? (Both names required.),"Adolf Hitler, Hans von Tschammer und Osten",1,0,incorrect
+triviaqa_qwen7b,455,How long was swimmer Michelle Smith-de Bruin banned for attempting to manipulate a drugs test?,4 years,1,1,correct
+triviaqa_qwen7b,475,When was the guillotine last used in France?,1977,1,1,correct
+triviaqa_qwen7b,479,In which country is the region Dalmatia?,Croatia,1,1,correct
+triviaqa_qwen7b,486,Which British comic included Desperate Dan and Korky the Cat?,The Beano,0,0,incorrect
+triviaqa_qwen7b,499,"Until the introduction of the Euro, what is the unit of currency in Austria?",Austrian Schilling,1,0,incorrect
+triviaqa_qwen7b,505,"Kingsley Amis, John Gardner and Raymond Benson have written novels about which character, after the death of the original author?",James Bond,1,1,correct
+triviaqa_qwen7b,550,Carried out by a military man it’s called Seppuku. What other name is it known by?,Hara-kiri,1,1,correct
+triviaqa_qwen7b,555,The laburnum tree has what colour flowers?,Yellow,1,1,correct
+triviaqa_qwen7b,576,Who was the first NASA astronaut to conduct a spacewalk?,Edward H. White II,0,1,correct
+triviaqa_qwen7b,580,What online travel agency uses The Roaming Gnome as its' TV spokesperson?,Expedia,0,0,incorrect
+triviaqa_qwen7b,602,"On August 28, 1963, who stood on the steps of Lincoln Memorial and famously stated ""I have a dream""?",Martin Luther King Jr.,1,1,correct
+triviaqa_qwen7b,606,"What is the forename of Lewis Hamilton’s father, a prominent member of his entourage?",Lewis,0,0,incorrect
+triviaqa_qwen7b,620,What is the name of Terence and Shirley Conran's dress designer son?,Tom,0,0,incorrect
+triviaqa_qwen7b,637,"""Who was known as """"The Waltz King""""?""",Johann Strauss II,1,1,correct
+triviaqa_qwen7b,641,Which Parliamentary Act was abbreviated to DORA?,Defence of the Realm Act,1,1,correct
+triviaqa_qwen7b,672,What modern popular pet population originated entirely from single female found in Syria in 1930?,Cat,0,0,incorrect
+triviaqa_qwen7b,683,"Who wrote the political treatise ‘The Prince’, published in 1532?",Niccolò Machi,0,1,correct
+triviaqa_qwen7b,702,Fiji Day is celebrated in Fiji during which month of the year?,October,1,1,correct
+triviaqa_qwen7b,704,"""Who wrote the piece of music recognised in much of the Western world as """"The Wedding March"""" (or as """"Here Comes The Bride"""")?""",William Sterndale Benett,0,0,incorrect
+triviaqa_qwen7b,707,"In November 2011, Wigan rugby league player Sam Tomkins made his rugby union debut in a 'one-off' game playing for which team?",Harlecrose Hawks,0,0,incorrect
+triviaqa_qwen7b,710,"How is 'Cedric Errol' referred to in the title of a famous children's novel, published in 1886?",Cedric of the Lost Castle,0,0,incorrect
+triviaqa_qwen7b,716,Which American city experienced an earthquake in the early hours of January 17th 1994?,Los Angeles,1,1,correct
+triviaqa_qwen7b,718,"Which group recorded the albums called 'Raintown', 'Fellow Hoodlums' and 'Homesick'?",Gang Starr,0,0,incorrect
+triviaqa_qwen7b,719,What is the Japanese share index called?,Nikkei Index,1,1,correct
+triviaqa_qwen7b,724,If you were performing an orison what would you be doing?,Praying,1,1,correct
+triviaqa_qwen7b,733,"London's city bike rental scheme, which launched in 2010, is based on the Bixi project which introduced bike rental to which city?",Paris,0,0,incorrect
+triviaqa_qwen7b,740,"""In the film of the same name, what was the name of """"The Hustler""""?""",The Hustler,0,0,incorrect
+triviaqa_qwen7b,742,"""In the James Bond film """"The World Is Not Enough"""" who played Bond girl Elektra King?""",Léa Seydon,0,0,incorrect
+triviaqa_qwen7b,762,"When Jim Laker took 19 wickets in the Old Trafford Test Match in 1956, who was the Australian captain?",Les Ames,0,0,incorrect
+triviaqa_qwen7b,767,Iris Somerville was killed in London in 1982 by lightning - Lightning struck what?,Iris Somerville,0,0,incorrect
+triviaqa_qwen7b,777,What type of leaves does a koala feed on?,Eucalyptus,1,1,correct
+triviaqa_qwen7b,792,"Which syndrome, a type of delusional jealousy of infidelity of a spouse or partner, is named after a Shakespearian character?",Othello Syndrome,1,1,correct
+triviaqa_qwen7b,797,Which Italian demonstrated the first modern electric battery?,Alessandro Volta,1,1,correct
+triviaqa_qwen7b,799,What is Paris's largest airport?,Charles de Gaulle Airport,1,1,correct
+triviaqa_qwen7b,816,What company advertised itself with the slogan “We’ll leave a light on for you”?,AT&T,0,0,incorrect
+triviaqa_qwen7b,825,Which English rowing event is held every year on the River Thames for 5 days (Wednesday to Sunday) over the first weekend in July?,Oxford and Cambridge Boat Race,0,0,incorrect
+triviaqa_qwen7b,830,Who was famous for popularising the 'little black dress' in the 1920s?,Coco Chanel,1,1,correct
+triviaqa_qwen7b,854,How often does a national census take place in Britain?,Every 100 years,0,1,correct
+triviaqa_qwen7b,856,The prominent headland known as the Great Orme is close to which Welsh town?,Llandudno,1,1,correct
+triviaqa_qwen7b,861,"Whose summer residence is at Lake Gandalfo, a small town south-east of Rome?",Benito Mussolini,0,0,incorrect
+triviaqa_qwen7b,884,"James Esdaile, John Elliotson, Jean-Martin Charcot, Hippolyte Bernheim, Pierre Janet, mile Cou, Morton Prince, Clark L. Hull, Andrew Salter, Theodore R. Sarbin, Ernest Hilgard, Martin Theodore Orne, and Nicholas Spanos are associated with what?",Hypnotism,1,1,correct
+triviaqa_qwen7b,901,What is the waxy secretion of the sperm whale used in perfume manufacturing,Spermaceti,0,0,incorrect
+triviaqa_qwen7b,910,"Who designed the red telephone box, which first appeared in London in 1926?",Hans Gugelot,0,0,incorrect
+triviaqa_qwen7b,913,Marilyn Monroe starred in the Seven Year Itch. Who directed it?,Billy Wilder,1,1,correct
+triviaqa_qwen7b,921,"Who, in November 2005, became the first ever female Chancellor of Germany?",Angela Merkel,1,1,correct
+triviaqa_qwen7b,923,Torres Strait Islander Eddie Mabo became famous in Australian history for his role in campaigning for what?,Land rights,1,1,correct
+triviaqa_qwen7b,951,"Which spy was sentenced to 42 years in prison in 1961, but escaped from Wormwood Scrubs in 1966?",Geoffrey Blake,0,0,incorrect
+triviaqa_qwen7b,970,"'The Playboy Riots' occurred during and following the opening in 1907 of 'The Playboy Of The Western World' by J.M. Synge, at which Dublin theatre?",Gaiety Theatre,0,0,incorrect
+triviaqa_qwen7b,974,On the banks of which river does the Welsh city of Carmarthenstand?,River Tywi,1,1,correct
+triviaqa_qwen7b,976,To which animal does the adjective caprine refer?,Goat,1,1,correct
+triviaqa_qwen7b,982,On which island is Reina Sofia Airport?,Tenerife,1,1,correct
+triviaqa_qwen7b,988,Which vegetable is added to Lasagne to make 'Lasagne Verdi'?,Parsleyweed,0,0,incorrect
+triviaqa_qwen7b,990,"""What was the name of the dog in the children’s TV series """"The Herbs""""?""",Percy,0,0,incorrect
+triviaqa_qwen7b,994,What is connected to the European mainland by a sand Isthmus called the North Front?,Cape Verde Islands,0,0,incorrect
+triviaqa_qwen7b,998,For which trade is Saville Row best known?,Tailoring,1,1,correct
+triviaqa_qwen7b,1012,"Who, with 84 goals in 85 games is Hungary’s highest international goal scorer?",Gábor Király,0,0,incorrect
+triviaqa_qwen7b,1018,The Tinta Barroca grape is chiefly used to make which drink?,Port wine,1,0,incorrect
+triviaqa_qwen7b,1031,"Alternatively known as Austrpphlebia Costalis, what type of insect is a Southern Giant Darner ?",Dragonfly,1,1,correct
+triviaqa_qwen7b,1040,Which sporting trophy is made of melted silver rupees?,Irvington Trophy,0,0,incorrect
+triviaqa_qwen7b,1075,"Which cocktail comprises Tequila, Lime or Lemon juice, and Orange-flavoured liqueur?",Paloma,0,0,incorrect
+triviaqa_qwen7b,1080,"Ingvar Kamprad, one of the world's richest men, founded which company in the 1940's?",IKEA,1,1,correct
+triviaqa_qwen7b,1095,What is the name of the helicopter used to transport the President of the United States,Marine One,1,1,correct
+triviaqa_qwen7b,1096,Which aperitif is named for the Paris chemist who created it in 1846?,Campari,0,0,incorrect
+triviaqa_qwen7b,1100,The Free Officers Movement was composed of young junior army officers committed to unseating the monarchy of which African country?,Egypt,1,1,correct
+triviaqa_qwen7b,1118,"Which daily newspaper was founded in 1903 by Alfred Harmsworth as a 'newspaper for women, run by women'?",The Daily Mail,0,0,incorrect
+triviaqa_qwen7b,1120,What online travel agency uses The Roaming Gnome as its' TV spokesperson?,Expedia,0,0,incorrect
+triviaqa_qwen7b,1138,"The Bell Rock Lighthouse, said to be the oldest surviving offshore lighthouse in the world, lies off the coast of which European country?",Scotland,1,1,correct
+triviaqa_qwen7b,1147,Who became BBC Radio One Breakfast Show presenter in June 1973?,Tony Blackburn,0,0,incorrect
+triviaqa_qwen7b,1148,Which country singer/songwriter was known as the 'Man in Black' ?,Johnny Cash,1,1,correct
+triviaqa_qwen7b,1176,Which famous British actor is/was married to Anouk Aimee?,Laurence Olivier,0,0,incorrect
+triviaqa_qwen7b,1181,"When is Labour Day in the USA, Bermuda and Canada?",May 1,0,0,incorrect
+triviaqa_qwen7b,1196,"Referring to the cause of a person's downfall, who is the Greek goddess of punishment?",Nemesis,1,0,incorrect
+triviaqa_qwen7b,1200,Which vegetable was the first to be canned?,Peas,1,1,correct
+triviaqa_qwen7b,1209,"What, loosely translating as 'self-boiler', is a traditional metal Russian tea urn called?",samovar,1,1,correct
+triviaqa_qwen7b,1211,"In the poem ‘Monday’s Child’, what is Wednesday’s child full of?",Adventures,0,0,incorrect
+triviaqa_qwen7b,1221,The stone Lapis Lazuli is used to make which shade of blue pigment for artists?,Ultramarine,1,1,correct
+triviaqa_qwen7b,1223,The Siege Perilous was a vacant seat at what?,The Knights of the Round Table,1,1,correct
+triviaqa_qwen7b,1234,What name was given to a series of thirty evening radio speeches given by US President Franklin D. Roosevelt in 1933 and 1944?,The Fireside Chats,1,1,correct
+triviaqa_qwen7b,1237,"The final carrier of the Olympic flame in the Olympic Torch Relay is often kept secret until the last moment, and is usually who?",A prominent athlete or public figure,0,1,correct
+triviaqa_qwen7b,1265,Who sang about 'Angie Baby' in 1975?,The Rolling Stones,0,0,incorrect
+triviaqa_qwen7b,1273,"May 28, 1998 saw the death of what Saturday Night Live alum, and voice of Lionel Hutz and Troy McClure on The Simpsons, who was shot while he slept by his wife Brynn Omdahl?",Phil Hartman,1,1,correct
+triviaqa_qwen7b,1281,What colour is the inner ring of an Olympic archery target?,Red,0,0,incorrect
+triviaqa_qwen7b,1298,What was the name of John Cabot’s ship which he sailed to North America in 1497?,Mathewgröße 6,0,0,incorrect
+triviaqa_qwen7b,1311,What was the capital of West Germany from 1949 to 1990?,Bonn,1,1,correct
+triviaqa_qwen7b,1324,What railway line is green on the traditional map of the London Underground (Tube)?,District Line,1,1,correct
+triviaqa_qwen7b,1325,Basutoland changed its name in 1966 to what current name?,Lesotho,1,1,correct
+triviaqa_qwen7b,1335,What kind of animal is a 'Suffolk Punch'?,Draft horse,1,1,correct
+triviaqa_qwen7b,1347,Which tennis player founded the fashion label Aneres?,Roger Federer,0,0,incorrect
+triviaqa_qwen7b,1352,What was the name of the teddy bear mascot of speed record holder Donald Campbell?,Bluebird,0,0,incorrect
+triviaqa_qwen7b,1353,Who played the role of Kate Flax in the 1990 film Mermaids?,Daryl Hannah,0,0,incorrect
+triviaqa_qwen7b,1356,"At the beginning of 'Two Towers', the second book in 'The Lord Of The Rings' trilogy, who was apparently killed in the 'Mines of Moria'?",Balin,0,0,incorrect
+triviaqa_qwen7b,1398,Which singer had a number 1 hit album in 2008 entitled 'Hard Candy'?,Avril Lavigne,0,0,incorrect
+triviaqa_qwen7b,1403,White Gem is a variety of which vegetable?,Turnip,0,0,incorrect
+triviaqa_qwen7b,1414,Who played the lawyer Miranda Hobbes in the TV series 'Sex and the City'?,Kim Cattrall,0,0,incorrect
+triviaqa_qwen7b,1436,In which English country is the country house Dorneywood?,Berkshire,0,0,incorrect
+triviaqa_qwen7b,1443,"At the time of the northern solstice, the sun is directly over which line of latitude around the Earth?",Tropic of Cancer,1,1,correct
+triviaqa_qwen7b,1448,"Name the fantasy movie directed by Terry Gilliam, where 6 dwarves have stolen a map.",The Fisher King,0,0,incorrect
+triviaqa_qwen7b,1467,Who discovered the two moons of Mars in 1877?,Asaph Hall,1,1,correct
+triviaqa_qwen7b,1471,What is the more common name for the white crystalline salt called hydrated sodium pyroborate?,Boraxax,0,0,incorrect
+triviaqa_qwen7b,1472,What name was given to a trooper in the Parliamentarian cavalry formed by Oliver Cromwell during the English Civil War?,Ironsides,1,1,correct
+triviaqa_qwen7b,1478,Of which US rock band is Anthony Kiedis a founder member and lead singer?,Red Hot Chili Peppers,1,1,correct
+triviaqa_qwen7b,1484,"""Which country launched the space station """"Skylab"""" in 1973?""",Australia,0,0,incorrect
+triviaqa_qwen7b,1486,The word sacerdotal means relating to what?,priestly,0,1,correct
+triviaqa_qwen7b,1493,"When the egg is released from the ovary, what is left behind?",Corpus luteum,1,1,correct
+triviaqa_qwen7b,1497,What kind of flowers was the gunman holding when he shot Dirty Den in Eastenders,Tulips,0,0,incorrect
+triviaqa_qwen7b,1508,"What type of creature is a Lion's Mane, found in the Arctic'?",Seal,0,0,incorrect
+triviaqa_qwen7b,1525,The UK political Labour Party's famously controversial 1995 constitutional 'Clause IV' amendment mainly removed a commitment to?,Abolition of class rule,0,0,incorrect
+triviaqa_qwen7b,1531,"In 1746, Scottish naval surgeon James Lind pioneered the treatment of which disease?",Scurvy,1,1,correct
+triviaqa_qwen7b,1546,"Which actor plays Cate Blanchett's father in the 2004 film ""The Missing"", a story set in 19th century New Mexico where the father works with estranged daughter Blanchett to get her kidnapped child back?",Keith David,0,0,incorrect
+triviaqa_qwen7b,1550,Which teacher taught Helen Keller to communicate?,Anne Sullivan,1,1,correct
+triviaqa_qwen7b,1563,Who wrote the poem The Dong With The Luminous Nose?,Liushaoshan,0,0,incorrect
+triviaqa_qwen7b,1565,"What name was collectively given to the sons of Poseidon, who dwelt with him at the bottom of the sea?",Tridents,0,0,incorrect
+triviaqa_qwen7b,1580,In which US state was the American Declaration of Independence signed on 4th July 1776?,New Jersey,0,0,incorrect
+triviaqa_qwen7b,1582,What bridge connects the two peninsulas of Michigan?,Mackinac Bridge,1,1,correct
+triviaqa_qwen7b,1583,What is the surname of the family in the BBC comedy series ‘Outnumbered’?,Barnsley,0,0,incorrect
+triviaqa_qwen7b,1632,Which town is home to the University of Ulster?,Jordanstown,0,0,incorrect
+triviaqa_qwen7b,1637,Where did the Shinning Path terrorists operate?,Peru,1,1,correct
+triviaqa_qwen7b,1644,From what illness did Mary II die in 1694?,Smallpox,1,1,correct
+triviaqa_qwen7b,1645,"Which type of roof is pitched at two different angles, the lower part being steeper than the upper?",Dutch gable,0,0,incorrect
+triviaqa_qwen7b,1647,What is the capital of the American state of Nevada?,Carson City,1,1,correct
+triviaqa_qwen7b,1653,The office of the President of which South American country is La Casa Rosada (The Pink House)?,Argentina,1,1,correct
+triviaqa_qwen7b,1668,"Breve, Mocha and Americano are all types of which drink?",Coffee,1,1,correct
+triviaqa_qwen7b,1670,"The Washington Post reporters, Carl Bernstein and Bob Woodward, wrote an account of the Watergate scandal, published in 1974. What was the book called?",All the President's Men,1,1,correct
+triviaqa_qwen7b,1684,"Who was the cartoon adversary of Pixie and Dixie, who would often say I hate those meeces to pieces?",Filibuster,0,0,incorrect
+triviaqa_qwen7b,1701,"Spider, Idiot’s Delight, Canfield, Pyramid and Clock are all forms of what card game?",Canasta,0,0,incorrect
+triviaqa_qwen7b,1713,Burnside was a spin off from which Australia series,HawkEye,0,0,incorrect
+triviaqa_qwen7b,1716,Who played the female lead in the 1957 film 'An Affair To Remember'?,Geneviève Bujold,0,0,incorrect
+triviaqa_qwen7b,1721,"""What word refers to the period before """"The Great Flood"""" as described in the Old Testament of the Bible?""",Antediluvian,1,1,correct
+triviaqa_qwen7b,1729,What is the plural of Winklevoss?,Winklevosses,0,0,incorrect
+triviaqa_qwen7b,1734,Diane Belmont became famous as who?,Vampirella,0,0,incorrect
+triviaqa_qwen7b,1741,"What country had a famine that killed over 400,000?",China,0,0,incorrect
+triviaqa_qwen7b,1754,Where is the venue for the next Winter Olympics in 2010?,"Pyeongchang, South Korea",0,0,incorrect
+triviaqa_qwen7b,1761,Who wrote the book 'LA Confidential'?,James Ellroy,0,1,correct
+triviaqa_qwen7b,1766,In which Thomas Hardy novel does Michael Henchard appear?,The Mayor of Casterbridge,1,1,correct
+triviaqa_qwen7b,1778,Which late English singer released albums entitled ‘Frank’ and ‘Back to Black’?,Amy Winehouse,1,1,correct
+triviaqa_qwen7b,1802,Jimmy Wales and Larry Sanger founded which website in 2001?,Wikipedia,1,1,correct
+triviaqa_qwen7b,1820,"The pasta, farfalle, is named after which creature?",Butterfly,1,1,correct
+triviaqa_qwen7b,1822,You have the right to remain silent and Anything you say or do can and will be held against you in a court of law are typical of the wording used by police officers to inform suspects of their rights following what landmark Supreme Court decision of 1966?,Miranda v. Arizona,1,1,correct
+triviaqa_qwen7b,1823,What synthetic opioid is used to help treat heroin addiction?,Methadone,1,1,correct
+triviaqa_qwen7b,1825,A merrythought is one of the popular names for which part of a bird?,wishbone,1,1,correct
+triviaqa_qwen7b,1838,What epitaph is on Frank Sinatra's tombstone?,Here's to the future,0,0,incorrect
+triviaqa_qwen7b,1841,Denmark has a single land border; with which country?,Germany,1,1,correct
+triviaqa_qwen7b,1846,In which state of the US is it illegal to mis-pronounce the name of the state?,Maine,0,0,incorrect
+triviaqa_qwen7b,1848,What common substance has the chemical formula NaCl?,Table salt,1,1,correct
+triviaqa_qwen7b,1858,"What, traditionally, would a Cordwainer make?",Shoes,1,1,correct
+triviaqa_qwen7b,1859,"Founded in 1900, in what sport is the Davis Cup played for?",Tennis,1,1,correct
+triviaqa_qwen7b,1874,"What formal menswear, often abbreviated to three letters, is named after a New York park where it was first worn in the 1880s?",Harristown,0,0,incorrect
+triviaqa_qwen7b,1906,Milwaukee is the largest city in which American state?,Wisconsin,1,1,correct
+triviaqa_qwen7b,1908,"Which cult film, starring Harrison Ford, was based on the story Do Androids Dream of Electric Sheep?",Blade Runner,1,1,correct
+triviaqa_qwen7b,1916,What name is given to a figure of speech by means of which contradictory terms are combined?,oxymoron,1,1,correct
+triviaqa_qwen7b,1920,What former diplomat and ambassador to Russia is generally considered the toughest questioner of the Chilcot Inquiry committee?,Derek Draper,0,0,incorrect
+triviaqa_qwen7b,1921,"In 1216, English monarch King John was said to have lost the crown jewels while crossing which body of water?",Solent,0,0,incorrect
+triviaqa_qwen7b,1922,"Name the year: American gangster AI Capone dies, Princess Elizabeth marries and India gains its independence?",1966,0,0,incorrect
+triviaqa_qwen7b,1941,Erotology is the study of what?,Eroticism,0,0,incorrect
+triviaqa_qwen7b,1946,What was the name of the old Waddington’s game based on newspapers?,Crossword Nonsense,0,0,incorrect
+triviaqa_qwen7b,1948,Who did Zola Budd accidentally trip during the LA Olympics in 1984?,Cathy Freeman,0,0,incorrect
+triviaqa_qwen7b,1952,In which European country is the port of St Malo?,France,1,1,correct
+triviaqa_qwen7b,1956,Who wrote The Sea Wolf,Jack London,1,1,correct
+triviaqa_qwen7b,1961,What color golf balls are used on the golf course in Antarctica?,White,0,0,incorrect
+triviaqa_qwen7b,1970,Where in England was actor Nigel Hawthorne born?,Dorset,0,0,incorrect
+triviaqa_qwen7b,1985,What is the name of the Welsh television producer and writer who created 'Torchwood'?,Russell T Davies,1,1,correct
+triviaqa_qwen7b,1988,Marjorie Courtenay-Latimer discovered which rare fish in 1938?,Coelacanth,1,1,correct

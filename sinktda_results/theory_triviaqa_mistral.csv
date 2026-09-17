@@ -1,0 +1,2 @@
+setting,n_rows,layers,mean_N,cells,bound_violations_h1,bound_violations_p0,bound_violations_maxdeath,frac_cells_coned,frac_cells_coned_any_apex,mean_sink_mass,frac_cells_h1_zero,frac_h1zero_given_coned,median_delta0,median_layer_spearman_P0_star,median_layer_spearman_P0_star_norm,min_layer_spearman_P0_star_norm,median_layer_rel_gap,cell_spearman_delta0_h1
+triviaqa_mistral,2000,32,58.719,64000,0,0,0,0.657515625,0.657515625,0.6389851380852954,0.751703125,1.0,0.0,0.9999996092498737,0.9999952404984604,0.9921540539618366,0.0,0.8208706804638515
