@@ -15,6 +15,7 @@ import pandas as pd
 
 RES = "sinktda_results"
 PAPER = "paper"
+OUT = os.environ.get("SINKTDA_OUT", "sinktda_out")
 
 # reference categorical order (dataviz palette, light mode)
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948",
@@ -575,6 +576,7 @@ def write_numbers(th, auc, comp):
     m.update(numbers_mistral())
     m.update(numbers_native())
     m.update(numbers_audit())
+    m.update(numbers_release())
     m.update(table_toha_causal()[1])
     # largest |delta| of any topological bank (0D, deflated, per-head defect, TOHA) beyond
     # NONTOPO, early or late fusion, on TruthfulQA and on-policy TriviaQA
@@ -589,6 +591,29 @@ def write_numbers(th, auc, comp):
     with open(f"{PAPER}/sink_numbers.tex", "w") as fh:
         for k, v in m.items():
             fh.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
+
+
+def numbers_release():
+    """What the released artifact actually contains.
+
+    The per-example feature dumps live in sinktda_out/, which is too large for git and is
+    attached to the anonymous mirror by hand. Several settings in the paper were extracted on
+    a machine whose dumps are gone, so the release covers a subset; these macros keep the
+    reproducibility statement honest about which one instead of asserting "all settings".
+    """
+    feats, gens = [], []
+    for s in ORDER:
+        d = f"{OUT}/{s}"
+        if os.path.exists(f"{d}/layers.parquet") or os.path.exists(f"{d}/perhead.npz"):
+            feats.append(s)
+        if os.path.exists(f"{d}/generations.csv"):
+            gens.append(s)
+    return {
+        "ReleaseFeatN": str(len(feats)),
+        "ReleaseFeatList": _join_names([short(s) for s in feats]),
+        "ReleaseGenN": str(len(gens)),
+        "ReleaseGenList": _join_names([short(s) for s in gens]),
+    }
 
 
 def numbers_audit():
