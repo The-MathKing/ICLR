@@ -11,7 +11,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install torch transformers datasets ripser scikit-learn scipy numpy pandas pyarrow joblib matplotlib
 ```
 
-Versions used for the paper: torch 2.13.0, transformers 5.16.1, ripser 0.6.15, scikit-learn 1.9.0, numpy 2.5.2, scipy 1.18.1, pandas 3.0.5, Python 3.13. The models of at most 3.8B parameters were run in bfloat16 on Apple-silicon MPS with eager attention.
+Versions used for the paper: torch 2.13.0, transformers 5.16.1, ripser 0.6.15, scikit-learn 1.9.0, numpy 2.5.2, scipy 1.18.1, pandas 3.0.5, Python 3.13. The models of at most 3.8B parameters were run in bfloat16 on Apple-silicon MPS with eager attention; the 7B models (Mistral-7B and Qwen2.5-7B) were run in bfloat16 on an NVIDIA RTX 5080. Nothing was quantized.
 
 The 7--8B settings were extracted on an RTX 5080 (16 GB, CUDA) with torch 2.11.0+cu128, transformers 5.17.0, ripser 0.6.15, scikit-learn 1.9.1, numpy 2.5.2, scipy 1.18.1, pandas 3.0.5, Python 3.14.7, also in bfloat16 with eager attention. Qwen2.5-7B uses `SINKTDA_OFFLOAD=1` (some layers on the CPU, dtype unchanged); Mistral-7B fits on the GPU. Nothing is quantized.
 
