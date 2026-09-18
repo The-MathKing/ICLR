@@ -39,3 +39,14 @@ scratch/
 refrences/
 references/
 
+
+# Working notes and review material: never ship these. They carry absolute paths,
+# an earlier review's scores, and third-party PDFs, and the anonymous mirror serves
+# whatever is in the repo.
+HANDOFF.md
+PLAN_v2.md
+PROMPT_5080.md
+PROMPT_REVITALIZE.md
+REVIEW_AC.md
+REVITALIZE_PLAN.md
+rigor/patch_device.py

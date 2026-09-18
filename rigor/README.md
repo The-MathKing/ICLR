@@ -11,16 +11,14 @@ over 4,000 randomized group layouts.
 
 ## 0. Prerequisite: get off CPU
 
-`rigor/patch_device.py` ports the repo to CUDA. This is not optional on an
-NVIDIA box — **15 scripts select `"mps" if torch.backends.mps.is_available()
-else "cpu"` and none contains a CUDA code path**, so on an RTX 5080 every
-extraction silently runs on CPU. 13 also hardcode
-`HF_HOME` to a fixed absolute path on an external drive.
+The legacy `phase*` scripts select `"mps" if torch.backends.mps.is_available()
+else "cpu"` and contain no CUDA code path, so on an NVIDIA box they silently run
+on CPU. They are superseded and produce no number in the current paper; the
+`sinktda/` package selects CUDA when it is available and reads `HF_HOME` and
+`TMPDIR` from the environment.
 
 ```bash
 pip install --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio
-python rigor/patch_device.py --dry-run
-python rigor/patch_device.py
 ```
 
 RTX 50-series is Blackwell (sm_120) and needs **torch ≥ 2.7 / cu128**. Older
