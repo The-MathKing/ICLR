@@ -69,10 +69,35 @@ Prompts are defined in `sinktda/data.py`.
 
 ## Reproducing from the released features
 
-The feature caches in `sinktda_out/` are enough to regenerate every table and figure without running a model:
+Only part of `sinktda_out/` is released. The per-head (`perhead.npz`, `toha.npz`) and
+hidden-state (`hidden.npy`) dumps are all larger than the 8 MB per-file limit of the
+anonymous host, and the dumps for the other settings were lost with the machine that
+produced them. What ships is every file that clears the limit:
+
+| file | settings |
+| --- | --- |
+| `layers.parquet` (per-layer features) | `truthfulqa_{mistral,mistral_chat,qwen7b}`, `triviaqa_qwen7b` |
+| `generations.csv` (on-policy answers and labels) | `triviaqa_{mistral,qwen7b}` |
+
+These are enough to re-derive the per-layer results for those settings -- the coning
+shares and `P_0`/star-weight correlations in Table 1, and the layer-level banks -- and to
+audit the on-policy labels directly. They are **not** enough to rebuild the per-head
+tables, the TOHA results, or the hidden-state probe; those banks need the dumps that
+could not ship.
+
+The numbers themselves do not depend on this. Every table, figure and macro in the paper
+is generated from the CSVs in `sinktda_results/`, which are released in full:
 
 ```bash
-python -m sinktda.evaluate && python -m sinktda.late_fusion && python -m sinktda.layer_split
-python -m sinktda.defect_probe && python -m sinktda.toha evaluate && python -m sinktda.check_theory
-python -m sinktda.synthetic && python -m sinktda.report && python -m sinktda.appendix_extra
+python -m sinktda.report
+```
+
+To regenerate the feature dumps for any setting and reproduce the whole chain from
+scratch, re-extract first. The model and setting identifiers are in the paper's
+implementation appendix:
+
+```bash
+python -m sinktda.extract --bench triviaqa --model qwen7b --n 2000
+python -m sinktda.toha extract --bench triviaqa --model qwen7b --n 2000
+python -m sinktda.evaluate triviaqa_qwen7b
 ```
