@@ -19,7 +19,8 @@ Writes sinktda_results/toha_native.csv.
 
 What this does NOT do: run the authors' end-to-end pipeline on their own datasets (CoQA,
 RAGTruth). That needs their generated CSVs, a Comet API key and a gated Llama-3.1-8B
-checkpoint; see REVIEW_AC.md for why it was not attempted here.
+checkpoint, none of which were available here, so this check covers the score itself
+rather than their full pipeline.
 """
 import argparse
 import os
