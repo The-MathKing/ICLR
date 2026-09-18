@@ -16,6 +16,7 @@ import pandas as pd
 RES = "sinktda_results"
 PAPER = "paper"
 OUT = os.environ.get("SINKTDA_OUT", "sinktda_out")
+MIRROR_LIMIT_MB = 8  # anonymous.4open.science refuses anything larger
 
 # reference categorical order (dataviz palette, light mode)
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948",
@@ -602,23 +603,24 @@ def write_numbers(th, auc, comp):
 def numbers_release():
     """What the released artifact actually contains.
 
-    The per-example feature dumps live in sinktda_out/, which is too large for git and is
-    attached to the anonymous mirror by hand. Several settings in the paper were extracted on
-    a machine whose dumps are gone, so the release covers a subset; these macros keep the
-    reproducibility statement honest about which one instead of asserting "all settings".
+    Two constraints decide this, and neither is negotiable. The per-example dumps for most
+    settings are gone with the machine that produced them. And the anonymous mirror that
+    hosts the release refuses files over MIRROR_LIMIT_MB, which rules out every perhead.npz
+    and hidden.npy we still hold, and both Mistral layer dumps. What is left is what these
+    macros name, so the reproducibility statement promises exactly what a reviewer can open.
     """
-    feats, gens = [], []
+    gens, layers = [], []
     for s in ORDER:
-        d = f"{OUT}/{s}"
-        if os.path.exists(f"{d}/layers.parquet") or os.path.exists(f"{d}/perhead.npz"):
-            feats.append(s)
-        if os.path.exists(f"{d}/generations.csv"):
-            gens.append(s)
+        for name, bucket in (("generations.csv", gens), ("layers.parquet", layers)):
+            f = f"{OUT}/{s}/{name}"
+            if os.path.exists(f) and os.path.getsize(f) <= MIRROR_LIMIT_MB * 1024 ** 2:
+                bucket.append(s)
     return {
-        "ReleaseFeatN": str(len(feats)),
-        "ReleaseFeatList": _join_names([short(s) for s in feats]),
+        "ReleaseLimitMB": str(MIRROR_LIMIT_MB),
         "ReleaseGenN": str(len(gens)),
-        "ReleaseGenList": _join_names([short(s) for s in gens]),
+        "ReleaseGenList": _join_names([short(x) for x in gens]),
+        "ReleaseLayerN": str(len(layers)),
+        "ReleaseLayerList": _join_names([short(x) for x in layers]),
     }
 
 
