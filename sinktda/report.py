@@ -495,7 +495,13 @@ def write_numbers(th, auc, comp):
         "TThreeHE": _rng(T("T3_deflated_beyond_sink", "halueval")["delta"]),
         "NTFourEquiv": str(int(T("T4_1D_beyond_0D")["equiv_0.015"].sum())),
         "TFourRange": _rng(T("T4_1D_beyond_0D")["delta"]),
-        "TFourExceptions": (lambda L: ", ".join(L[:-1]) + " and " + L[-1] if len(L) > 1 else (L[0] if L else "none"))([short(x) for x in T("T4_1D_beyond_0D").query("not `equiv_0.015`")["setting"]]),
+        "TFourExceptions": _join_names([short(x) for x in T("T4_1D_beyond_0D").query("not `equiv_0.015`")["setting"]]),
+        # Failing the equivalence test is not the same as helping: one of those
+        # settings has a negative delta with an interval too wide to certify either
+        # way. These two cover the settings where 1D genuinely adds signal.
+        "TFourHelps": _join_names([short(x) for x in
+                                   T("T4_1D_beyond_0D").query("ci95_lo > 0")["setting"]]),
+        "TFourHelpsAllN": str(int((comp[comp["test"] == "T4_1D_beyond_0D"]["ci95_lo"] > 0).sum())),
         "PHTopoRange": _rng(T("PH_topo_beyond_sink")["delta"]),
         "NPHTopoEquiv": str(int(T("PH_topo_beyond_sink")["equiv_0.015"].sum())),
         "NPHTopoTotal": str(len(T("PH_topo_beyond_sink"))),
@@ -630,8 +636,8 @@ def numbers_audit():
     m = {
         "AuditSettings": str(d["setting"].nunique()),
         "AuditN": str(int(d.groupby("setting").size().min())),
-        "AuditDisagreeRange": _rng(rate * 100, "{:.0f}\\%"),
-        "AuditDisagreeMax": f"{rate.max() * 100:.0f}\\%",
+        "AuditDisagreeRange": _rng(rate * 100, "{:.1f}\\%"),
+        "AuditDisagreeMax": f"{rate.max() * 100:.1f}\\%",
     }
     s = f"{RES}/label_audit_sensitivity.csv"
     if os.path.exists(s):
