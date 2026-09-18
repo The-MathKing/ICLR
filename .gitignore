@@ -23,6 +23,10 @@ paper/*.synctex.gz
 
 # Cache and raw large feature vector dumps (>100MB)
 phase_hs_results/*_hidden_states.csv*
+# Raw feature dumps: too large for git in general. Six files under this path are
+# tracked anyway (four layers.parquet, two generations.csv) because the paper's
+# reproducibility statement points at them; they were added with `git add -f` and
+# stay tracked despite this rule. Do not `git rm --cached` this directory.
 sinktda_out/
 hf_cache/
 .hf_cache/
