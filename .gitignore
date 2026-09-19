@@ -31,7 +31,6 @@ sinktda_out/
 hf_cache/
 .hf_cache/
 scratch/
-.claude/
 
 *.old150
 
