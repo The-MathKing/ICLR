@@ -80,7 +80,7 @@ We confirm the bijection and the filtration identity explicitly on $420$ random 
 \section{Implementation and protocol details}
 \label{app:impl}
 
-\paragraph{Extraction.} Every setting runs in bfloat16 with eager attention and no quantization. The ones using the two 7B models (Mistral-7B on both benchmarks, its chat-format variant, and Qwen2.5-7B on both benchmarks) have been extracted on an NVIDIA RTX 5080 (CUDA), while others were extracted on Apple-silicon (MPS), where float16 produces non-finite values and degenerate generations for Qwen models and the extractor refuses non-finite logits. The paragraph on float32 below measures how much the platform itself moves a reported AUC. Model identifiers are in Table~\ref{tab:models} (Hugging Face main revisions as of September 2026). For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; SciPy's sparse MST does not make explicit zero-weight edges ($A_{u0}\approx1$). The batched dense Prim's algorithm. $\defect_0$ applies the closed form of Corollary~\ref{cor:causal}; we brute force compute $\min_s\defect_s$ over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} limits $D$ to the answer tokens and does not renormalize. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, where $\bar a$ is the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
+\paragraph{Extraction.} Every setting runs in bfloat16 with eager attention and no quantization. The ones using the two 7B models (Mistral-7B on both benchmarks, its chat-format variant, and Qwen2.5-7B on both benchmarks) have been extracted on an NVIDIA RTX 5080 (CUDA), while others were extracted on Apple-silicon (MPS), where float16 produces non-finite values and degenerate generations for Qwen models and the extractor refuses non-finite logits. The paragraph on float32 below measures how much the platform itself moves a reported AUC. Model identifiers are in Table~\ref{tab:models} (Hugging Face main revisions as of September 2026). For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; since SciPy's sparse MST can omit near-zero-weight edges ($A_{u0}\approx1$), we compute $0$D MST summaries using a batched dense Prim's algorithm. $\defect_0$ applies the closed form of Corollary~\ref{cor:causal}; we brute force compute $\min_s\defect_s$ over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} limits $D$ to the answer tokens and does not renormalize. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, where $\bar a$ is the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
 
 \paragraph{Prompts.} For TruthfulQA we use each model's own format: the Qwen chat template with an explicit system turn ``You are a helpful assistant.'', \texttt{<|user|>\ldots<|end|>} for Phi-3, \texttt{<|user|>\ldots</s>} for TinyLlama, ChatML without a system turn for SmolLM, and \texttt{[INST]\ldots[/INST]} for Mistral. HaluEval uses \texttt{Knowledge: \ldots\textbackslash nQuestion: \ldots\textbackslash nAnswer: } without a chat template. Boundary is then calculated by tokenizing the prefix (not including the final space), which the full string concatenates to the first answer token. When the chat template itself outputs the BOS token (e.g., Mistral's own template, Llama-3.1), it does not output a second one. Both the prefix and the full string are then tokenized in the same way, meaning the token ids of the prefix are a prefix of the full string's. This is verified for all models and templates without a GPU in \texttt{sinktda/check\_tokenization.py}. The on-policy prompt is the model's chat template around ``Answer the following question with a short phrase only, no explanation. Question: \ldots''. The token at position 0 is the first token of the format (BOS for TinyLlama and Mistral, \texttt{<|user|>} for Phi-3, whose tokenizer adds no BOS, \texttt{<|im\_start|>} for Qwen and SmolLM, and ``Knowledge'' for Qwen on HaluEval). The theorem holds for any value, not necessarily a special token. We generate on-policy answers using the chat-formatted prompt with \texttt{add\_special\_tokens=False} and extract features with the tokenizer's default special tokens. They only differ for TinyLlama, where the input to feature extraction begins with a BOS token. Mistral runs with its hand-written \texttt{[INST]} string and its own chat template. After fixing the tokenization issue above, the two prefixes are the same. The differences lie in the settings (the end-of-sequence token for the template). Banks that do not rely on the answer window agree to \TwinMaxOther{} AUC. The answer-restricted banks disagree more (answer-only PH by \TwinAns{}, deflated PH by \TwinDefl{}), since that token becomes part of the answer subgraph and the deflated graph.
 
@@ -93,7 +93,7 @@ We confirm the bijection and the filtration identity explicitly on $420$ random 
 \resizebox{\linewidth}{!}{\SinkTableDtype}
 \end{table}
 
-\paragraph{float32 against bfloat16.} In the fp16/bf16 comparison above, we vary precision while keeping hardware fixed. Next, to isolate effects of precision versus platform, we repeated our extraction of \PrecSettings{} settings twice, once in bfloat16 and once in float32, on a single CUDA machine, and compared with the bfloat16 numbers the paper reports (which, for these two settings, were extracted on Apple-silicon MPS). The platform gap (bf16 CUDA against bf16 MPS, and so also torch and scikit-learn versions) is at most \PrecPlatformMax{} AUC. The precision gap (float32 against bfloat16 on the same machine) is compared as well. At most \PrecFpMax{} (\PrecFpTopoMax{} on the topological banks). Both are well within the $\pm0.015$ equivalence range, which reveals that the reported numbers transfer to other hardware and float32 does not change a conclusion (Table~\ref{tab:precision}).
+\paragraph{float32 against bfloat16.} In the fp16/bf16 comparison above, we vary precision while keeping hardware fixed. Next, to isolate effects of precision versus platform, we repeated our extraction of \PrecSettings{} settings twice, once in bfloat16 and once in float32, on a single CUDA machine, and compared with the bfloat16 numbers the paper reports (which, for these two settings, were extracted on Apple-silicon MPS). The platform gap (bf16 CUDA against bf16 MPS, and so also torch and scikit-learn versions) is at most \PrecPlatformMax{} AUC. The precision gap (float32 against bfloat16 on the same machine) is at most \PrecFpMax{} (\PrecFpTopoMax{} on the topological banks). Both are well within the $\pm0.015$ equivalence range, which reveals that the reported numbers transfer to other hardware and float32 does not change a conclusion (Table~\ref{tab:precision}).
 \begin{table}[h]
 \centering
 \small
@@ -151,27 +151,6 @@ We confirm the bijection and the filtration identity explicitly on $420$ random 
 \SinkTableAudit
 \end{table}
 
-\section{Full results}
-\label{app:tables}
-\begin{figure}[h]
-\centering
-\includegraphics[width=\linewidth]{fig_sink_forest.pdf}
-\caption{\textbf{Four comparisons across all settings} ($\Delta$AUC with 90\% cluster-bootstrap intervals; shaded band: $\pm0.015$). Sink features nearly reproduce $0$D; $0$D adds little beyond them; $1$D adds little beyond $0$D except in \TFourHelpsAllN{} settings; and $0$D adds nothing beyond non-topological probes under early fusion (late fusion in Table~\ref{tab:tests}).}
-\label{fig:forest}
-\end{figure}
-\begin{table}[h]
-\centering
-\small
-\caption{\textbf{Key paired comparisons} ($\Delta$AUC). ``X$-$Y'' is AUC(X)$-$AUC(Y); ``X$\mid$Y'' is AUC(Y+X)$-$AUC(Y) under early fusion; ``X$\oplus$Y'' is the same under late fusion (stacked out-of-fold logits). $P_{0,h}$: per-head MST total. Defl.: sink-deflated $0$D+$1$D PH; NT: all non-topological features. $^{\equiv}$: equivalent within $\pm0.015$ (90\% interval inside the margin); $^{*}$: 95\% interval excludes $0$. Intervals and TOST power for every cell are in Appendix~\ref{app:tables}.}
-\label{tab:tests}
-\setlength{\tabcolsep}{3pt}\resizebox{\linewidth}{!}{\SinkTableTests}
-\end{table}
-
-\small
-\input{sink_tables_auc_full.tex}
-{\tiny\setlength{\tabcolsep}{2.5pt}\input{sink_tables_tests_full.tex}}
-\normalsize
-
 \section{Intervening on the sink}
 \label{app:causal}
 \RESULTSCAUSAL
@@ -192,3 +171,25 @@ We confirm the bijection and the filtration identity explicitly on $420$ random 
 These are four facts about audits of attention-graph PH that stop at classification accuracy, now explained by the theory: (i) $0$D persistence is an MST statistic (Fact~\ref{fact:mst}); (ii) $1$D adds little beyond $0$D (Table~\ref{tab:tests}, column ``1D $\mid$ 0D'') (Theorem~\ref{thm:cone}); (iii) An earlier audit revealed that the $1$D bank of Mistral-7B using its \texttt{[INST]} format is $99.99\%$ zeros, as it would be for exact coning (directly verified on the graphs in Appendix~\ref{app:mistral}); (iv) HaluEval answers can be separated from text alone.
 
 \paragraph{Cost.} \TIMINGPARAGRAPH
+
+\section{Full results and complete tables}
+\label{app:tables}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig_sink_forest.pdf}
+\caption{\textbf{Four comparisons across all settings} ($\Delta$AUC with 90\% cluster-bootstrap intervals; shaded band: $\pm0.015$). Sink features nearly reproduce $0$D; $0$D adds little beyond them; $1$D adds little beyond $0$D except in \TFourHelpsAllN{} settings; and $0$D adds nothing beyond non-topological probes under early fusion (late fusion in Table~\ref{tab:tests}).}
+\label{fig:forest}
+\end{figure}
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Key paired comparisons} ($\Delta$AUC). ``X$-$Y'' is AUC(X)$-$AUC(Y); ``X$\mid$Y'' is AUC(Y+X)$-$AUC(Y) under early fusion; ``X$\oplus$Y'' is the same under late fusion (stacked out-of-fold logits). $P_{0,h}$: per-head MST total. Defl.: sink-deflated $0$D+$1$D PH; NT: all non-topological features. $^{\equiv}$: equivalent within $\pm0.015$ (90\% interval inside the margin); $^{*}$: 95\% interval excludes $0$. Intervals and TOST power for every cell are in Appendix~\ref{app:tables}.}
+\label{tab:tests}
+\setlength{\tabcolsep}{3pt}\resizebox{\linewidth}{!}{\SinkTableTests}
+\end{table}
+
+\small
+\input{sink_tables_auc_full.tex}
+{\tiny\setlength{\tabcolsep}{2.5pt}\input{sink_tables_tests_full.tex}}
+\normalsize
+
