@@ -1,5 +1,0 @@
-Benchmark,N,Mean MI I(Y; H0) [nats],Mean MI I(Y; H1_raw) [nats],Mean MI I(Y; H1_norm) [nats],"Cond MI I(Y; H1* | H0, L) [nats]",Max Cond MI [nats]
-HaluEval (Qwen2.5-3B),4000,0.00854,0.00249,0.0053,0.00671,0.02943
-HaluEval (Qwen2.5-1.5B),1000,0.01072,0.00543,0.00573,0.00645,0.04918
-TruthfulQA (Qwen2.5-3B),300,0.0063,0.0125,0.01203,0.01611,0.14718
-TruthfulQA (Phi-3-mini-3.8B),300,0.00641,0.01077,0.01111,0.01211,0.08173

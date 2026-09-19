@@ -1,6 +1,0 @@
-Probe,AUC
-Head-averaged 0D (10 dims),0.6773
-Per-head 0D (160 dims),0.8918
-"Per-head max-attn, matched-dim (160 dims)",0.8612
-"Per-head entropy, matched-dim (160 dims)",0.9021
-Per-head max-attn+entropy (320 dims),0.888

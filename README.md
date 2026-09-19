@@ -2,7 +2,7 @@
 
 Code, per-example features, and results for *"The Topology Is the Sink: Topological Hallucination Detectors Reduce to First-Order Attention Statistics"* (ICLR submission).
 
-Everything in the paper comes from the `sinktda/` package. The top-level `phase*`, `master_pipeline.py`, `rigor/`, and `archive/` files belong to an earlier, superseded version of the study and are **not** used for any number in the current paper. The one exception is `rigor/verify_directed_collapse.py`, which checks the directed-flag proposition (Appendix A).
+Everything in the paper comes from the `sinktda/` package. `rigor/verify_directed_collapse.py` checks the directed-flag proposition (Appendix A). An earlier, superseded version of this study used a separate set of scripts; none of them produces any number in the current paper, so they are not part of this release.
 
 ## Setup
 

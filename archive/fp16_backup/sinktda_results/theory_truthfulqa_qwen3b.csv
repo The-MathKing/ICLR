@@ -1,2 +1,0 @@
-setting,n_rows,layers,mean_N,cells,bound_violations_h1,bound_violations_p0,frac_cells_coned,frac_cells_coned_any_apex,mean_sink_mass,frac_cells_h1_zero,frac_h1zero_given_coned,median_delta0,median_layer_spearman_P0_star,median_layer_rel_gap,cell_spearman_delta0_h1
-truthfulqa_qwen3b,1634,36,44.20685434516524,58824,0,0,0.6215490276077792,0.6215490276077792,0.5000641963000456,0.7638038895688835,1.0,0.0,0.9999972631667792,0.0,0.8417399163104731

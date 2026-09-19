@@ -1,4 +1,0 @@
-Dataset,Subset,N,AUC (answer char-length only),AUC (TF-IDF answer text only)
-HaluEval QA,Full,4000,0.9752,0.9623
-HaluEval QA,"Length-Matched (token seq_len, bin=10)",3512,0.9736,0.9601
-TruthfulQA,Full,1634,0.5565,0.8299
