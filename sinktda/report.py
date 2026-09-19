@@ -750,6 +750,21 @@ def numbers_audit():
         m[f"Audit{tag}Setting"] = short(name)
         m[f"Audit{tag}Rate"] = f"{100 * (g['judge'] != g['string_match']).mean():.1f}\\%"
         m[f"Audit{tag}Lax"], m[f"Audit{tag}Strict"] = str(lax), str(strict)
+    # Hanley & McNeil (1982) SE of an AUC, computed on the audited rows under the judge's
+    # labels. The text uses it to say how close two banks have to be before the audit
+    # cannot separate them, so it has to track the audit size rather than be written in.
+    ses = []
+    for st, g in d.groupby("setting"):
+        y = 1 - g["judge"].values                  # judge label, 1 = hallucinated
+        n1, n0 = int((y == 1).sum()), int((y == 0).sum())
+        if not (n1 and n0):
+            continue
+        a = 0.8                                    # representative of the audited banks
+        q1, q0 = a / (2 - a), 2 * a ** 2 / (1 + a)
+        ses.append(((a * (1 - a) + (n1 - 1) * (q1 - a ** 2)
+                     + (n0 - 1) * (q0 - a ** 2)) / (n1 * n0)) ** 0.5)
+    if ses:
+        m["AuditAucSE"] = f"{max(ses):.3f}"
     s = f"{RES}/label_audit_sensitivity.csv"
     if os.path.exists(s):
         sn = pd.read_csv(s)
