@@ -223,7 +223,6 @@ Zeroing the prompt block merges $P$ at scale $0$, so the remaining finite $0$D b
 
 \paragraph{Benchmark artifacts.} \RESULTSARTIFACTS
 
-\vspace*{-20pt}
 \section{Discussion}
 \label{sec:discussion}
 
@@ -231,14 +230,9 @@ Zeroing the prompt block merges $P$ at scale $0$, so the remaining finite $0$D b
 
 \paragraph{Limitations.} Our scales go \ModelSizeRange{}; sink strength varies with scale and training \citep{gu2025attentionsink}, so the coned fraction is model-specific, though Theorem~\ref{thm:cone} is not. HalluZig's zigzag and learned graph models \citep{samaga2026halluzig,charm} are out of scope, as are sampling-based (semantic entropy; \citealp{farquhar2024semantic}) and latent-probe (CCS; \citealp{burns2022discovering}) baselines, which score quantities other than the attention graph. We do not reproduce TOHA on its RAG benchmarks (\S\ref{sec:toha}): whether the reduction stays exact on long retrieved contexts, where $\defect_P$ may grow, is untested. On-policy labels use alias matching; an LLM-judge audit finds \AuditDisagreeRange{} disagreement without changing the orderings we claim (Appendix~\ref{app:validation}).
 
-\makeatletter
-\def\section{\@startsection{section}{1}{\z@}{-0.5ex plus -0.3ex minus -.1ex}{0.8ex plus 0.2ex}{\large\sc\raggedright}}
-\makeatother
-\vspace*{-16pt}
 \section*{Reproducibility Statement}
 All code, per-layer features for \ReleaseLayerN{} settings and on-policy generations for \ReleaseGenList{} are at \url{https://anonymous.4open.science/r/ICLR-BE07/} (run \texttt{run\_fix.sh}, then \texttt{run\_toha.sh}); every other setting is reproducible via \texttt{extract.py}. Seeds, dtype, proofs: Appendices~\ref{app:impl},~\ref{app:proofs}.
 
-\vspace*{-14pt}
 \section*{AI Use Statement}
 We used generative AI tools to aid in proving mathematical claims and to aid and polish the writing of this paper.
 
