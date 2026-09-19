@@ -36,12 +36,17 @@ from sklearn.preprocessing import StandardScaler
 warnings.filterwarnings("ignore")
 
 ROOT = os.environ.get("SINKTDA_OUT", "sinktda_out")
-RES = "sinktda_results"
+# SINKTDA_RES lets a side study (a float16 or float32 re-extraction) write its AUC tables
+# somewhere other than the published ones. report.load() globs sinktda_results/auc_*.csv,
+# so a side setting left there is swept into the main tables as if it were another model.
+RES = os.environ.get("SINKTDA_RES", "sinktda_results")
 SEEDS = (42, 43, 44)
 N_SPLITS = 10
 N_BOOT = 10000
 EPS = (0.010, 0.015, 0.020, 0.025)
 C_GRID = (0.01, 0.1, 1.0)
+TUNE_MIN_DIM = 64   # banks wider than this get a tuned C; narrower ones are fit at C=1
+
 N_JOBS = int(os.environ.get("SINKTDA_JOBS", "3"))
 
 
@@ -130,6 +135,12 @@ def banks(df, ph, hid):
         "LEX": None,
     }
     B["LEGACY_MSTPROXY"] = df[cols(df, ["h0_total_persistence"])].values
+    # Present only when extract.py ran with --apex-deflation: the same bank as DEFL, but
+    # the deleted vertex is the layer's apex argmin_s delta_s rather than token 0.
+    if any(c.startswith("layer_0_apexdefl_") for c in df.columns):
+        B["APEXDEFL"] = np.hstack(
+            [df[cols(df, ["apexdefl_h0_max_lifetime", "apexdefl_h0_total_persistence"])].values,
+             df[cols(df, ["apexdefl_" + k for k in h1k])].values / N])
     if ph:
         n = len(df)
         B["LLMCHECK"] = ph["ph_llmcheck"].sum(-1)
@@ -158,7 +169,7 @@ def _splitter(groups, seed, k):
 def _fit_dense(X, y, g, tr, seed):
     Xtr, ytr, gtr = X[tr], y[tr], g[tr]
     C = 1.0
-    if X.shape[1] > 64:
+    if X.shape[1] > TUNE_MIN_DIM:
         best = -1
         for c in C_GRID:
             aucs = []
@@ -314,6 +325,8 @@ BANK_LIST = ["LEN", "0D", "SINK", "1D", "DEFL", "ANS", "ROWSTAT", "LOGPROB", "HI
 COMBOS = {
     "0D+SINK": ["0D", "SINK"], "0D+1D": ["0D", "1D"], "SINK+DEFL": ["SINK", "DEFL"],
     "SINK+ANS": ["SINK", "ANS"], "SINK+1D": ["SINK", "1D"],
+    "SINK+APEXDEFL": ["SINK", "APEXDEFL"],
+    "NONTOPO+APEXDEFL": ["LOGPROB", "HIDDEN", "LOOKBACK", "LLMCHECK", "ROWSTAT", "APEXDEFL"],
     "PH_SINK+PH_0DTOT": ["PH_SINK", "PH_0DTOT"],
     "NONTOPO": ["LOGPROB", "HIDDEN", "LOOKBACK", "LLMCHECK", "ROWSTAT"],
     "NONTOPO+0D": ["LOGPROB", "HIDDEN", "LOOKBACK", "LLMCHECK", "ROWSTAT", "0D"],
@@ -325,6 +338,9 @@ COMPARISONS = [
     ("T1_reduction", "0D", "SINK"), ("T1_legacy_proxy", "0D", "LEGACY_MSTPROXY"),
     ("T2_topo_beyond_sink", "SINK", "0D+SINK"),
     ("T3_deflated_beyond_sink", "SINK", "SINK+DEFL"),
+    ("T3b_apexdeflated_beyond_sink", "SINK", "SINK+APEXDEFL"),
+    ("T3c_apexdefl_vs_defl", "SINK+DEFL", "SINK+APEXDEFL"),
+    ("I_apexdefl_beyond_nontopo", "NONTOPO", "NONTOPO+APEXDEFL"),
     ("T4_1D_beyond_0D", "0D", "0D+1D"), ("T4b_1D_beyond_sink", "SINK", "SINK+1D"),
     ("T6_answer_only_beyond_sink", "SINK", "SINK+ANS"),
     ("PH_reduction", "PH_0DTOT", "PH_SINK"), ("PH_topo_beyond_sink", "PH_SINK", "PH_SINK+PH_0DTOT"),

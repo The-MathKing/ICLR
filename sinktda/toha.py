@@ -132,7 +132,7 @@ def extract(args):
         enc = data.encode(tok, r["full"], return_tensors="pt").to(device)
         N = enc["input_ids"].shape[1]
         p = min(len(data.encode(tok, r["prefix"].rstrip(" "))["input_ids"]), N - 1)
-        if N > 1024:
+        if N > args.max_len:
             continue
         with torch.no_grad():
             out = model(**enc, output_attentions=True)
@@ -299,6 +299,10 @@ def main():
     ap.add_argument("--n", type=int, default=None)
     ap.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"])
     ap.add_argument("--sink-bias", type=float, default=0.0)
+    ap.add_argument("--max-len", type=int, default=1024,
+                    help="skip rows longer than this. The per-head buffer is the response "
+                         "rows only, L*H*T*N float64, so long retrieved contexts are "
+                         "affordable as long as the response stays short.")
     extract(ap.parse_args())
 
 

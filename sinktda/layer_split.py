@@ -15,15 +15,17 @@ import sys
 import numpy as np
 import pandas as pd
 
-from sinktda.evaluate import (RES, ROOT, banks, bootstrap_delta, cols, fast_auc,
-                              load_setting, oof_predictions)
+from sinktda.evaluate import (RES, ROOT, bootstrap_delta, cols, fast_auc, oof_predictions)
 
 
 def run(name):
-    df, ph, hid = load_setting(name)
+    # Only layers.parquet is needed (SINK and per-layer 0D), so settings whose per-head and
+    # hidden-state dumps are not on this machine can still be split.
+    df = pd.read_parquet(os.path.join(ROOT, name, "layers.parquet"))
+    df["y"] = (df["label"] == "hallucinated").astype(int)
     lay = pd.read_csv(f"{RES}/theory_layers_{name}.csv")
     y, g = df["y"].values, df["example_id"].values
-    B = banks(df, ph, hid)
+    B = {"SINK": np.nan_to_num(df[cols(df, ["star_max", "star_tot"])].values.astype(np.float64))}
     coned = lay.loc[lay["frac_coned"] >= 0.9, "layer"].tolist()
     open_ = lay.loc[lay["frac_coned"] < 0.5, "layer"].tolist()
     base, _ = oof_predictions(B["SINK"], y, g)
@@ -32,7 +34,8 @@ def run(name):
         if not ls:
             out.append(dict(setting=name, subset=tag, n_layers=0))
             continue
-        X0 = df[[f"layer_{l}_{k}" for l in ls for k in ("h0_max_lifetime", "h0_total_persistence")]].values
+        X0 = np.nan_to_num(df[[f"layer_{l}_{k}" for l in ls
+                               for k in ("h0_max_lifetime", "h0_total_persistence")]].values.astype(np.float64))
         p, _ = oof_predictions(np.hstack([B["SINK"], X0]), y, g)
         r = dict(setting=name, subset=tag, n_layers=len(ls), layers=" ".join(map(str, ls)),
                  auc_sink=fast_auc(y, base), auc_sink_plus_0d=fast_auc(y, p))
@@ -44,7 +47,8 @@ def run(name):
 
 def main():
     names = sys.argv[1:] or sorted(f[len("theory_layers_"):-4] for f in os.listdir(RES)
-                                   if f.startswith("theory_layers_"))
+                                   if f.startswith("theory_layers_")
+                                   and os.path.exists(os.path.join(ROOT, f[len("theory_layers_"):-4], "layers.parquet")))
     rows = []
     for n in names:
         rows += run(n)

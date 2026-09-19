@@ -96,6 +96,22 @@ def fdelta(r):
     return f"${r['delta']:+.3f}$ {{\\scriptsize[{r['ci90_lo']:+.3f}, {r['ci90_hi']:+.3f}]}}"
 
 
+def mark(r):
+    """Significance and equivalence marks for a paired comparison.
+
+    The two are not exclusive: a 95% interval that excludes 0 can lie inside the +-0.015
+    margin (a real but small effect). Both marks are printed then; printing only the
+    equivalence mark used to hide significant results.
+    """
+    sig = bool(r["ci95_lo"] > 0 or r["ci95_hi"] < 0)
+    eq = bool(r["equiv_0.015"])
+    return "$^{" + ("*" if sig else "") + (r"\equiv" if eq else "") + "}$" if (sig or eq) else ""
+
+
+def fcell(r):
+    return f"${r['delta']:+.3f}${mark(r)}".replace("-0.000", "0.000").replace("+0.000", "0.000")
+
+
 # ---------------------------------------------------------------------------
 def table_theory(th):
     lines = [r"\begin{tabular}{llrrrrrrrr}", r"\toprule",
@@ -165,8 +181,7 @@ def table_tests(comp):
                 cells.append("--")
                 continue
             r = d[t]
-            mark = r"$^{\equiv}$" if r["equiv_0.015"] else ("$^{*}$" if (r["ci95_lo"] > 0 or r["ci95_hi"] < 0) else "")
-            cells.append(f"${r['delta']:+.3f}${mark}".replace("-0.000", "0.000").replace("+0.000", "0.000"))
+            cells.append(fcell(r))
         lines.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines)
@@ -180,18 +195,36 @@ def short(s):
     return f"{SHORT_B.get(b, b)} {m.replace('Qwen2.5-', 'Qw').replace('-mini', '').replace('TinyLlama-1.1B', 'TinyLl.').replace('SmolLM-1.7B', 'SmolLM').replace('Mistral-7B', 'Mis7B').replace('Llama-3.1-8B', 'Ll8B')}"
 
 
+def bank_label(name):
+    """Render a bank name with the fusion notation the main text uses.
+
+    evaluate.py names early-fusion banks "X+Y" and late_fusion.py names late-fusion
+    banks "X(+)Y". The paper writes early fusion as X|Y and late fusion as X(+)Y
+    (\\oplus), so the full tables have to translate or they contradict Table 7.
+    """
+    if "(+)" in name:
+        return r"$\oplus$".join(bank_label(p) for p in name.split("(+)"))
+    if "+" in name:
+        return r"$\mid$".join(bank_label(p) for p in name.split("+"))
+    return name.replace("_", " ")
+
+
 def table_tests_full(comp):
     torder = [t for t, *_ in __import__("sinktda.evaluate", fromlist=["COMPARISONS"]).COMPARISONS]
     comp = comp.assign(_s=comp["setting"].map({x: i for i, x in enumerate(ORDER)}),
                        _t=comp["test"].map(lambda t: torder.index(t) if t in torder else len(torder)))
     lines = [r"\begin{longtable}{llrrrrcc}",
-             r"\caption{\textbf{Complete paired difference tests and equivalence tests across all settings and comparisons.}}\label{tab:tests_full}\\",
+             r"\caption{\textbf{Complete paired difference tests and equivalence tests across all settings and comparisons.} "
+             r"Bank names follow the main text: X$\mid$Y is early fusion (the concatenated banks) and X$\oplus$Y is late fusion "
+             r"(the two banks' out-of-fold logits stacked in a second-level model), so X$\mid$Y and X$\oplus$Y are two different "
+             r"models over the same features and need not agree. \textsc{Legacy mstproxy} is per-layer $0$D total persistence "
+             r"alone (Appendix~\ref{app:impl}).}\label{tab:tests_full}\\",
              r"\toprule",
              r"Setting & Test (A $\to$ B) & AUC$_A$ & AUC$_B$ & $\Delta$ & 90\% CI & $\equiv_{.015}$ & power \\",
              r"\midrule\endhead"]
     comp = comp.sort_values(["_s", "_t"])
     for _, r in comp.iterrows():
-        t = f"{r['A']}$\\to${r['B']}".replace("_", r"\_")
+        t = f"{bank_label(r['A'])}$\\to${bank_label(r['B'])}"
         lines.append(f"{short(r['setting'])} & {t} & {r['auc_A']:.3f} & {r['auc_B']:.3f} & "
                      f"{r['delta']:+.3f} & [{r['ci90_lo']:+.3f}, {r['ci90_hi']:+.3f}] & "
                      f"{'yes' if r['equiv_0.015'] else 'no'} & {r['tost_power_0.015']:.2f} \\\\")
@@ -201,7 +234,12 @@ def table_tests_full(comp):
 
 def table_auc_full(auc):
     lines = [r"\begin{longtable}{llrrrr}",
-             r"\caption{\textbf{Complete out-of-fold ROC-AUC results across all settings and feature banks.}}\label{tab:auc_full}\\",
+             r"\caption{\textbf{Complete out-of-fold ROC-AUC results across all settings and feature banks.} "
+             r"\textsc{Legacy mstproxy} is per-layer $0$D total persistence alone, the MST-weight summary used by earlier "
+             r"attention-graph work (Appendix~\ref{app:impl}); X$\mid$Y is early fusion, as in the main text. "
+             r"A dash in \emph{dim} means the bank has no fixed width: \textsc{Lex} refits a TF-IDF vocabulary inside every "
+             r"training fold. A dash in \emph{pair acc.} means the benchmark is not paired: the on-policy TriviaQA settings "
+             r"have one row per question, so there is no grounded/hallucinated pair to score.}\label{tab:auc_full}\\",
              r"\toprule",
              r"Setting & Bank & dim & AUC & seed SD & pair acc. \\", r"\midrule\endhead"]
     order = ["LEN", "LEX", "LOGPROB", "LLMCHECK", "ROWSTAT", "SINK", "0D", "LEGACY_MSTPROXY", "1D", "DEFL", "ANS",
@@ -211,7 +249,7 @@ def table_auc_full(auc):
     auc = auc.sort_values(["_s", "_b", "bank"])
     for _, r in auc.iterrows():
         dim = "--" if pd.isna(r["dim"]) else f"{int(r['dim'])}"
-        lines.append(f"{short(r['setting'])} & {r['bank'].replace('_', ' ')} & {dim} & {r['auc']:.3f} & "
+        lines.append(f"{short(r['setting'])} & {bank_label(r['bank'])} & {dim} & {r['auc']:.3f} & "
                      f"{r['auc_seed_sd']:.4f} & {f3(r['within_pair_acc'])} \\\\")
     lines += [r"\bottomrule", r"\end{longtable}"]
     return "\n".join(lines)
@@ -514,6 +552,9 @@ def write_numbers(th, auc, comp):
         "PHTopoRange": _rng(T("PH_topo_beyond_sink")["delta"]),
         "NPHTopoEquiv": str(int(T("PH_topo_beyond_sink")["equiv_0.015"].sum())),
         "NPHTopoTotal": str(len(T("PH_topo_beyond_sink"))),
+        # equivalent and significant are not exclusive: count the small-but-real gains too
+        "NPHTopoSig": str(int((T("PH_topo_beyond_sink")["ci95_lo"] > 0).sum())),
+        "PHTopoSigMax": f"{T('PH_topo_beyond_sink').query('ci95_lo > 0')['delta'].max():.3f}",
         "PHEntRange": _rng(comp[comp["test"] == "PH_0D_vs_entropy"]["delta"]),
         "NIZeroEquiv": str(int(comp[comp["test"] == "I_0D_beyond_nontopo"]["equiv_0.015"].sum())),
         "NIZeroTotal": str(int((comp["test"] == "I_0D_beyond_nontopo").sum())),
@@ -544,6 +585,11 @@ def write_numbers(th, auc, comp):
         "HiddenHE": _rng(a("HIDDEN", "halueval"), "{:.2f}"),
         "SplitConed": _rng(ls[ls["subset"] == "coned"]["delta"]) if len(ls) else "--",
         "SplitOpen": _rng(ls[ls["subset"] == "open"]["delta"]) if len(ls) else "--",
+        "SplitN": str(ls["setting"].nunique()) if len(ls) else "--",
+        "SplitConedEquiv": str(int((ls[ls["subset"] == "coned"]["equiv_0.015"] == True).sum())) if len(ls) else "--",
+        "SplitConedTotal": str(int(((ls["subset"] == "coned") & (ls["n_layers"] > 0)).sum())) if len(ls) else "--",
+        "HiddenDimRange": _rng(auc[auc["bank"] == "HIDDEN"]["dim"], "{:,.0f}"),
+        "ZeroDDimRange": _rng(auc[auc["bank"] == "0D"]["dim"], "{:,.0f}"),
     }
     lf = pd.read_csv(f"{RES}/late_fusion.csv") if os.path.exists(f"{RES}/late_fusion.csv") else pd.DataFrame()
     # largest |delta| of 0D / deflated PH beyond NONTOPO (early and late fusion), TruthfulQA + on-policy
@@ -588,7 +634,14 @@ def write_numbers(th, auc, comp):
         m["PlantNone"] = f"{pc[pc.b == 0]['auc_h1'].max():.2f}"
     m.update(numbers_twin())
     m.update(numbers_defect())
+    m.update(numbers_nested())
+    m.update(numbers_bound_gap())
+    m.update(numbers_tight())
+    m.update(numbers_c_grid())
     m.update(numbers_toha())
+    # the abstract's bound on what TOHA adds over NONTOPO must cover the nested stacking too
+    if "NestTohaNTMax" in m and "TohaLFNTMax" in m:
+        m["TohaNTMaxAll"] = f"{max(float(m['TohaLFNTMax']), float(m['NestTohaNTMax'])):.3f}"
     m.update(numbers_mistral())
     m.update(numbers_format_gap())
     m.update(numbers_native())
@@ -663,6 +716,25 @@ def numbers_audit():
         "AuditDisagreeRange": _rng(rate * 100, "{:.1f}\\%"),
         "AuditDisagreeMax": f"{rate.max() * 100:.1f}\\%",
     }
+    # Which setting the judge graded itself matters: that one's rate is a floor, and the
+    # direction of disagreement differs between the two, so neither may be stated globally.
+    from sinktda import data
+    from sinktda.label_audit import JUDGE
+
+    def self_graded(setting):
+        key = setting.split("_", 1)[1]
+        return data.MODELS.get(key, ("",))[0] == JUDGE
+
+    for tag, want in (("Self", True), ("Other", False)):
+        g = d[[self_graded(x) == want for x in d["setting"]]]
+        if not len(g):
+            continue
+        name = g["setting"].iloc[0]
+        lax = int(((g["string_match"] == 1) & (g["judge"] == 0)).sum())
+        strict = int(((g["string_match"] == 0) & (g["judge"] == 1)).sum())
+        m[f"Audit{tag}Setting"] = short(name)
+        m[f"Audit{tag}Rate"] = f"{100 * (g['judge'] != g['string_match']).mean():.1f}\\%"
+        m[f"Audit{tag}Lax"], m[f"Audit{tag}Strict"] = str(lax), str(strict)
     s = f"{RES}/label_audit_sensitivity.csv"
     if os.path.exists(s):
         sn = pd.read_csv(s)
@@ -842,9 +914,7 @@ def table_toha():
             if t not in c.index:
                 cells.append("--")
                 continue
-            x = c.loc[t]
-            mark = r"$^{\equiv}$" if x["equiv_0.015"] else ("$^{*}$" if (x["ci95_lo"] > 0 or x["ci95_hi"] < 0) else "")
-            cells.append(f"${x['delta']:+.3f}${mark}".replace("-0.000", "0.000").replace("+0.000", "0.000"))
+            cells.append(fcell(c.loc[t]))
         lines.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines)
@@ -923,7 +993,8 @@ def numbers_toha():
     tl = comp[comp["test"] == "LF_toha_beyond_maxp"]
     m["TohaLFMaxpMax"] = f"{np.ceil(tl['delta'].abs().max() * 1000) / 1000:.3f}"
     tn = comp[comp["test"] == "LF_toha_beyond_nontopo"]
-    m["TohaLFNTMax"] = f"{np.ceil(tn['delta'].abs().max() * 1000) / 1000:.3f}"
+    # format exactly as the table cell does, so the abstract and Table 3 cannot disagree
+    m["TohaLFNTMax"] = f"{tn['delta'].abs().max():.3f}"
     ts = comp[comp["test"] == "TOHA_sinkr_vs_toha"]
     # split by measured sink mass, not by model name: SmolLM is no longer the only model
     # without a first-token sink (Qwen2.5-7B's sink sits on token 2)
@@ -943,6 +1014,263 @@ def numbers_toha():
         m[tag + "NonInf"] = str(int((t["ci90_lo"] > -0.015).sum()))
         m[tag + "Total"] = str(len(t))
     return m
+
+
+def table_toha_diag():
+    """Per-setting diagnostics behind the TOHA prose (identity, coning, correlations,
+    properties of the heads TOHA selects)."""
+    fr = _toha_frames()
+    if fr is None:
+        return ""
+    ck = fr[0]
+    rows = [r"\begin{tabular}{lrrrrrrrrrr}", r"\toprule",
+            r"Setting & head graphs & viol. & $\defect_P{=}0$ & max gap & sink top & $\rho(d,\bar\pi)$ & "
+            r"$\rho(d,1{-}\bar a_0)$ & sel.\ $\defect_P{=}0$ & sel.\ sink top & sel.\ heads \\", r"\midrule"]
+    for _, r in ck.iterrows():
+        g = r["max_abs_gap_coned"]
+        gs = "$0$" if g <= 0 else (lambda e: f"${e[0]}\\cdot10^{{{int(e[1])}}}$")(f"{g:.0e}".split("e"))
+        rows.append(f"{short(r['setting'])} & {int(r['cells']):,} & {int(r['viol_upper'] + r['viol_lower'])} & "
+                    f"{100 * r['frac_coned_P']:.0f}\\% & {gs} & {100 * r['frac_arg0_all']:.0f}\\% & "
+                    f"{r['median_head_rho_maxp']:.3f} & {r['median_head_rho_sinkr']:+.3f} & "
+                    f"{100 * r['toha_sel_frac_coned_P']:.0f}\\% & {100 * r['toha_sel_frac_arg0']:.0f}\\% & "
+                    f"{r['toha_sel_mean_nheads']:.1f} \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+def table_layer_split():
+    f = f"{RES}/layer_split.csv"
+    if not os.path.exists(f):
+        return ""
+    d = pd.read_csv(f)
+    d = d.assign(_o=d["setting"].map({s: i for i, s in enumerate(ORDER)}).fillna(99)).sort_values("_o")
+    rows = [r"\begin{tabular}{lrcrc}", r"\toprule",
+            r"Setting & coned layers & $\Delta$ (0D$_{\text{coned}}\mid$Sink) & open layers & $\Delta$ (0D$_{\text{open}}\mid$Sink) \\",
+            r"\midrule"]
+    for s, g in d.groupby("setting", sort=False):
+        cells = []
+        for sub in ("coned", "open"):
+            x = g[g["subset"] == sub]
+            if not len(x) or int(x.iloc[0]["n_layers"]) == 0:
+                cells += ["0", "--"]
+            else:
+                x = x.iloc[0]
+                cells += [str(int(x["n_layers"])), fcell(x) + f" {{\\scriptsize[{x['ci90_lo']:+.3f}, {x['ci90_hi']:+.3f}]}}"]
+        rows.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+def table_defect():
+    f = f"{RES}/defect_probe.csv"
+    if not os.path.exists(f):
+        return ""
+    d = pd.read_csv(f)
+    d = d.assign(_o=d["setting"].map({s: i for i, s in enumerate(ORDER)}).fillna(99)).sort_values("_o", kind="stable")
+    tests = [("DELTA_h_beyond_SINK_h", r"$\defect_h\mid$Sink$_h$"), ("LF_PH_DELTA_beyond_PH_SINK", r"$\defect_h\oplus$Sink$_h$"),
+             ("LF_DELTA_beyond_SINK", r"$\defect\oplus$Sink"), ("LF_PH_DELTA_beyond_NONTOPO", r"$\defect_h\oplus$NT"),
+             ("LF_DELTA_beyond_NONTOPO", r"$\defect\oplus$NT")]
+    rows = [r"\begin{tabular}{lcc" + "c" * len(tests) + "}", r"\toprule",
+            r"Setting & AUC $\defect$ & AUC $\defect_h$ & " + " & ".join(n for _, n in tests) + r" \\", r"\midrule"]
+    for s, g in d.groupby("setting", sort=False):
+        t = g.set_index("test")
+        a = lambda k: f3(t.loc[k, "auc_B"]) if k in t.index else "--"
+        cells = [a("AUC_DELTA"), a("AUC_PH_DELTA")] + [fcell(t.loc[k]) if k in t.index else "--" for k, _ in tests]
+        rows.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+def table_bound_gap():
+    f = f"{RES}/bound_gap.csv"
+    if not os.path.exists(f):
+        return ""
+    d = pd.read_csv(f)
+    rows = [r"\begin{tabular}{lrrrrrrrr}", r"\toprule",
+            r"Setting & graphs with $\defect_0{>}0$ & median $\defect_0$ & \multicolumn{3}{c}{$u_0$: median / 99\% / max} & vacuous & "
+            r"\multicolumn{2}{c}{$u_1$: median / max} \\", r"\midrule"]
+    for _, r in d.iterrows():
+        pct = f"{100 * r['open'] / r['graphs']:.0f}\\%"
+        u1 = "-- & --" if r["n_h1"] == 0 else f"{r['u1_median']:.2f} & {r['u1_max']:.3f}"
+        rows.append(f"{short(r['setting'])} & {int(r['open']):,} ({pct}) & {r['delta0_median_open']:.2f} & "
+                    f"{r['u0_median']:.2f} & {r['u0_q99']:.2f} & {r['u0_max']:.2f} & {100 * r['frac_vacuous']:.1f}\\% & {u1} \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+NESTED_TESTS = [("NLF_0D_beyond_NONTOPO", r"0D$\oplus$NT", "late_fusion", "LF_0D_beyond_NONTOPO"),
+                ("NLF_DEFL_beyond_NONTOPO", r"Defl.$\oplus$NT", "late_fusion", "LF_DEFL_beyond_NONTOPO"),
+                ("NLF_PH_DELTA_beyond_NONTOPO", r"$\defect_h\oplus$NT", "defect_probe", "LF_PH_DELTA_beyond_NONTOPO"),
+                ("NLF_TOHA_beyond_NONTOPO", r"TOHA$\oplus$NT", "toha_comp", "LF_toha_beyond_nontopo"),
+                ("NLF_TOHA_beyond_MAXP", r"TOHA$\oplus\bar\pi$", "toha_comp", "LF_toha_beyond_maxp"),
+                ("NLF_PH_DELTA_beyond_PH_SINK", r"$\defect_h\oplus$Sink$_h$", "defect_probe", "LF_PH_DELTA_beyond_PH_SINK")]
+
+
+def _nested():
+    f = f"{RES}/nested_fusion.csv"
+    if not os.path.exists(f):
+        return None
+    d = pd.read_csv(f)
+    return d.assign(_o=d["setting"].map({s: i for i, s in enumerate(ORDER)}).fillna(99)).sort_values("_o", kind="stable")
+
+
+def _stored(src, test):
+    f = f"{RES}/{src}.csv"
+    if not os.path.exists(f):
+        return pd.Series(dtype=float)
+    d = pd.read_csv(f)
+    return d[d["test"] == test].set_index("setting")["delta"]
+
+
+def table_nested():
+    d = _nested()
+    if d is None:
+        return ""
+    rows = [r"\begin{tabular}{l" + "c" * len(NESTED_TESTS) + "}", r"\toprule",
+            "Setting & " + " & ".join(n for _, n, *_ in NESTED_TESTS) + r" \\", r"\midrule"]
+    for s, g in d.groupby("setting", sort=False):
+        t = g.set_index("test")
+        rows.append(f"{short(s)} & " + " & ".join(fcell(t.loc[k]) if k in t.index else "--"
+                                                  for k, *_ in NESTED_TESTS) + r" \\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+def numbers_nested():
+    d = _nested()
+    if d is None:
+        return {}
+    m = {"NestN": str(d["setting"].nunique()),
+         "NestList": _join_names([short(x) for x in d["setting"].unique()])}
+    shift = []
+    for k, _, src, old in NESTED_TESTS:
+        t = d[d["test"] == k]
+        tag = {"NLF_0D_beyond_NONTOPO": "ZeroNT", "NLF_DEFL_beyond_NONTOPO": "DeflNT",
+               "NLF_PH_DELTA_beyond_NONTOPO": "DefHNT", "NLF_TOHA_beyond_NONTOPO": "TohaNT",
+               "NLF_TOHA_beyond_MAXP": "TohaMaxp", "NLF_PH_DELTA_beyond_PH_SINK": "DefHSink"}[k]
+        m[f"Nest{tag}Range"] = _rng(t["delta"])
+        m[f"Nest{tag}Max"] = f"{t['delta'].abs().max():.3f}"
+        m[f"Nest{tag}Equiv"] = str(int(t["equiv_0.015"].sum()))
+        m[f"Nest{tag}Sig"] = str(int((t["ci95_lo"] > 0).sum()))
+        m[f"Nest{tag}Total"] = str(len(t))
+        st = _stored(src, old)
+        both = t.set_index("setting")["delta"].to_frame("n").join(st.rename("o"), how="inner")
+        shift.append((both["n"] - both["o"]).abs())
+    sh = pd.concat(shift)
+    m["NestMaxShift"] = f"{np.ceil(sh.max() * 1000) / 1000:.3f}" if len(sh) else "--"
+    nt = d[d["test"].str.endswith("_beyond_NONTOPO") & ~d["setting"].str.startswith("halueval")]
+    m["NestTopoNTMaxAbs"] = f"{np.ceil(nt['delta'].abs().max() * 1000) / 1000:.3f}" if len(nt) else "--"
+    return m
+
+
+def _c_grid():
+    f = f"{RES}/c_grid.csv"
+    return pd.read_csv(f) if os.path.exists(f) else None
+
+
+CGRID_BANKS = ["SINK", "0D", "1D", "DEFL", "ANS", "PH_SINK", "PH_0D", "LOOKBACK", "LOGPROB",
+               "HIDDEN", "NONTOPO"]
+CGRID_NAMES = {"SINK": "Sink", "0D": "0D", "1D": "1D", "DEFL": "Defl.", "ANS": "Ans.",
+               "PH_SINK": "Sink$_h$", "PH_0D": "0D$_h$", "LOOKBACK": "Lookb.",
+               "LOGPROB": "LogP", "HIDDEN": "Hidden", "NONTOPO": "Non-topo."}
+
+
+def table_c_grid():
+    """AUC change when every bank is tuned over the wider C grid (sinktda/c_grid.py)."""
+    d = _c_grid()
+    if d is None:
+        return ""
+    piv = d.pivot_table(index="setting", columns="bank", values="delta")
+    banks = [b for b in CGRID_BANKS if b in piv.columns]
+    lines = [r"\begin{tabular}{l" + "r" * len(banks) + "}", r"\toprule",
+             "Setting & " + " & ".join(CGRID_NAMES[b] for b in banks) + r" \\", r"\midrule"]
+    for s in [x for x in ORDER if x in piv.index]:
+        cells = ["--" if pd.isna(piv.loc[s].get(b)) else
+                 f"${piv.loc[s][b]:+.3f}$".replace("-0.000", "0.000").replace("+0.000", "0.000")
+                 for b in banks]
+        lines.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(lines)
+
+
+# The dominance orderings the paper claims, as (stronger, weaker) bank pairs. If any of
+# them flips under the wider grid in any setting, the robustness claim is false and the
+# macro says so rather than quietly reporting a maximum.
+CGRID_ORDERINGS = [("NONTOPO", "0D"), ("NONTOPO", "DEFL"), ("HIDDEN", "0D"), ("NONTOPO", "PH_0D")]
+CGRID_NONTOPO = ["LOGPROB", "LLMCHECK", "LOOKBACK", "HIDDEN", "ROWSTAT", "NONTOPO"]
+
+
+def numbers_c_grid():
+    d = _c_grid()
+    if d is None:
+        return {}
+    hid = d[d["bank"] == "HIDDEN"]["delta"].abs()
+    nt = d[d["bank"].isin(CGRID_NONTOPO)]["delta"].abs()
+    i = d["delta"].abs().idxmax()
+    piv = d.pivot_table(index="setting", columns="bank", values="auc_wide")
+    rep = d.pivot_table(index="setting", columns="bank", values="auc_reported")
+    flips = []
+    for hi, lo in CGRID_ORDERINGS:
+        if hi in piv.columns and lo in piv.columns:
+            bad = piv.dropna(subset=[hi, lo])
+            flips += [(s, hi, lo) for s in bad.index[bad[hi] < bad[lo]]]
+    # the reduction's headline comparison is a difference of two banks, so what matters is
+    # how far that difference moves, not how far either bank moves on its own
+    t1 = ((piv["0D"] - piv["SINK"]) - (rep["0D"] - rep["SINK"])).abs()
+    ans_over_nt = int((piv["ANS"] > piv["NONTOPO"]).sum()) if "NONTOPO" in piv.columns else 0
+    return {
+        "CGridN": str(d["setting"].nunique()),
+        "CGridShown": str(len([b for b in CGRID_BANKS if b in set(d["bank"])])),
+        "CGridBanks": str(d["bank"].nunique()),
+        # settings that kept only layers.parquet cover the layer banks but not HIDDEN
+        "CGridLayerOnlyN": str(int((d.groupby("setting")["bank"].apply(
+            lambda b: "HIDDEN" not in set(b))).sum())),
+        "CGridMaxAbs": f"{np.ceil(d['delta'].abs().max() * 1000) / 1000:.3f}",
+        "CGridHiddenMax": f"{np.ceil(hid.max() * 1000) / 1000:.3f}" if len(hid) else "--",
+        "CGridNTMax": f"{np.ceil(nt.max() * 1000) / 1000:.3f}" if len(nt) else "--",
+        "CGridNTBankMax": f"{np.ceil(d[d['bank'] == 'NONTOPO']['delta'].abs().max() * 1000) / 1000:.3f}",
+        "CGridWorst": short(d.loc[i, "setting"]) + " "
+                      + CGRID_NAMES.get(d.loc[i, "bank"], d.loc[i, "bank"].replace("_", " ")),
+        "CGridWorstDelta": f"{d.loc[i, 'delta']:+.3f}",
+        "CGridFlips": str(len(flips)),
+        "CGridTOneShiftMax": f"{np.ceil(t1.max() * 1000) / 1000:.3f}",
+        "CGridAnsOverNT": str(ans_over_nt),
+        "CGridTopoMax": f"{np.ceil(d[d['bank'].isin(['0D', '1D', 'DEFL', 'ANS', 'SINK', 'PH_0D', 'PH_0DTOT', 'PH_SINK'])]['delta'].abs().max() * 1000) / 1000:.3f}",
+    }
+
+
+def numbers_tight():
+    """Tightened lower bounds ((N-2) delta_0, (|R|-1)/|R| delta_P) checked on the real graphs
+    whose per-example dumps are on this machine (sinktda/check_tight.py)."""
+    f = f"{RES}/check_tight.csv"
+    if not os.path.exists(f):
+        return {}
+    d = pd.read_csv(f)
+    lg, hg = d.dropna(subset=["layer_graphs"]), d.dropna(subset=["head_graphs"])
+    return {"TightLayerGraphs": f"{int(lg['layer_graphs'].sum()):,}", "TightLayerSettings": str(len(lg)),
+            "TightHeadGraphs": f"{int(hg['head_graphs'].sum()):,}", "TightHeadSettings": str(len(hg)),
+            "TightViol": str(int(lg["layer_viol"].sum() + hg["head_viol"].sum()))}
+
+
+def numbers_bound_gap():
+    f = f"{RES}/bound_gap.csv"
+    if not os.path.exists(f):
+        return {}
+    d = pd.read_csv(f)
+    ss = _sink_settings() or set(d["setting"])
+    sk = d[d["setting"].isin(ss)]
+    return {
+        "GapN": str(len(d)),
+        "GapOpen": f"{int(d['open'].sum()):,}",
+        "GapUZeroMedSink": _rng(sk["u0_median"], "{:.2f}"),
+        "GapUZeroMax": f"{d['u0_max'].max():.2f}",
+        "GapUZeroMaxSink": f"{sk['u0_max'].max():.2f}",
+        "GapVacMax": f"{100 * d['frac_vacuous'].max():.1f}\\%",
+        "GapVacZeroN": str(int((d["frac_vacuous"] == 0).sum())),
+        "GapUOneMedRange": _rng(d["u1_median"].dropna(), "{:.2f}"),
+        "GapUOneMax": f"{d['u1_max'].max():.4f}",
+        "GapHOneN": f"{int(d['n_h1'].sum()):,}",
+    }
 
 
 def table_native():
@@ -1009,7 +1337,10 @@ def main():
         fh.write(f"\\newcommand{{\\SinkTableOnpolicy}}{{%\n{table_onpolicy()}\n}}\n")
         fh.write(f"\\newcommand{{\\SinkTableToha}}{{%\n{table_toha()}\n}}\n")
         fh.write(f"\\newcommand{{\\SinkTableTohaCausal}}{{%\n{table_toha_causal()[0]}\n}}\n")
-        for name, body in [("Native", table_native()), ("Audit", table_audit())]:
+        for name, body in [("Native", table_native()), ("Audit", table_audit()),
+                           ("TohaDiag", table_toha_diag()), ("LayerSplit", table_layer_split()),
+                           ("Defect", table_defect()), ("BoundGap", table_bound_gap()),
+                           ("Nested", table_nested()), ("CGrid", table_c_grid())]:
             if body:
                 fh.write(f"\\newcommand{{\\SinkTable{name}}}{{%\n{body}\n}}\n")
     write_numbers(th, auc, comp)

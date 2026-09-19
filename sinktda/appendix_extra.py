@@ -18,7 +18,7 @@ import pandas as pd
 from scipy.stats import pointbiserialr, spearmanr, ttest_ind
 
 from sinktda.evaluate import cols, fast_auc, n_layers
-from sinktda.report import INK2, ORDER, PRETTY, SERIES, short, style
+from sinktda.report import INK2, ORDER, PRETTY, SERIES, _join_names, short, style
 
 OUT = "sinktda_out"
 RES = "sinktda_results"
@@ -71,6 +71,24 @@ def guard_missing_features(force=False):
             "  Restore those sinktda_out/ directories, or pass --force to accept a shorter table.")
 
 
+def omitted():
+    """Settings in the paper whose per-example layer features are not on this machine;
+    tables built from layers.parquet say so instead of silently shrinking."""
+    f = f"{RES}/summary_theory.csv"
+    known = pd.read_csv(f)["setting"].tolist() if os.path.exists(f) else []
+    have = set(settings())
+    return [s for s in ORDER if s in known and s not in have]
+
+
+def omitted_note():
+    o = omitted()
+    if not o:
+        return ""
+    n = len(pd.read_csv(f"{RES}/summary_theory.csv"))
+    return (f" Rows need per-example layer features, which we retain for {n - len(o)} of the {n} settings "
+            f"(not {', '.join(short(x) for x in o)}).")
+
+
 def load(s):
     d = pd.read_parquet(f"{OUT}/{s}/layers.parquet")
     d["y"] = (d["label"] == "hallucinated").astype(int)
@@ -78,6 +96,16 @@ def load(s):
 
 
 # ---------------------------------------------------------------------------
+# (layers, heads, KV heads, hidden) from each model's config.json, used when the config is
+# not in the local Hugging Face cache, so an offline run cannot drop a row from the table
+MODEL_CONFIGS = {
+    "Qwen/Qwen2.5-3B-Instruct": (36, 16, 2, 2048), "Qwen/Qwen2.5-1.5B-Instruct": (28, 12, 2, 1536),
+    "microsoft/Phi-3-mini-4k-instruct": (32, 32, 32, 3072), "TinyLlama/TinyLlama-1.1B-Chat-v1.0": (22, 32, 4, 2048),
+    "HuggingFaceTB/SmolLM-1.7B-Instruct": (24, 32, 32, 2048), "mistralai/Mistral-7B-Instruct-v0.2": (32, 32, 8, 4096),
+    "Qwen/Qwen2.5-7B-Instruct": (28, 28, 4, 3584),
+}
+
+
 def table_models():
     from transformers import AutoConfig
     rows = [r"\begin{tabular}{lrrrrr}", r"\toprule",
@@ -85,10 +113,11 @@ def table_models():
     for mid, p in MODEL_SPECS.items():
         try:
             c = AutoConfig.from_pretrained(mid)
+            cfg = (c.num_hidden_layers, c.num_attention_heads,
+                   getattr(c, "num_key_value_heads", c.num_attention_heads), c.hidden_size)
         except Exception:
-            continue
-        kv = getattr(c, "num_key_value_heads", c.num_attention_heads)
-        rows.append(f"\\texttt{{{mid}}} & {p} & {c.num_hidden_layers} & {c.num_attention_heads} & {kv} & {c.hidden_size} \\\\")
+            cfg = MODEL_CONFIGS[mid]
+        rows.append(f"\\texttt{{{mid}}} & {p} & " + " & ".join(map(str, cfg)) + " \\\\")
     rows += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(rows)
 
@@ -132,29 +161,37 @@ def scaling_text(scal):
     lin = scal[scal["lo"] > 1.0]
     txt = (f"Exponents range from {scal['alpha'].min():.2f} to {scal['alpha'].max():.2f}, against {IID_ALPHA:.2f} for i.i.d.\\ "
            f"uniform weights and {CAUSAL_ALPHA:.2f} for random causal attention without a sink over the same range of $N$. "
-           f"{len(slow)} of {len(scal)} settings grow significantly more slowly than the i.i.d.\\ reference")
+           f"{len(slow)} of the {len(scal)} fitted settings grow significantly more slowly than the i.i.d.\\ reference")
     if len(fast):
         txt += " (not " + ", ".join(short(x) for x in fast["setting"]) + ")"
     txt += "."
     if len(lin):
-        txt += (" The exponent exceeds $1$ in " + ", ".join(short(x) for x in lin["setting"])
+        txt += (" The exponent exceeds $1$ in " + _join_names([short(x) for x in lin["setting"]])
                 + ", so growth on real attention is not uniformly sub-linear.")
-    txt += (r" Summed over layers, almost every example has some $1$D bar, because every model has some layers that are not "
-            r"coned; within an example, the coned layers contribute nothing to $P_1$ whatever the length "
-            r"(Table~\ref{tab:theory}).")
+    skipped = [x for x in settings() if x not in set(scal["setting"])]
+    if skipped:
+        txt += (" " + _join_names([short(x) for x in skipped]) + " have too few rows with $P_1>0$ to fit (first column): "
+                r"almost all of their graphs are coned (Table~\ref{tab:theory}), so $1$D persistence is zero for "
+                r"almost every example whatever its length.")
+    txt += (r" In the other settings almost every example has some $1$D bar summed over layers, because those models "
+            r"have some layers that are not coned; within an example, the coned layers contribute nothing to $P_1$ "
+            r"whatever the length (Table~\ref{tab:theory}).")
     return txt
 
 
 def table_lengths():
     rows = [r"\begin{tabular}{lrrrrr}", r"\toprule",
-            r"Setting & $N$ (correct) & $N$ (hallucinated) & answer tokens (c./h.) & point-biserial $r$ & Welch $p$ \\",
+            r"Setting & length $N$ (correct) & length $N$ (hallucinated) & answer tokens (c./h.) & point-biserial $r$ & Welch $p$ \\",
             r"\midrule"]
     for s in settings():
         d = load(s)
         g, h = d[d.y == 0], d[d.y == 1]
         r = pointbiserialr(d["y"], d["seq_len"])[0]
         p = ttest_ind(g["seq_len"], h["seq_len"], equal_var=False).pvalue
-        ps = f"{p:.2g}" if p >= 1e-4 else f"$<10^{{{int(np.floor(np.log10(max(p, 1e-300))))+1}}}$"
+        # one rule for every cell: two decimals down to 0.01, otherwise scientific to two
+        # significant figures. Mixing "0.00013" with "$<10^{-9}$" in one column made the
+        # small values hard to compare.
+        ps = f"{p:.2f}" if p >= 0.01 else "$" + f"{p:.1e}".replace("e-0", r"\times 10^{-").replace("e-", r"\times 10^{-") + "}$"
         rows.append(f"{short(s)} & ${g.seq_len.mean():.1f}\\pm{g.seq_len.std():.1f}$ & "
                     f"${h.seq_len.mean():.1f}\\pm{h.seq_len.std():.1f}$ & "
                     f"{g.answer_len.mean():.1f} / {h.answer_len.mean():.1f} & {r:+.3f} & {ps} \\\\")
@@ -172,7 +209,8 @@ def table_tost():
     sub = " & ".join(["{\\scriptsize .010} & {\\scriptsize .015} & {\\scriptsize .020} & {\\scriptsize .025}"] * len(TOST_TESTS))
     rows = [r"\begin{tabular}{l" + "cccc" * len(TOST_TESTS) + "}", r"\toprule",
             f"Setting & {head} \\\\", f"$m$ & {sub} \\\\", r"\midrule"]
-    for s in settings():
+    # built from summary_comp.csv, so every evaluated setting has a row
+    for s in [x for x in ORDER if x in set(c["setting"])]:
         cells = []
         for t, _ in TOST_TESTS:
             r = c[(c.setting == s) & (c.test == t)]
@@ -195,7 +233,8 @@ def fig_layer_auc():
     groups = [("truthfulqa", "TruthfulQA"), ("triviaqa", "TriviaQA (on-policy)")]
     fig, axes = plt.subplots(2, 3, figsize=(7.0, 3.6), sharey=True, sharex=True)
     for gi, (pref, gname) in enumerate(groups):
-        ss = [s for s in settings() if s.startswith(pref)]
+        # the chat-format Mistral twin differs by one token and would overplot its sibling
+        ss = [s for s in settings() if s.startswith(pref) and not s.endswith("_chat")]
         for fi, (f, fname) in enumerate(feats):
             a = axes[gi, fi]
             for k, s in enumerate(ss):
@@ -294,7 +333,7 @@ def example_text():
             f"$\\defect_0={a.delta0:.3f}$, and accordingly $P_0={a.P0:.3f}$ equals the star weight $\\stw_0={a.S:.3f}$ "
             f"and there are {int(a.n_h1)} $H_1$ bars. "
             f"In layer {int(b.layer)} sink attention drops to {b.sink:.2f} and $\\defect_0={b.delta0:.3f}$; "
-            f"now $P_0={b.P0:.3f}$ falls below $\\stw_0={b.S:.3f}$ (within the bound $(N{{-}}1)\\defect_0={(b.N - 1) * b.delta0:.2f}$), "
+            f"now $P_0={b.P0:.3f}$ falls below $\\stw_0={b.S:.3f}$ (within the bound $(N{{-}}2)\\defect_0={(b.N - 2) * b.delta0:.2f}$), "
             f"and {int(b.n_h1)} $H_1$ bars appear, the longest of length {b.max_h1:.3f}$\\,\\le\\defect_0$. "
             + no_force_text() + "\n")
 
@@ -336,9 +375,9 @@ def main():
     has_ex = os.path.exists(f"{PAPER}/fig_sink_example.pdf")
     with open(f"{PAPER}/sink_appendix_extra.tex", "w") as fh:
         fh.write(r"\section{Additional analyses}" + "\n" + r"\label{app:extra}" + "\n\n")
-        fh.write(r"\paragraph{Models.} Table~\ref{tab:models} lists the audited architectures. All models use grouped or "
+        fh.write(r"\paragraph{Models.} Table~\ref{tab:models} lists the model architectures. All models use grouped or "
                  r"multi-head attention; we average attention over query heads.""\n")
-        fh.write(r"\begin{table}[H]\centering\small\caption{\textbf{Audited models.}}\label{tab:models}" + "\n"
+        fh.write(r"\begin{table}[H]\centering\small\caption{\textbf{Models.}}\label{tab:models}" + "\n"
                  + r"\resizebox{\linewidth}{!}{" + table_models() + "}\n" + r"\end{table}" + "\n\n")
         if len(scal):
             fh.write(r"\paragraph{Length scaling of $1$D persistence on real attention.} "
@@ -347,13 +386,14 @@ def main():
                      r"correct and hallucinated answers. "
                      + scaling_text(scal) + "\n")
             fh.write(r"\begin{table}[H]\centering\small\caption{\textbf{Length scaling of $1$D persistence.} "
-                     r"OLS of $\log P_1$ on $\log N$ and the class label; rows with $P_1=0$ are excluded and counted in the first column.}"
+                     r"OLS of $\log P_1$ on $\log N$ and the class label, fit on the rows with $P_1>0$; the first column is the "
+                     r"share of rows that are retained, and the rows with $P_1=0$ are dropped from the fit." + omitted_note() + "}"
                      r"\label{tab:scaling}" + "\n" + r"\resizebox{\linewidth}{!}{" + scal_tex + "}\n" + r"\end{table}" + "\n\n")
         fh.write(r"\paragraph{Sequence lengths.} Table~\ref{tab:lengths} gives class-conditional lengths. TruthfulQA is "
                  r"length-balanced by construction; HaluEval's hallucinated answers are systematically longer; on-policy, "
                  r"incorrect answers differ in length from correct ones because they are the model's own.""\n")
         fh.write(r"\begin{table}[H]\centering\small\caption{\textbf{Class-conditional sequence length} (mean $\pm$ SD, full sequence) "
-                 r"and mean answer length.}\label{tab:lengths}" + "\n" + r"\resizebox{\linewidth}{!}{" + table_lengths() + "}\n" + r"\end{table}" + "\n\n")
+                 r"and mean answer length." + omitted_note() + r"}\label{tab:lengths}" + "\n" + r"\resizebox{\linewidth}{!}{" + table_lengths() + "}\n" + r"\end{table}" + "\n\n")
         fh.write(r"\paragraph{Margin sensitivity.} Table~\ref{tab:tost} reports TOST $p$-values at four equivalence margins for "
                  r"the four comparisons of Figure~\ref{fig:forest}; bold marks $p<0.05$ (equivalence).""\n")
         fh.write(r"\begin{table}[H]\centering\scriptsize\setlength{\tabcolsep}{2.2pt}\caption{\textbf{TOST $p$-values by margin $m$.} "
@@ -363,7 +403,8 @@ def main():
                  r"layers that are not coned. These AUCs are orientation-free ($\max(\mathrm{AUC},1-\mathrm{AUC})$) and therefore "
                  r"slightly optimistic; they are descriptive, not a detector.""\n")
         fh.write(r"\begin{figure}[H]\centering\includegraphics[width=\linewidth]{fig_sink_layer_auc.pdf}"
-                 r"\caption{\textbf{Single-feature AUC by layer.}}\label{fig:layerauc}\end{figure}" + "\n\n")
+                 r"\caption{\textbf{Single-feature AUC by layer.}" + omitted_note().replace("Rows need", "Curves need")
+                 + r" Mistral-7B is shown in its \texttt{[INST]} format only.}\label{fig:layerauc}\end{figure}" + "\n\n")
         if has_ex:
             fh.write(example_text())
             fh.write(r"\begin{figure}[H]\centering\includegraphics[width=\linewidth]{fig_sink_example.pdf}"

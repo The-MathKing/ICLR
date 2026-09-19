@@ -45,6 +45,8 @@
 \newcommand{\PHTopoRange}{-0.001 to +0.011}
 \newcommand{\NPHTopoEquiv}{13}
 \newcommand{\NPHTopoTotal}{13}
+\newcommand{\NPHTopoSig}{6}
+\newcommand{\PHTopoSigMax}{0.011}
 \newcommand{\PHEntRange}{-0.016 to +0.044}
 \newcommand{\NIZeroEquiv}{16}
 \newcommand{\NIZeroTotal}{16}
@@ -74,7 +76,12 @@
 \newcommand{\LookbackAll}{0.82 to 0.93}
 \newcommand{\HiddenHE}{1.00}
 \newcommand{\SplitConed}{-0.001 to +0.004}
-\newcommand{\SplitOpen}{+0.003 to +0.027}
+\newcommand{\SplitOpen}{0.000 to +0.027}
+\newcommand{\SplitN}{12}
+\newcommand{\SplitConedEquiv}{12}
+\newcommand{\SplitConedTotal}{12}
+\newcommand{\HiddenDimRange}{1,536 to 4,096}
+\newcommand{\ZeroDDimRange}{44 to 72}
 \newcommand{\IZeroMaxAbs}{0.006}
 \newcommand{\IZeroAllEquiv}{yes}
 \newcommand{\MorseNumbersText}{Numerically, the integral equals 0.791, 3.92, 11.9, 30.2, 70.1 at $N=16,32,64,128,256$, against simulated means 1.91, 5.83, 15.5, 36.2, 79.3 under i.i.d.\ Uniform$[0,1]$ weights (Figure~\ref{fig:synthetic}, left). Over $N\in[16,256]$ both grow faster than linearly (log-log slopes 1.55 and 1.31), a pre-asymptotic effect of the $-\sqrt{3N}$ term; both are $\Theta(N)$ as $N\to\infty$.}
@@ -124,6 +131,69 @@
 \newcommand{\DefLNTRange}{-0.001 to +0.001}
 \newcommand{\DefLNTSig}{0}
 \newcommand{\DefLNTEquiv}{16}
+\newcommand{\NestN}{11}
+\newcommand{\NestList}{HE Qw1.5B, HE Qw3B, TQA Phi-3, TQA Qw1.5B, TQA Qw3B, TQA SmolLM, TQA TinyLl., TrQA Phi-3, TrQA Qw1.5B, TrQA Qw3B and TrQA TinyLl.}
+\newcommand{\NestZeroNTRange}{0.000 to +0.002}
+\newcommand{\NestZeroNTMax}{0.002}
+\newcommand{\NestZeroNTEquiv}{11}
+\newcommand{\NestZeroNTSig}{0}
+\newcommand{\NestZeroNTTotal}{11}
+\newcommand{\NestDeflNTRange}{0.000 to +0.002}
+\newcommand{\NestDeflNTMax}{0.002}
+\newcommand{\NestDeflNTEquiv}{11}
+\newcommand{\NestDeflNTSig}{0}
+\newcommand{\NestDeflNTTotal}{11}
+\newcommand{\NestDefHNTRange}{0.000 to +0.007}
+\newcommand{\NestDefHNTMax}{0.007}
+\newcommand{\NestDefHNTEquiv}{11}
+\newcommand{\NestDefHNTSig}{2}
+\newcommand{\NestDefHNTTotal}{11}
+\newcommand{\NestTohaNTRange}{0.000 to +0.013}
+\newcommand{\NestTohaNTMax}{0.013}
+\newcommand{\NestTohaNTEquiv}{9}
+\newcommand{\NestTohaNTSig}{3}
+\newcommand{\NestTohaNTTotal}{11}
+\newcommand{\NestTohaMaxpRange}{0.000 to +0.006}
+\newcommand{\NestTohaMaxpMax}{0.006}
+\newcommand{\NestTohaMaxpEquiv}{11}
+\newcommand{\NestTohaMaxpSig}{4}
+\newcommand{\NestTohaMaxpTotal}{11}
+\newcommand{\NestDefHSinkRange}{+0.006 to +0.027}
+\newcommand{\NestDefHSinkMax}{0.027}
+\newcommand{\NestDefHSinkEquiv}{4}
+\newcommand{\NestDefHSinkSig}{11}
+\newcommand{\NestDefHSinkTotal}{11}
+\newcommand{\NestMaxShift}{0.002}
+\newcommand{\NestTopoNTMaxAbs}{0.013}
+\newcommand{\GapN}{15}
+\newcommand{\GapOpen}{345,418}
+\newcommand{\GapUZeroMedSink}{0.03 to 0.44}
+\newcommand{\GapUZeroMax}{0.88}
+\newcommand{\GapUZeroMaxSink}{0.80}
+\newcommand{\GapVacMax}{5.5\%}
+\newcommand{\GapVacZeroN}{12}
+\newcommand{\GapUOneMedRange}{0.02 to 0.41}
+\newcommand{\GapUOneMax}{0.9999}
+\newcommand{\GapHOneN}{211,192}
+\newcommand{\TightLayerGraphs}{774,356}
+\newcommand{\TightLayerSettings}{15}
+\newcommand{\TightHeadGraphs}{12,336,672}
+\newcommand{\TightHeadSettings}{11}
+\newcommand{\TightViol}{0}
+\newcommand{\CGridN}{15}
+\newcommand{\CGridShown}{11}
+\newcommand{\CGridBanks}{16}
+\newcommand{\CGridLayerOnlyN}{4}
+\newcommand{\CGridMaxAbs}{0.061}
+\newcommand{\CGridHiddenMax}{0.010}
+\newcommand{\CGridNTMax}{0.015}
+\newcommand{\CGridNTBankMax}{0.006}
+\newcommand{\CGridWorst}{TQA Mis7B Ans.}
+\newcommand{\CGridWorstDelta}{+0.061}
+\newcommand{\CGridFlips}{0}
+\newcommand{\CGridTOneShiftMax}{0.023}
+\newcommand{\CGridAnsOverNT}{0}
+\newcommand{\CGridTopoMax}{0.061}
 \newcommand{\TohaSettings}{16}
 \newcommand{\TohaCells}{20,580,160}
 \newcommand{\TohaViol}{0}
@@ -146,7 +216,7 @@
 \newcommand{\TohaSupAuc}{0.82 to 1.00}
 \newcommand{\TohaSupSinkAuc}{0.82 to 1.00}
 \newcommand{\TohaLFMaxpMax}{0.007}
-\newcommand{\TohaLFNTMax}{0.013}
+\newcommand{\TohaLFNTMax}{0.012}
 \newcommand{\TohaSinkLossSink}{0.049}
 \newcommand{\TohaSinkLossNoSink}{0.107 to 0.161}
 \newcommand{\TohaNoSinkModels}{Qwen2.5-7B and SmolLM-1.7B}
@@ -186,6 +256,7 @@
 \newcommand{\TohaLFNTNeg}{0}
 \newcommand{\TohaLFNTNonInf}{16}
 \newcommand{\TohaLFNTTotal}{16}
+\newcommand{\TohaNTMaxAll}{0.013}
 \newcommand{\MistralCells}{52,288}
 \newcommand{\MistralViol}{0}
 \newcommand{\MistralSinkMass}{0.75}
@@ -205,6 +276,14 @@
 \newcommand{\AuditN}{200}
 \newcommand{\AuditDisagreeRange}{5.5\% to 14.0\%}
 \newcommand{\AuditDisagreeMax}{14.0\%}
+\newcommand{\AuditSelfSetting}{TrQA Qw7B}
+\newcommand{\AuditSelfRate}{5.5\%}
+\newcommand{\AuditSelfLax}{4}
+\newcommand{\AuditSelfStrict}{7}
+\newcommand{\AuditOtherSetting}{TrQA Mis7B}
+\newcommand{\AuditOtherRate}{14.0\%}
+\newcommand{\AuditOtherLax}{20}
+\newcommand{\AuditOtherStrict}{8}
 \newcommand{\AuditMaxAucShift}{0.063}
 \newcommand{\ReleaseLimitMB}{8}
 \newcommand{\ReleaseGenN}{2}

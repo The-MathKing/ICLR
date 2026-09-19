@@ -39,7 +39,8 @@ def check_toha(n=400, seed=0):
         ref = h0[np.isfinite(h0[:, 1]), 1].sum() / (N - p)
         f = toha_head_features(A[None, p:, :], p)
         err = max(err, abs(f["toha"][0] - ref))
-        bad += not (f["maxp"][0] - f["dP"][0] - 1e-6 <= f["toha"][0] <= f["maxp"][0] + 1e-6)
+        R = N - p  # tightened lower bound: (|R|-1)/|R| delta_P
+        bad += not (f["maxp"][0] - (R - 1) / R * f["dP"][0] - 1e-6 <= f["toha"][0] <= f["maxp"][0] + 1e-6)
         if f["dP"][0] == 0:
             coned += 1
             bad += abs(f["toha"][0] - f["maxp"][0]) > 1e-9
@@ -57,7 +58,9 @@ def check_diagram(n=300, seed=1):
         dg = ripser.ripser(D, distance_matrix=True, maxdim=2)["dgms"]
         deaths = np.sort(dg[0][np.isfinite(dg[0][:, 1]), 1])
         star = np.sort(D[0, 1:])
-        bad0 += not (np.all(deaths <= star + 1e-6) and np.all(deaths >= star - d - 1e-6))
+        bad0 += not (np.all(deaths <= star + 1e-6) and np.all(deaths >= star - d - 1e-6)
+                     and deaths.sum() >= star.sum() - (N - 2) * d - 1e-6            # (N-2) delta sandwich
+                     and np.all(np.abs(deaths - np.maximum(star - d / 2, 0)) <= d / 2 + 1e-6))  # shifted star, d/2
         badk += sum(len(dg[k]) > 0 and (dg[k][:, 1] - dg[k][:, 0]).max() > d + 1e-6 for k in (1, 2))
     print(f"Cor. 2: {n} matrices, elementwise 0D violations = {bad0}, H1/H2 bar violations = {badk}")
     return dict(diag_n=n, diag_viol0=bad0, diag_violk=int(badk))

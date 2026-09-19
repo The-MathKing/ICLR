@@ -1,5 +1,5 @@
 \begin{longtable}{llrrrr}
-\caption{\textbf{Complete out-of-fold ROC-AUC results across all settings and feature banks.}}\label{tab:auc_full}\\
+\caption{\textbf{Complete out-of-fold ROC-AUC results across all settings and feature banks.} \textsc{Legacy mstproxy} is per-layer $0$D total persistence alone, the MST-weight summary used by earlier attention-graph work (Appendix~\ref{app:impl}); X$\mid$Y is early fusion, as in the main text. A dash in \emph{dim} means the bank has no fixed width: \textsc{Lex} refits a TF-IDF vocabulary inside every training fold. A dash in \emph{pair acc.} means the benchmark is not paired: the on-policy TriviaQA settings have one row per question, so there is no grounded/hallucinated pair to score.}\label{tab:auc_full}\\
 \toprule
 Setting & Bank & dim & AUC & seed SD & pair acc. \\
 \midrule\endhead
@@ -21,19 +21,19 @@ TQA Qw3B & PH ENT & 576 & 0.857 & 0.0013 & 0.901 \\
 TQA Qw3B & LOOKBACK & 576 & 0.897 & 0.0022 & 0.908 \\
 TQA Qw3B & HIDDEN & 2048 & 0.913 & 0.0008 & 0.918 \\
 TQA Qw3B & NONTOPO & 2738 & 0.926 & 0.0006 & 0.936 \\
-TQA Qw3B & 0D+1D & 216 & 0.769 & 0.0004 & 0.791 \\
-TQA Qw3B & 0D+SINK & 144 & 0.741 & 0.0015 & 0.776 \\
-TQA Qw3B & HIDDEN+0D & 2120 & 0.913 & 0.0007 & 0.920 \\
-TQA Qw3B & LEX+0D & -- & 0.840 & 0.0015 & 0.848 \\
-TQA Qw3B & LEX+DEFL & -- & 0.830 & 0.0004 & 0.854 \\
-TQA Qw3B & LEX+SINK & -- & 0.843 & 0.0020 & 0.851 \\
-TQA Qw3B & LOGPROB+0D & 78 & 0.776 & 0.0022 & 0.810 \\
-TQA Qw3B & NONTOPO+0D & 2810 & 0.926 & 0.0004 & 0.936 \\
-TQA Qw3B & NONTOPO+DEFL & 2954 & 0.928 & 0.0006 & 0.933 \\
-TQA Qw3B & PH SINK+PH 0DTOT & 1152 & 0.860 & 0.0022 & 0.892 \\
-TQA Qw3B & SINK+1D & 216 & 0.766 & 0.0007 & 0.787 \\
-TQA Qw3B & SINK+ANS & 288 & 0.785 & 0.0031 & 0.797 \\
-TQA Qw3B & SINK+DEFL & 288 & 0.766 & 0.0024 & 0.799 \\
+TQA Qw3B & 0D$\mid$1D & 216 & 0.769 & 0.0004 & 0.791 \\
+TQA Qw3B & 0D$\mid$SINK & 144 & 0.741 & 0.0015 & 0.776 \\
+TQA Qw3B & HIDDEN$\mid$0D & 2120 & 0.913 & 0.0007 & 0.920 \\
+TQA Qw3B & LEX$\mid$0D & -- & 0.840 & 0.0015 & 0.848 \\
+TQA Qw3B & LEX$\mid$DEFL & -- & 0.830 & 0.0004 & 0.854 \\
+TQA Qw3B & LEX$\mid$SINK & -- & 0.843 & 0.0020 & 0.851 \\
+TQA Qw3B & LOGPROB$\mid$0D & 78 & 0.776 & 0.0022 & 0.810 \\
+TQA Qw3B & NONTOPO$\mid$0D & 2810 & 0.926 & 0.0004 & 0.936 \\
+TQA Qw3B & NONTOPO$\mid$DEFL & 2954 & 0.928 & 0.0006 & 0.933 \\
+TQA Qw3B & PH SINK$\mid$PH 0DTOT & 1152 & 0.860 & 0.0022 & 0.892 \\
+TQA Qw3B & SINK$\mid$1D & 216 & 0.766 & 0.0007 & 0.787 \\
+TQA Qw3B & SINK$\mid$ANS & 288 & 0.785 & 0.0031 & 0.797 \\
+TQA Qw3B & SINK$\mid$DEFL & 288 & 0.766 & 0.0024 & 0.799 \\
 TQA Qw1.5B & LEN & 2 & 0.529 & 0.0003 & 0.567 \\
 TQA Qw1.5B & LEX & -- & 0.820 & 0.0014 & 0.829 \\
 TQA Qw1.5B & LOGPROB & 6 & 0.638 & 0.0007 & 0.682 \\
@@ -52,19 +52,19 @@ TQA Qw1.5B & PH ENT & 336 & 0.833 & 0.0025 & 0.852 \\
 TQA Qw1.5B & LOOKBACK & 336 & 0.851 & 0.0020 & 0.856 \\
 TQA Qw1.5B & HIDDEN & 1536 & 0.916 & 0.0012 & 0.923 \\
 TQA Qw1.5B & NONTOPO & 1962 & 0.917 & 0.0013 & 0.928 \\
-TQA Qw1.5B & 0D+1D & 168 & 0.718 & 0.0013 & 0.767 \\
-TQA Qw1.5B & 0D+SINK & 112 & 0.735 & 0.0012 & 0.766 \\
-TQA Qw1.5B & HIDDEN+0D & 1592 & 0.916 & 0.0014 & 0.924 \\
-TQA Qw1.5B & LEX+0D & -- & 0.835 & 0.0017 & 0.841 \\
-TQA Qw1.5B & LEX+DEFL & -- & 0.825 & 0.0019 & 0.836 \\
-TQA Qw1.5B & LEX+SINK & -- & 0.833 & 0.0008 & 0.846 \\
-TQA Qw1.5B & LOGPROB+0D & 62 & 0.740 & 0.0013 & 0.797 \\
-TQA Qw1.5B & NONTOPO+0D & 2018 & 0.917 & 0.0014 & 0.927 \\
-TQA Qw1.5B & NONTOPO+DEFL & 2130 & 0.917 & 0.0014 & 0.923 \\
-TQA Qw1.5B & PH SINK+PH 0DTOT & 672 & 0.841 & 0.0013 & 0.867 \\
-TQA Qw1.5B & SINK+1D & 168 & 0.715 & 0.0017 & 0.769 \\
-TQA Qw1.5B & SINK+ANS & 224 & 0.761 & 0.0027 & 0.753 \\
-TQA Qw1.5B & SINK+DEFL & 224 & 0.757 & 0.0028 & 0.802 \\
+TQA Qw1.5B & 0D$\mid$1D & 168 & 0.718 & 0.0013 & 0.767 \\
+TQA Qw1.5B & 0D$\mid$SINK & 112 & 0.735 & 0.0012 & 0.766 \\
+TQA Qw1.5B & HIDDEN$\mid$0D & 1592 & 0.916 & 0.0014 & 0.924 \\
+TQA Qw1.5B & LEX$\mid$0D & -- & 0.835 & 0.0017 & 0.841 \\
+TQA Qw1.5B & LEX$\mid$DEFL & -- & 0.825 & 0.0019 & 0.836 \\
+TQA Qw1.5B & LEX$\mid$SINK & -- & 0.833 & 0.0008 & 0.846 \\
+TQA Qw1.5B & LOGPROB$\mid$0D & 62 & 0.740 & 0.0013 & 0.797 \\
+TQA Qw1.5B & NONTOPO$\mid$0D & 2018 & 0.917 & 0.0014 & 0.927 \\
+TQA Qw1.5B & NONTOPO$\mid$DEFL & 2130 & 0.917 & 0.0014 & 0.923 \\
+TQA Qw1.5B & PH SINK$\mid$PH 0DTOT & 672 & 0.841 & 0.0013 & 0.867 \\
+TQA Qw1.5B & SINK$\mid$1D & 168 & 0.715 & 0.0017 & 0.769 \\
+TQA Qw1.5B & SINK$\mid$ANS & 224 & 0.761 & 0.0027 & 0.753 \\
+TQA Qw1.5B & SINK$\mid$DEFL & 224 & 0.757 & 0.0028 & 0.802 \\
 TQA Phi-3 & LEN & 2 & 0.522 & 0.0004 & 0.562 \\
 TQA Phi-3 & LEX & -- & 0.820 & 0.0014 & 0.829 \\
 TQA Phi-3 & LOGPROB & 6 & 0.578 & 0.0016 & 0.597 \\
@@ -83,19 +83,19 @@ TQA Phi-3 & PH ENT & 1024 & 0.864 & 0.0010 & 0.895 \\
 TQA Phi-3 & LOOKBACK & 1024 & 0.892 & 0.0004 & 0.902 \\
 TQA Phi-3 & HIDDEN & 3072 & 0.933 & 0.0007 & 0.945 \\
 TQA Phi-3 & NONTOPO & 4198 & 0.936 & 0.0006 & 0.942 \\
-TQA Phi-3 & 0D+1D & 192 & 0.643 & 0.0014 & 0.705 \\
-TQA Phi-3 & 0D+SINK & 128 & 0.657 & 0.0007 & 0.704 \\
-TQA Phi-3 & HIDDEN+0D & 3136 & 0.933 & 0.0008 & 0.944 \\
-TQA Phi-3 & LEX+0D & -- & 0.821 & 0.0003 & 0.842 \\
-TQA Phi-3 & LEX+DEFL & -- & 0.802 & 0.0001 & 0.827 \\
-TQA Phi-3 & LEX+SINK & -- & 0.820 & 0.0007 & 0.834 \\
-TQA Phi-3 & LOGPROB+0D & 70 & 0.655 & 0.0011 & 0.694 \\
-TQA Phi-3 & NONTOPO+0D & 4262 & 0.936 & 0.0006 & 0.942 \\
-TQA Phi-3 & NONTOPO+DEFL & 4390 & 0.937 & 0.0007 & 0.939 \\
-TQA Phi-3 & PH SINK+PH 0DTOT & 2048 & 0.871 & 0.0007 & 0.905 \\
-TQA Phi-3 & SINK+1D & 192 & 0.651 & 0.0011 & 0.696 \\
-TQA Phi-3 & SINK+ANS & 256 & 0.675 & 0.0015 & 0.698 \\
-TQA Phi-3 & SINK+DEFL & 256 & 0.684 & 0.0023 & 0.718 \\
+TQA Phi-3 & 0D$\mid$1D & 192 & 0.643 & 0.0014 & 0.705 \\
+TQA Phi-3 & 0D$\mid$SINK & 128 & 0.657 & 0.0007 & 0.704 \\
+TQA Phi-3 & HIDDEN$\mid$0D & 3136 & 0.933 & 0.0008 & 0.944 \\
+TQA Phi-3 & LEX$\mid$0D & -- & 0.821 & 0.0003 & 0.842 \\
+TQA Phi-3 & LEX$\mid$DEFL & -- & 0.802 & 0.0001 & 0.827 \\
+TQA Phi-3 & LEX$\mid$SINK & -- & 0.820 & 0.0007 & 0.834 \\
+TQA Phi-3 & LOGPROB$\mid$0D & 70 & 0.655 & 0.0011 & 0.694 \\
+TQA Phi-3 & NONTOPO$\mid$0D & 4262 & 0.936 & 0.0006 & 0.942 \\
+TQA Phi-3 & NONTOPO$\mid$DEFL & 4390 & 0.937 & 0.0007 & 0.939 \\
+TQA Phi-3 & PH SINK$\mid$PH 0DTOT & 2048 & 0.871 & 0.0007 & 0.905 \\
+TQA Phi-3 & SINK$\mid$1D & 192 & 0.651 & 0.0011 & 0.696 \\
+TQA Phi-3 & SINK$\mid$ANS & 256 & 0.675 & 0.0015 & 0.698 \\
+TQA Phi-3 & SINK$\mid$DEFL & 256 & 0.684 & 0.0023 & 0.718 \\
 TQA TinyLl. & LEN & 2 & 0.523 & 0.0005 & 0.556 \\
 TQA TinyLl. & LEX & -- & 0.820 & 0.0014 & 0.829 \\
 TQA TinyLl. & LOGPROB & 6 & 0.637 & 0.0010 & 0.645 \\
@@ -114,19 +114,19 @@ TQA TinyLl. & PH ENT & 704 & 0.817 & 0.0008 & 0.838 \\
 TQA TinyLl. & LOOKBACK & 704 & 0.850 & 0.0028 & 0.846 \\
 TQA TinyLl. & HIDDEN & 2048 & 0.883 & 0.0013 & 0.879 \\
 TQA TinyLl. & NONTOPO & 2824 & 0.885 & 0.0011 & 0.887 \\
-TQA TinyLl. & 0D+1D & 132 & 0.660 & 0.0010 & 0.744 \\
-TQA TinyLl. & 0D+SINK & 88 & 0.663 & 0.0004 & 0.728 \\
-TQA TinyLl. & HIDDEN+0D & 2092 & 0.883 & 0.0014 & 0.880 \\
-TQA TinyLl. & LEX+0D & -- & 0.830 & 0.0012 & 0.836 \\
-TQA TinyLl. & LEX+DEFL & -- & 0.826 & 0.0012 & 0.846 \\
-TQA TinyLl. & LEX+SINK & -- & 0.831 & 0.0011 & 0.832 \\
-TQA TinyLl. & LOGPROB+0D & 50 & 0.683 & 0.0010 & 0.711 \\
-TQA TinyLl. & NONTOPO+0D & 2868 & 0.885 & 0.0011 & 0.889 \\
-TQA TinyLl. & NONTOPO+DEFL & 2956 & 0.884 & 0.0010 & 0.885 \\
-TQA TinyLl. & PH SINK+PH 0DTOT & 1408 & 0.810 & 0.0031 & 0.841 \\
-TQA TinyLl. & SINK+1D & 132 & 0.651 & 0.0016 & 0.729 \\
-TQA TinyLl. & SINK+ANS & 176 & 0.685 & 0.0041 & 0.720 \\
-TQA TinyLl. & SINK+DEFL & 176 & 0.688 & 0.0015 & 0.749 \\
+TQA TinyLl. & 0D$\mid$1D & 132 & 0.660 & 0.0010 & 0.744 \\
+TQA TinyLl. & 0D$\mid$SINK & 88 & 0.663 & 0.0004 & 0.728 \\
+TQA TinyLl. & HIDDEN$\mid$0D & 2092 & 0.883 & 0.0014 & 0.880 \\
+TQA TinyLl. & LEX$\mid$0D & -- & 0.830 & 0.0012 & 0.836 \\
+TQA TinyLl. & LEX$\mid$DEFL & -- & 0.826 & 0.0012 & 0.846 \\
+TQA TinyLl. & LEX$\mid$SINK & -- & 0.831 & 0.0011 & 0.832 \\
+TQA TinyLl. & LOGPROB$\mid$0D & 50 & 0.683 & 0.0010 & 0.711 \\
+TQA TinyLl. & NONTOPO$\mid$0D & 2868 & 0.885 & 0.0011 & 0.889 \\
+TQA TinyLl. & NONTOPO$\mid$DEFL & 2956 & 0.884 & 0.0010 & 0.885 \\
+TQA TinyLl. & PH SINK$\mid$PH 0DTOT & 1408 & 0.810 & 0.0031 & 0.841 \\
+TQA TinyLl. & SINK$\mid$1D & 132 & 0.651 & 0.0016 & 0.729 \\
+TQA TinyLl. & SINK$\mid$ANS & 176 & 0.685 & 0.0041 & 0.720 \\
+TQA TinyLl. & SINK$\mid$DEFL & 176 & 0.688 & 0.0015 & 0.749 \\
 TQA SmolLM & LEN & 2 & 0.524 & 0.0003 & 0.554 \\
 TQA SmolLM & LEX & -- & 0.820 & 0.0014 & 0.829 \\
 TQA SmolLM & LOGPROB & 6 & 0.588 & 0.0010 & 0.592 \\
@@ -145,19 +145,19 @@ TQA SmolLM & PH ENT & 768 & 0.834 & 0.0007 & 0.841 \\
 TQA SmolLM & LOOKBACK & 768 & 0.863 & 0.0017 & 0.864 \\
 TQA SmolLM & HIDDEN & 2048 & 0.894 & 0.0022 & 0.892 \\
 TQA SmolLM & NONTOPO & 2894 & 0.899 & 0.0015 & 0.903 \\
-TQA SmolLM & 0D+1D & 144 & 0.588 & 0.0019 & 0.643 \\
-TQA SmolLM & 0D+SINK & 96 & 0.641 & 0.0026 & 0.662 \\
-TQA SmolLM & HIDDEN+0D & 2096 & 0.894 & 0.0020 & 0.891 \\
-TQA SmolLM & LEX+0D & -- & 0.827 & 0.0008 & 0.838 \\
-TQA SmolLM & LEX+DEFL & -- & 0.822 & 0.0001 & 0.845 \\
-TQA SmolLM & LEX+SINK & -- & 0.819 & 0.0015 & 0.826 \\
-TQA SmolLM & LOGPROB+0D & 54 & 0.613 & 0.0009 & 0.630 \\
-TQA SmolLM & NONTOPO+0D & 2942 & 0.899 & 0.0013 & 0.902 \\
-TQA SmolLM & NONTOPO+DEFL & 3038 & 0.899 & 0.0012 & 0.900 \\
-TQA SmolLM & PH SINK+PH 0DTOT & 1536 & 0.826 & 0.0023 & 0.854 \\
-TQA SmolLM & SINK+1D & 144 & 0.629 & 0.0013 & 0.650 \\
-TQA SmolLM & SINK+ANS & 192 & 0.646 & 0.0021 & 0.651 \\
-TQA SmolLM & SINK+DEFL & 192 & 0.652 & 0.0022 & 0.681 \\
+TQA SmolLM & 0D$\mid$1D & 144 & 0.588 & 0.0019 & 0.643 \\
+TQA SmolLM & 0D$\mid$SINK & 96 & 0.641 & 0.0026 & 0.662 \\
+TQA SmolLM & HIDDEN$\mid$0D & 2096 & 0.894 & 0.0020 & 0.891 \\
+TQA SmolLM & LEX$\mid$0D & -- & 0.827 & 0.0008 & 0.838 \\
+TQA SmolLM & LEX$\mid$DEFL & -- & 0.822 & 0.0001 & 0.845 \\
+TQA SmolLM & LEX$\mid$SINK & -- & 0.819 & 0.0015 & 0.826 \\
+TQA SmolLM & LOGPROB$\mid$0D & 54 & 0.613 & 0.0009 & 0.630 \\
+TQA SmolLM & NONTOPO$\mid$0D & 2942 & 0.899 & 0.0013 & 0.902 \\
+TQA SmolLM & NONTOPO$\mid$DEFL & 3038 & 0.899 & 0.0012 & 0.900 \\
+TQA SmolLM & PH SINK$\mid$PH 0DTOT & 1536 & 0.826 & 0.0023 & 0.854 \\
+TQA SmolLM & SINK$\mid$1D & 144 & 0.629 & 0.0013 & 0.650 \\
+TQA SmolLM & SINK$\mid$ANS & 192 & 0.646 & 0.0021 & 0.651 \\
+TQA SmolLM & SINK$\mid$DEFL & 192 & 0.652 & 0.0022 & 0.681 \\
 TQA Mis7B & LEN & 2 & 0.525 & 0.0002 & 0.571 \\
 TQA Mis7B & LEX & -- & 0.820 & 0.0008 & 0.828 \\
 TQA Mis7B & LOGPROB & 6 & 0.641 & 0.0004 & 0.652 \\
@@ -176,19 +176,19 @@ TQA Mis7B & PH ENT & 1024 & 0.897 & 0.0010 & 0.929 \\
 TQA Mis7B & LOOKBACK & 1024 & 0.933 & 0.0008 & 0.945 \\
 TQA Mis7B & HIDDEN & 4096 & 0.956 & 0.0005 & 0.957 \\
 TQA Mis7B & NONTOPO & 5222 & 0.959 & 0.0006 & 0.967 \\
-TQA Mis7B & 0D+1D & 192 & 0.685 & 0.0007 & 0.760 \\
-TQA Mis7B & 0D+SINK & 128 & 0.685 & 0.0007 & 0.754 \\
-TQA Mis7B & HIDDEN+0D & 4160 & 0.956 & 0.0005 & 0.956 \\
-TQA Mis7B & LEX+0D & -- & 0.834 & 0.0013 & 0.859 \\
-TQA Mis7B & LEX+DEFL & -- & 0.823 & 0.0013 & 0.856 \\
-TQA Mis7B & LEX+SINK & -- & 0.833 & 0.0015 & 0.859 \\
-TQA Mis7B & LOGPROB+0D & 70 & 0.722 & 0.0012 & 0.775 \\
-TQA Mis7B & NONTOPO+0D & 5286 & 0.958 & 0.0006 & 0.967 \\
-TQA Mis7B & NONTOPO+DEFL & 5414 & 0.959 & 0.0006 & 0.966 \\
-TQA Mis7B & PH SINK+PH 0DTOT & 2048 & 0.903 & 0.0013 & 0.936 \\
-TQA Mis7B & SINK+1D & 192 & 0.685 & 0.0008 & 0.758 \\
-TQA Mis7B & SINK+ANS & 256 & 0.727 & 0.0023 & 0.763 \\
-TQA Mis7B & SINK+DEFL & 256 & 0.740 & 0.0004 & 0.800 \\
+TQA Mis7B & 0D$\mid$1D & 192 & 0.685 & 0.0007 & 0.760 \\
+TQA Mis7B & 0D$\mid$SINK & 128 & 0.685 & 0.0007 & 0.754 \\
+TQA Mis7B & HIDDEN$\mid$0D & 4160 & 0.956 & 0.0005 & 0.956 \\
+TQA Mis7B & LEX$\mid$0D & -- & 0.834 & 0.0013 & 0.859 \\
+TQA Mis7B & LEX$\mid$DEFL & -- & 0.823 & 0.0013 & 0.856 \\
+TQA Mis7B & LEX$\mid$SINK & -- & 0.833 & 0.0015 & 0.859 \\
+TQA Mis7B & LOGPROB$\mid$0D & 70 & 0.722 & 0.0012 & 0.775 \\
+TQA Mis7B & NONTOPO$\mid$0D & 5286 & 0.958 & 0.0006 & 0.967 \\
+TQA Mis7B & NONTOPO$\mid$DEFL & 5414 & 0.959 & 0.0006 & 0.966 \\
+TQA Mis7B & PH SINK$\mid$PH 0DTOT & 2048 & 0.903 & 0.0013 & 0.936 \\
+TQA Mis7B & SINK$\mid$1D & 192 & 0.685 & 0.0008 & 0.758 \\
+TQA Mis7B & SINK$\mid$ANS & 256 & 0.727 & 0.0023 & 0.763 \\
+TQA Mis7B & SINK$\mid$DEFL & 256 & 0.740 & 0.0004 & 0.800 \\
 TQA Mis7B (chat) & LEN & 2 & 0.525 & 0.0002 & 0.571 \\
 TQA Mis7B (chat) & LEX & -- & 0.820 & 0.0008 & 0.828 \\
 TQA Mis7B (chat) & LOGPROB & 6 & 0.651 & 0.0014 & 0.668 \\
@@ -207,19 +207,19 @@ TQA Mis7B (chat) & PH ENT & 1024 & 0.901 & 0.0010 & 0.928 \\
 TQA Mis7B (chat) & LOOKBACK & 1024 & 0.934 & 0.0008 & 0.942 \\
 TQA Mis7B (chat) & HIDDEN & 4096 & 0.958 & 0.0004 & 0.957 \\
 TQA Mis7B (chat) & NONTOPO & 5222 & 0.960 & 0.0006 & 0.965 \\
-TQA Mis7B (chat) & 0D+1D & 192 & 0.688 & 0.0009 & 0.754 \\
-TQA Mis7B (chat) & 0D+SINK & 128 & 0.689 & 0.0008 & 0.755 \\
-TQA Mis7B (chat) & HIDDEN+0D & 4160 & 0.958 & 0.0004 & 0.957 \\
-TQA Mis7B (chat) & LEX+0D & -- & 0.834 & 0.0013 & 0.860 \\
-TQA Mis7B (chat) & LEX+DEFL & -- & 0.835 & 0.0020 & 0.864 \\
-TQA Mis7B (chat) & LEX+SINK & -- & 0.834 & 0.0015 & 0.859 \\
-TQA Mis7B (chat) & LOGPROB+0D & 70 & 0.733 & 0.0021 & 0.798 \\
-TQA Mis7B (chat) & NONTOPO+0D & 5286 & 0.960 & 0.0005 & 0.965 \\
-TQA Mis7B (chat) & NONTOPO+DEFL & 5414 & 0.961 & 0.0006 & 0.966 \\
-TQA Mis7B (chat) & PH SINK+PH 0DTOT & 2048 & 0.907 & 0.0012 & 0.938 \\
-TQA Mis7B (chat) & SINK+1D & 192 & 0.688 & 0.0009 & 0.756 \\
-TQA Mis7B (chat) & SINK+ANS & 256 & 0.767 & 0.0028 & 0.792 \\
-TQA Mis7B (chat) & SINK+DEFL & 256 & 0.756 & 0.0018 & 0.803 \\
+TQA Mis7B (chat) & 0D$\mid$1D & 192 & 0.688 & 0.0009 & 0.754 \\
+TQA Mis7B (chat) & 0D$\mid$SINK & 128 & 0.689 & 0.0008 & 0.755 \\
+TQA Mis7B (chat) & HIDDEN$\mid$0D & 4160 & 0.958 & 0.0004 & 0.957 \\
+TQA Mis7B (chat) & LEX$\mid$0D & -- & 0.834 & 0.0013 & 0.860 \\
+TQA Mis7B (chat) & LEX$\mid$DEFL & -- & 0.835 & 0.0020 & 0.864 \\
+TQA Mis7B (chat) & LEX$\mid$SINK & -- & 0.834 & 0.0015 & 0.859 \\
+TQA Mis7B (chat) & LOGPROB$\mid$0D & 70 & 0.733 & 0.0021 & 0.798 \\
+TQA Mis7B (chat) & NONTOPO$\mid$0D & 5286 & 0.960 & 0.0005 & 0.965 \\
+TQA Mis7B (chat) & NONTOPO$\mid$DEFL & 5414 & 0.961 & 0.0006 & 0.966 \\
+TQA Mis7B (chat) & PH SINK$\mid$PH 0DTOT & 2048 & 0.907 & 0.0012 & 0.938 \\
+TQA Mis7B (chat) & SINK$\mid$1D & 192 & 0.688 & 0.0009 & 0.756 \\
+TQA Mis7B (chat) & SINK$\mid$ANS & 256 & 0.767 & 0.0028 & 0.792 \\
+TQA Mis7B (chat) & SINK$\mid$DEFL & 256 & 0.756 & 0.0018 & 0.803 \\
 TQA Qw7B & LEN & 2 & 0.529 & 0.0003 & 0.567 \\
 TQA Qw7B & LEX & -- & 0.820 & 0.0008 & 0.828 \\
 TQA Qw7B & LOGPROB & 6 & 0.674 & 0.0007 & 0.717 \\
@@ -238,19 +238,19 @@ TQA Qw7B & PH ENT & 784 & 0.887 & 0.0003 & 0.901 \\
 TQA Qw7B & LOOKBACK & 784 & 0.922 & 0.0004 & 0.923 \\
 TQA Qw7B & HIDDEN & 3584 & 0.933 & 0.0008 & 0.934 \\
 TQA Qw7B & NONTOPO & 4458 & 0.950 & 0.0013 & 0.950 \\
-TQA Qw7B & 0D+1D & 168 & 0.701 & 0.0002 & 0.756 \\
-TQA Qw7B & 0D+SINK & 112 & 0.777 & 0.0004 & 0.794 \\
-TQA Qw7B & HIDDEN+0D & 3640 & 0.933 & 0.0008 & 0.933 \\
-TQA Qw7B & LEX+0D & -- & 0.834 & 0.0008 & 0.858 \\
-TQA Qw7B & LEX+DEFL & -- & 0.828 & 0.0014 & 0.844 \\
-TQA Qw7B & LEX+SINK & -- & 0.848 & 0.0001 & 0.849 \\
-TQA Qw7B & LOGPROB+0D & 62 & 0.727 & 0.0002 & 0.792 \\
-TQA Qw7B & NONTOPO+0D & 4514 & 0.949 & 0.0013 & 0.949 \\
-TQA Qw7B & NONTOPO+DEFL & 4626 & 0.949 & 0.0012 & 0.952 \\
-TQA Qw7B & PH SINK+PH 0DTOT & 1568 & 0.881 & 0.0005 & 0.920 \\
-TQA Qw7B & SINK+1D & 168 & 0.767 & 0.0023 & 0.780 \\
-TQA Qw7B & SINK+ANS & 224 & 0.794 & 0.0010 & 0.802 \\
-TQA Qw7B & SINK+DEFL & 224 & 0.788 & 0.0006 & 0.797 \\
+TQA Qw7B & 0D$\mid$1D & 168 & 0.701 & 0.0002 & 0.756 \\
+TQA Qw7B & 0D$\mid$SINK & 112 & 0.777 & 0.0004 & 0.794 \\
+TQA Qw7B & HIDDEN$\mid$0D & 3640 & 0.933 & 0.0008 & 0.933 \\
+TQA Qw7B & LEX$\mid$0D & -- & 0.834 & 0.0008 & 0.858 \\
+TQA Qw7B & LEX$\mid$DEFL & -- & 0.828 & 0.0014 & 0.844 \\
+TQA Qw7B & LEX$\mid$SINK & -- & 0.848 & 0.0001 & 0.849 \\
+TQA Qw7B & LOGPROB$\mid$0D & 62 & 0.727 & 0.0002 & 0.792 \\
+TQA Qw7B & NONTOPO$\mid$0D & 4514 & 0.949 & 0.0013 & 0.949 \\
+TQA Qw7B & NONTOPO$\mid$DEFL & 4626 & 0.949 & 0.0012 & 0.952 \\
+TQA Qw7B & PH SINK$\mid$PH 0DTOT & 1568 & 0.881 & 0.0005 & 0.920 \\
+TQA Qw7B & SINK$\mid$1D & 168 & 0.767 & 0.0023 & 0.780 \\
+TQA Qw7B & SINK$\mid$ANS & 224 & 0.794 & 0.0010 & 0.802 \\
+TQA Qw7B & SINK$\mid$DEFL & 224 & 0.788 & 0.0006 & 0.797 \\
 HE Qw3B & LEN & 2 & 0.962 & 0.0001 & 0.970 \\
 HE Qw3B & LEX & -- & 0.981 & 0.0004 & 0.977 \\
 HE Qw3B & LOGPROB & 6 & 0.993 & 0.0001 & 0.991 \\
@@ -269,19 +269,19 @@ HE Qw3B & PH ENT & 576 & 0.964 & 0.0005 & 0.993 \\
 HE Qw3B & LOOKBACK & 576 & 0.998 & 0.0001 & 0.998 \\
 HE Qw3B & HIDDEN & 2048 & 1.000 & 0.0000 & 1.000 \\
 HE Qw3B & NONTOPO & 2738 & 1.000 & 0.0002 & 1.000 \\
-HE Qw3B & 0D+1D & 216 & 0.826 & 0.0013 & 0.945 \\
-HE Qw3B & 0D+SINK & 144 & 0.857 & 0.0010 & 0.948 \\
-HE Qw3B & HIDDEN+0D & 2120 & 1.000 & 0.0000 & 1.000 \\
-HE Qw3B & LEX+0D & -- & 0.979 & 0.0001 & 0.983 \\
-HE Qw3B & LEX+DEFL & -- & 0.971 & 0.0003 & 0.975 \\
-HE Qw3B & LEX+SINK & -- & 0.980 & 0.0003 & 0.981 \\
-HE Qw3B & LOGPROB+0D & 78 & 0.993 & 0.0003 & 0.992 \\
-HE Qw3B & NONTOPO+0D & 2810 & 1.000 & 0.0002 & 1.000 \\
-HE Qw3B & NONTOPO+DEFL & 2954 & 1.000 & 0.0002 & 1.000 \\
-HE Qw3B & PH SINK+PH 0DTOT & 1152 & 0.962 & 0.0006 & 0.997 \\
-HE Qw3B & SINK+1D & 216 & 0.843 & 0.0011 & 0.938 \\
-HE Qw3B & SINK+ANS & 288 & 0.978 & 0.0003 & 0.982 \\
-HE Qw3B & SINK+DEFL & 288 & 0.887 & 0.0020 & 0.957 \\
+HE Qw3B & 0D$\mid$1D & 216 & 0.826 & 0.0013 & 0.945 \\
+HE Qw3B & 0D$\mid$SINK & 144 & 0.857 & 0.0010 & 0.948 \\
+HE Qw3B & HIDDEN$\mid$0D & 2120 & 1.000 & 0.0000 & 1.000 \\
+HE Qw3B & LEX$\mid$0D & -- & 0.979 & 0.0001 & 0.983 \\
+HE Qw3B & LEX$\mid$DEFL & -- & 0.971 & 0.0003 & 0.975 \\
+HE Qw3B & LEX$\mid$SINK & -- & 0.980 & 0.0003 & 0.981 \\
+HE Qw3B & LOGPROB$\mid$0D & 78 & 0.993 & 0.0003 & 0.992 \\
+HE Qw3B & NONTOPO$\mid$0D & 2810 & 1.000 & 0.0002 & 1.000 \\
+HE Qw3B & NONTOPO$\mid$DEFL & 2954 & 1.000 & 0.0002 & 1.000 \\
+HE Qw3B & PH SINK$\mid$PH 0DTOT & 1152 & 0.962 & 0.0006 & 0.997 \\
+HE Qw3B & SINK$\mid$1D & 216 & 0.843 & 0.0011 & 0.938 \\
+HE Qw3B & SINK$\mid$ANS & 288 & 0.978 & 0.0003 & 0.982 \\
+HE Qw3B & SINK$\mid$DEFL & 288 & 0.887 & 0.0020 & 0.957 \\
 HE Qw1.5B & LEN & 2 & 0.967 & 0.0002 & 0.976 \\
 HE Qw1.5B & LEX & -- & 0.979 & 0.0004 & 0.980 \\
 HE Qw1.5B & LOGPROB & 6 & 0.995 & 0.0002 & 0.988 \\
@@ -300,19 +300,19 @@ HE Qw1.5B & PH ENT & 336 & 0.933 & 0.0011 & 0.996 \\
 HE Qw1.5B & LOOKBACK & 336 & 0.999 & 0.0002 & 0.998 \\
 HE Qw1.5B & HIDDEN & 1536 & 1.000 & 0.0001 & 1.000 \\
 HE Qw1.5B & NONTOPO & 1962 & 1.000 & 0.0002 & 1.000 \\
-HE Qw1.5B & 0D+1D & 168 & 0.815 & 0.0032 & 0.922 \\
-HE Qw1.5B & 0D+SINK & 112 & 0.832 & 0.0015 & 0.924 \\
-HE Qw1.5B & HIDDEN+0D & 1592 & 1.000 & 0.0001 & 1.000 \\
-HE Qw1.5B & LEX+0D & -- & 0.971 & 0.0004 & 0.986 \\
-HE Qw1.5B & LEX+DEFL & -- & 0.956 & 0.0002 & 0.986 \\
-HE Qw1.5B & LEX+SINK & -- & 0.968 & 0.0005 & 0.984 \\
-HE Qw1.5B & LOGPROB+0D & 62 & 0.994 & 0.0002 & 0.990 \\
-HE Qw1.5B & NONTOPO+0D & 2018 & 1.000 & 0.0000 & 1.000 \\
-HE Qw1.5B & NONTOPO+DEFL & 2130 & 1.000 & 0.0001 & 1.000 \\
-HE Qw1.5B & PH SINK+PH 0DTOT & 672 & 0.931 & 0.0024 & 0.998 \\
-HE Qw1.5B & SINK+1D & 168 & 0.826 & 0.0035 & 0.940 \\
-HE Qw1.5B & SINK+ANS & 224 & 0.975 & 0.0015 & 0.990 \\
-HE Qw1.5B & SINK+DEFL & 224 & 0.872 & 0.0028 & 0.962 \\
+HE Qw1.5B & 0D$\mid$1D & 168 & 0.815 & 0.0032 & 0.922 \\
+HE Qw1.5B & 0D$\mid$SINK & 112 & 0.832 & 0.0015 & 0.924 \\
+HE Qw1.5B & HIDDEN$\mid$0D & 1592 & 1.000 & 0.0001 & 1.000 \\
+HE Qw1.5B & LEX$\mid$0D & -- & 0.971 & 0.0004 & 0.986 \\
+HE Qw1.5B & LEX$\mid$DEFL & -- & 0.956 & 0.0002 & 0.986 \\
+HE Qw1.5B & LEX$\mid$SINK & -- & 0.968 & 0.0005 & 0.984 \\
+HE Qw1.5B & LOGPROB$\mid$0D & 62 & 0.994 & 0.0002 & 0.990 \\
+HE Qw1.5B & NONTOPO$\mid$0D & 2018 & 1.000 & 0.0000 & 1.000 \\
+HE Qw1.5B & NONTOPO$\mid$DEFL & 2130 & 1.000 & 0.0001 & 1.000 \\
+HE Qw1.5B & PH SINK$\mid$PH 0DTOT & 672 & 0.931 & 0.0024 & 0.998 \\
+HE Qw1.5B & SINK$\mid$1D & 168 & 0.826 & 0.0035 & 0.940 \\
+HE Qw1.5B & SINK$\mid$ANS & 224 & 0.975 & 0.0015 & 0.990 \\
+HE Qw1.5B & SINK$\mid$DEFL & 224 & 0.872 & 0.0028 & 0.962 \\
 TrQA Qw3B & LEN & 2 & 0.569 & 0.0014 & -- \\
 TrQA Qw3B & LEX & -- & 0.596 & 0.0039 & -- \\
 TrQA Qw3B & LOGPROB & 6 & 0.839 & 0.0002 & -- \\
@@ -331,19 +331,19 @@ TrQA Qw3B & PH ENT & 576 & 0.810 & 0.0007 & -- \\
 TrQA Qw3B & LOOKBACK & 576 & 0.861 & 0.0013 & -- \\
 TrQA Qw3B & HIDDEN & 2048 & 0.841 & 0.0042 & -- \\
 TrQA Qw3B & NONTOPO & 2738 & 0.870 & 0.0028 & -- \\
-TrQA Qw3B & 0D+1D & 216 & 0.729 & 0.0022 & -- \\
-TrQA Qw3B & 0D+SINK & 144 & 0.738 & 0.0050 & -- \\
-TrQA Qw3B & HIDDEN+0D & 2120 & 0.843 & 0.0040 & -- \\
-TrQA Qw3B & LEX+0D & -- & 0.733 & 0.0011 & -- \\
-TrQA Qw3B & LEX+DEFL & -- & 0.690 & 0.0031 & -- \\
-TrQA Qw3B & LEX+SINK & -- & 0.724 & 0.0005 & -- \\
-TrQA Qw3B & LOGPROB+0D & 78 & 0.843 & 0.0022 & -- \\
-TrQA Qw3B & NONTOPO+0D & 2810 & 0.870 & 0.0027 & -- \\
-TrQA Qw3B & NONTOPO+DEFL & 2954 & 0.870 & 0.0029 & -- \\
-TrQA Qw3B & PH SINK+PH 0DTOT & 1152 & 0.824 & 0.0017 & -- \\
-TrQA Qw3B & SINK+1D & 216 & 0.718 & 0.0035 & -- \\
-TrQA Qw3B & SINK+ANS & 288 & 0.752 & 0.0010 & -- \\
-TrQA Qw3B & SINK+DEFL & 288 & 0.719 & 0.0038 & -- \\
+TrQA Qw3B & 0D$\mid$1D & 216 & 0.729 & 0.0022 & -- \\
+TrQA Qw3B & 0D$\mid$SINK & 144 & 0.738 & 0.0050 & -- \\
+TrQA Qw3B & HIDDEN$\mid$0D & 2120 & 0.843 & 0.0040 & -- \\
+TrQA Qw3B & LEX$\mid$0D & -- & 0.733 & 0.0011 & -- \\
+TrQA Qw3B & LEX$\mid$DEFL & -- & 0.690 & 0.0031 & -- \\
+TrQA Qw3B & LEX$\mid$SINK & -- & 0.724 & 0.0005 & -- \\
+TrQA Qw3B & LOGPROB$\mid$0D & 78 & 0.843 & 0.0022 & -- \\
+TrQA Qw3B & NONTOPO$\mid$0D & 2810 & 0.870 & 0.0027 & -- \\
+TrQA Qw3B & NONTOPO$\mid$DEFL & 2954 & 0.870 & 0.0029 & -- \\
+TrQA Qw3B & PH SINK$\mid$PH 0DTOT & 1152 & 0.824 & 0.0017 & -- \\
+TrQA Qw3B & SINK$\mid$1D & 216 & 0.718 & 0.0035 & -- \\
+TrQA Qw3B & SINK$\mid$ANS & 288 & 0.752 & 0.0010 & -- \\
+TrQA Qw3B & SINK$\mid$DEFL & 288 & 0.719 & 0.0038 & -- \\
 TrQA Qw1.5B & LEN & 2 & 0.588 & 0.0012 & -- \\
 TrQA Qw1.5B & LEX & -- & 0.609 & 0.0033 & -- \\
 TrQA Qw1.5B & LOGPROB & 6 & 0.823 & 0.0006 & -- \\
@@ -362,19 +362,19 @@ TrQA Qw1.5B & PH ENT & 336 & 0.768 & 0.0025 & -- \\
 TrQA Qw1.5B & LOOKBACK & 336 & 0.824 & 0.0017 & -- \\
 TrQA Qw1.5B & HIDDEN & 1536 & 0.855 & 0.0031 & -- \\
 TrQA Qw1.5B & NONTOPO & 1962 & 0.873 & 0.0023 & -- \\
-TrQA Qw1.5B & 0D+1D & 168 & 0.714 & 0.0015 & -- \\
-TrQA Qw1.5B & 0D+SINK & 112 & 0.717 & 0.0006 & -- \\
-TrQA Qw1.5B & HIDDEN+0D & 1592 & 0.855 & 0.0032 & -- \\
-TrQA Qw1.5B & LEX+0D & -- & 0.721 & 0.0031 & -- \\
-TrQA Qw1.5B & LEX+DEFL & -- & 0.672 & 0.0047 & -- \\
-TrQA Qw1.5B & LEX+SINK & -- & 0.715 & 0.0036 & -- \\
-TrQA Qw1.5B & LOGPROB+0D & 62 & 0.828 & 0.0007 & -- \\
-TrQA Qw1.5B & NONTOPO+0D & 2018 & 0.873 & 0.0025 & -- \\
-TrQA Qw1.5B & NONTOPO+DEFL & 2130 & 0.872 & 0.0024 & -- \\
-TrQA Qw1.5B & PH SINK+PH 0DTOT & 672 & 0.772 & 0.0022 & -- \\
-TrQA Qw1.5B & SINK+1D & 168 & 0.709 & 0.0028 & -- \\
-TrQA Qw1.5B & SINK+ANS & 224 & 0.726 & 0.0059 & -- \\
-TrQA Qw1.5B & SINK+DEFL & 224 & 0.719 & 0.0023 & -- \\
+TrQA Qw1.5B & 0D$\mid$1D & 168 & 0.714 & 0.0015 & -- \\
+TrQA Qw1.5B & 0D$\mid$SINK & 112 & 0.717 & 0.0006 & -- \\
+TrQA Qw1.5B & HIDDEN$\mid$0D & 1592 & 0.855 & 0.0032 & -- \\
+TrQA Qw1.5B & LEX$\mid$0D & -- & 0.721 & 0.0031 & -- \\
+TrQA Qw1.5B & LEX$\mid$DEFL & -- & 0.672 & 0.0047 & -- \\
+TrQA Qw1.5B & LEX$\mid$SINK & -- & 0.715 & 0.0036 & -- \\
+TrQA Qw1.5B & LOGPROB$\mid$0D & 62 & 0.828 & 0.0007 & -- \\
+TrQA Qw1.5B & NONTOPO$\mid$0D & 2018 & 0.873 & 0.0025 & -- \\
+TrQA Qw1.5B & NONTOPO$\mid$DEFL & 2130 & 0.872 & 0.0024 & -- \\
+TrQA Qw1.5B & PH SINK$\mid$PH 0DTOT & 672 & 0.772 & 0.0022 & -- \\
+TrQA Qw1.5B & SINK$\mid$1D & 168 & 0.709 & 0.0028 & -- \\
+TrQA Qw1.5B & SINK$\mid$ANS & 224 & 0.726 & 0.0059 & -- \\
+TrQA Qw1.5B & SINK$\mid$DEFL & 224 & 0.719 & 0.0023 & -- \\
 TrQA Phi-3 & LEN & 2 & 0.581 & 0.0022 & -- \\
 TrQA Phi-3 & LEX & -- & 0.635 & 0.0083 & -- \\
 TrQA Phi-3 & LOGPROB & 6 & 0.877 & 0.0002 & -- \\
@@ -393,19 +393,19 @@ TrQA Phi-3 & PH ENT & 1024 & 0.817 & 0.0021 & -- \\
 TrQA Phi-3 & LOOKBACK & 1024 & 0.840 & 0.0016 & -- \\
 TrQA Phi-3 & HIDDEN & 3072 & 0.867 & 0.0035 & -- \\
 TrQA Phi-3 & NONTOPO & 4198 & 0.883 & 0.0030 & -- \\
-TrQA Phi-3 & 0D+1D & 192 & 0.705 & 0.0011 & -- \\
-TrQA Phi-3 & 0D+SINK & 128 & 0.713 & 0.0024 & -- \\
-TrQA Phi-3 & HIDDEN+0D & 3136 & 0.867 & 0.0037 & -- \\
-TrQA Phi-3 & LEX+0D & -- & 0.721 & 0.0031 & -- \\
-TrQA Phi-3 & LEX+DEFL & -- & 0.712 & 0.0022 & -- \\
-TrQA Phi-3 & LEX+SINK & -- & 0.718 & 0.0044 & -- \\
-TrQA Phi-3 & LOGPROB+0D & 70 & 0.878 & 0.0013 & -- \\
-TrQA Phi-3 & NONTOPO+0D & 4262 & 0.883 & 0.0030 & -- \\
-TrQA Phi-3 & NONTOPO+DEFL & 4390 & 0.885 & 0.0030 & -- \\
-TrQA Phi-3 & PH SINK+PH 0DTOT & 2048 & 0.828 & 0.0009 & -- \\
-TrQA Phi-3 & SINK+1D & 192 & 0.699 & 0.0012 & -- \\
-TrQA Phi-3 & SINK+ANS & 256 & 0.736 & 0.0046 & -- \\
-TrQA Phi-3 & SINK+DEFL & 256 & 0.736 & 0.0016 & -- \\
+TrQA Phi-3 & 0D$\mid$1D & 192 & 0.705 & 0.0011 & -- \\
+TrQA Phi-3 & 0D$\mid$SINK & 128 & 0.713 & 0.0024 & -- \\
+TrQA Phi-3 & HIDDEN$\mid$0D & 3136 & 0.867 & 0.0037 & -- \\
+TrQA Phi-3 & LEX$\mid$0D & -- & 0.721 & 0.0031 & -- \\
+TrQA Phi-3 & LEX$\mid$DEFL & -- & 0.712 & 0.0022 & -- \\
+TrQA Phi-3 & LEX$\mid$SINK & -- & 0.718 & 0.0044 & -- \\
+TrQA Phi-3 & LOGPROB$\mid$0D & 70 & 0.878 & 0.0013 & -- \\
+TrQA Phi-3 & NONTOPO$\mid$0D & 4262 & 0.883 & 0.0030 & -- \\
+TrQA Phi-3 & NONTOPO$\mid$DEFL & 4390 & 0.885 & 0.0030 & -- \\
+TrQA Phi-3 & PH SINK$\mid$PH 0DTOT & 2048 & 0.828 & 0.0009 & -- \\
+TrQA Phi-3 & SINK$\mid$1D & 192 & 0.699 & 0.0012 & -- \\
+TrQA Phi-3 & SINK$\mid$ANS & 256 & 0.736 & 0.0046 & -- \\
+TrQA Phi-3 & SINK$\mid$DEFL & 256 & 0.736 & 0.0016 & -- \\
 TrQA TinyLl. & LEN & 2 & 0.631 & 0.0005 & -- \\
 TrQA TinyLl. & LEX & -- & 0.740 & 0.0003 & -- \\
 TrQA TinyLl. & LOGPROB & 6 & 0.724 & 0.0006 & -- \\
@@ -424,19 +424,19 @@ TrQA TinyLl. & PH ENT & 704 & 0.807 & 0.0003 & -- \\
 TrQA TinyLl. & LOOKBACK & 704 & 0.823 & 0.0024 & -- \\
 TrQA TinyLl. & HIDDEN & 2048 & 0.827 & 0.0028 & -- \\
 TrQA TinyLl. & NONTOPO & 2824 & 0.842 & 0.0031 & -- \\
-TrQA TinyLl. & 0D+1D & 132 & 0.718 & 0.0002 & -- \\
-TrQA TinyLl. & 0D+SINK & 88 & 0.724 & 0.0015 & -- \\
-TrQA TinyLl. & HIDDEN+0D & 2092 & 0.828 & 0.0027 & -- \\
-TrQA TinyLl. & LEX+0D & -- & 0.764 & 0.0010 & -- \\
-TrQA TinyLl. & LEX+DEFL & -- & 0.757 & 0.0032 & -- \\
-TrQA TinyLl. & LEX+SINK & -- & 0.762 & 0.0021 & -- \\
-TrQA TinyLl. & LOGPROB+0D & 50 & 0.762 & 0.0021 & -- \\
-TrQA TinyLl. & NONTOPO+0D & 2868 & 0.842 & 0.0029 & -- \\
-TrQA TinyLl. & NONTOPO+DEFL & 2956 & 0.842 & 0.0032 & -- \\
-TrQA TinyLl. & PH SINK+PH 0DTOT & 1408 & 0.813 & 0.0016 & -- \\
-TrQA TinyLl. & SINK+1D & 132 & 0.719 & 0.0013 & -- \\
-TrQA TinyLl. & SINK+ANS & 176 & 0.725 & 0.0030 & -- \\
-TrQA TinyLl. & SINK+DEFL & 176 & 0.734 & 0.0032 & -- \\
+TrQA TinyLl. & 0D$\mid$1D & 132 & 0.718 & 0.0002 & -- \\
+TrQA TinyLl. & 0D$\mid$SINK & 88 & 0.724 & 0.0015 & -- \\
+TrQA TinyLl. & HIDDEN$\mid$0D & 2092 & 0.828 & 0.0027 & -- \\
+TrQA TinyLl. & LEX$\mid$0D & -- & 0.764 & 0.0010 & -- \\
+TrQA TinyLl. & LEX$\mid$DEFL & -- & 0.757 & 0.0032 & -- \\
+TrQA TinyLl. & LEX$\mid$SINK & -- & 0.762 & 0.0021 & -- \\
+TrQA TinyLl. & LOGPROB$\mid$0D & 50 & 0.762 & 0.0021 & -- \\
+TrQA TinyLl. & NONTOPO$\mid$0D & 2868 & 0.842 & 0.0029 & -- \\
+TrQA TinyLl. & NONTOPO$\mid$DEFL & 2956 & 0.842 & 0.0032 & -- \\
+TrQA TinyLl. & PH SINK$\mid$PH 0DTOT & 1408 & 0.813 & 0.0016 & -- \\
+TrQA TinyLl. & SINK$\mid$1D & 132 & 0.719 & 0.0013 & -- \\
+TrQA TinyLl. & SINK$\mid$ANS & 176 & 0.725 & 0.0030 & -- \\
+TrQA TinyLl. & SINK$\mid$DEFL & 176 & 0.734 & 0.0032 & -- \\
 TrQA Mis7B & LEN & 2 & 0.635 & 0.0017 & -- \\
 TrQA Mis7B & LEX & -- & 0.677 & 0.0050 & -- \\
 TrQA Mis7B & LOGPROB & 6 & 0.728 & 0.0007 & -- \\
@@ -455,19 +455,19 @@ TrQA Mis7B & PH ENT & 1024 & 0.812 & 0.0027 & -- \\
 TrQA Mis7B & LOOKBACK & 1024 & 0.829 & 0.0041 & -- \\
 TrQA Mis7B & HIDDEN & 4096 & 0.833 & 0.0008 & -- \\
 TrQA Mis7B & NONTOPO & 5222 & 0.841 & 0.0011 & -- \\
-TrQA Mis7B & 0D+1D & 192 & 0.692 & 0.0035 & -- \\
-TrQA Mis7B & 0D+SINK & 128 & 0.698 & 0.0018 & -- \\
-TrQA Mis7B & HIDDEN+0D & 4160 & 0.834 & 0.0011 & -- \\
-TrQA Mis7B & LEX+0D & -- & 0.723 & 0.0030 & -- \\
-TrQA Mis7B & LEX+DEFL & -- & 0.744 & 0.0057 & -- \\
-TrQA Mis7B & LEX+SINK & -- & 0.721 & 0.0027 & -- \\
-TrQA Mis7B & LOGPROB+0D & 70 & 0.755 & 0.0016 & -- \\
-TrQA Mis7B & NONTOPO+0D & 5286 & 0.842 & 0.0015 & -- \\
-TrQA Mis7B & NONTOPO+DEFL & 5414 & 0.841 & 0.0010 & -- \\
-TrQA Mis7B & PH SINK+PH 0DTOT & 2048 & 0.814 & 0.0022 & -- \\
-TrQA Mis7B & SINK+1D & 192 & 0.686 & 0.0042 & -- \\
-TrQA Mis7B & SINK+ANS & 256 & 0.693 & 0.0048 & -- \\
-TrQA Mis7B & SINK+DEFL & 256 & 0.739 & 0.0019 & -- \\
+TrQA Mis7B & 0D$\mid$1D & 192 & 0.692 & 0.0035 & -- \\
+TrQA Mis7B & 0D$\mid$SINK & 128 & 0.698 & 0.0018 & -- \\
+TrQA Mis7B & HIDDEN$\mid$0D & 4160 & 0.834 & 0.0011 & -- \\
+TrQA Mis7B & LEX$\mid$0D & -- & 0.723 & 0.0030 & -- \\
+TrQA Mis7B & LEX$\mid$DEFL & -- & 0.744 & 0.0057 & -- \\
+TrQA Mis7B & LEX$\mid$SINK & -- & 0.721 & 0.0027 & -- \\
+TrQA Mis7B & LOGPROB$\mid$0D & 70 & 0.755 & 0.0016 & -- \\
+TrQA Mis7B & NONTOPO$\mid$0D & 5286 & 0.842 & 0.0015 & -- \\
+TrQA Mis7B & NONTOPO$\mid$DEFL & 5414 & 0.841 & 0.0010 & -- \\
+TrQA Mis7B & PH SINK$\mid$PH 0DTOT & 2048 & 0.814 & 0.0022 & -- \\
+TrQA Mis7B & SINK$\mid$1D & 192 & 0.686 & 0.0042 & -- \\
+TrQA Mis7B & SINK$\mid$ANS & 256 & 0.693 & 0.0048 & -- \\
+TrQA Mis7B & SINK$\mid$DEFL & 256 & 0.739 & 0.0019 & -- \\
 TrQA Qw7B & LEN & 2 & 0.595 & 0.0004 & -- \\
 TrQA Qw7B & LEX & -- & 0.594 & 0.0029 & -- \\
 TrQA Qw7B & LOGPROB & 6 & 0.847 & 0.0003 & -- \\
@@ -486,18 +486,18 @@ TrQA Qw7B & PH ENT & 784 & 0.841 & 0.0021 & -- \\
 TrQA Qw7B & LOOKBACK & 784 & 0.879 & 0.0010 & -- \\
 TrQA Qw7B & HIDDEN & 3584 & 0.854 & 0.0007 & -- \\
 TrQA Qw7B & NONTOPO & 4458 & 0.881 & 0.0008 & -- \\
-TrQA Qw7B & 0D+1D & 168 & 0.668 & 0.0021 & -- \\
-TrQA Qw7B & 0D+SINK & 112 & 0.735 & 0.0008 & -- \\
-TrQA Qw7B & HIDDEN+0D & 3640 & 0.853 & 0.0008 & -- \\
-TrQA Qw7B & LEX+0D & -- & 0.678 & 0.0043 & -- \\
-TrQA Qw7B & LEX+DEFL & -- & 0.678 & 0.0022 & -- \\
-TrQA Qw7B & LEX+SINK & -- & 0.728 & 0.0007 & -- \\
-TrQA Qw7B & LOGPROB+0D & 62 & 0.842 & 0.0012 & -- \\
-TrQA Qw7B & NONTOPO+0D & 4514 & 0.881 & 0.0007 & -- \\
-TrQA Qw7B & NONTOPO+DEFL & 4626 & 0.881 & 0.0007 & -- \\
-TrQA Qw7B & PH SINK+PH 0DTOT & 1568 & 0.832 & 0.0010 & -- \\
-TrQA Qw7B & SINK+1D & 168 & 0.718 & 0.0023 & -- \\
-TrQA Qw7B & SINK+ANS & 224 & 0.781 & 0.0035 & -- \\
-TrQA Qw7B & SINK+DEFL & 224 & 0.734 & 0.0021 & -- \\
+TrQA Qw7B & 0D$\mid$1D & 168 & 0.668 & 0.0021 & -- \\
+TrQA Qw7B & 0D$\mid$SINK & 112 & 0.735 & 0.0008 & -- \\
+TrQA Qw7B & HIDDEN$\mid$0D & 3640 & 0.853 & 0.0008 & -- \\
+TrQA Qw7B & LEX$\mid$0D & -- & 0.678 & 0.0043 & -- \\
+TrQA Qw7B & LEX$\mid$DEFL & -- & 0.678 & 0.0022 & -- \\
+TrQA Qw7B & LEX$\mid$SINK & -- & 0.728 & 0.0007 & -- \\
+TrQA Qw7B & LOGPROB$\mid$0D & 62 & 0.842 & 0.0012 & -- \\
+TrQA Qw7B & NONTOPO$\mid$0D & 4514 & 0.881 & 0.0007 & -- \\
+TrQA Qw7B & NONTOPO$\mid$DEFL & 4626 & 0.881 & 0.0007 & -- \\
+TrQA Qw7B & PH SINK$\mid$PH 0DTOT & 1568 & 0.832 & 0.0010 & -- \\
+TrQA Qw7B & SINK$\mid$1D & 168 & 0.718 & 0.0023 & -- \\
+TrQA Qw7B & SINK$\mid$ANS & 224 & 0.781 & 0.0035 & -- \\
+TrQA Qw7B & SINK$\mid$DEFL & 224 & 0.734 & 0.0021 & -- \\
 \bottomrule
 \end{longtable}

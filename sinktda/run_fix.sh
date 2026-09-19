@@ -30,5 +30,7 @@ ext --bench halueval --model qwen3b --n 1000;        ev halueval_qwen3b
 waitmem; echo "=== theory-only for unchanged settings ($(date +%H:%M:%S))"
 $PY -m sinktda.evaluate --theory-only truthfulqa_qwen1.5b triviaqa_qwen3b triviaqa_qwen1.5b triviaqa_phi3 triviaqa_tinyllama 2>&1 | grep -c setting
 waitmem; echo "=== layer_split ($(date +%H:%M:%S))"; $PY -m sinktda.layer_split 2>&1 | grep --line-buffered -E "^\{|Error"
+waitmem; echo "=== nested stacking ($(date +%H:%M:%S))"; $PY -m sinktda.nested_fusion 2>&1 | grep --line-buffered -E "NLF_|Error"
+waitmem; echo "=== tightened bounds ($(date +%H:%M:%S))"; $PY -m sinktda.check_theory && $PY -m sinktda.check_tight && $PY -m sinktda.bound_gap > /dev/null
 waitmem; echo "=== worked example ($(date +%H:%M:%S))"; $PY -m sinktda.appendix_extra --examples 2>&1 | tail -2
 echo "=== FIX DONE ($(date +%H:%M:%S))"

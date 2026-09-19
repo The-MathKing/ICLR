@@ -1,8 +1,8 @@
-# The Topology Is the Sink — code and data
+# Topological Hallucination Detectors on Decoder Attention Reduce to First-Order Statistics — code and data
 
-Code, per-example features, and results for *"The Topology Is the Sink: Topological Hallucination Detectors Reduce to First-Order Attention Statistics"* (ICLR submission).
+Code, per-example features, and results for *"Topological Hallucination Detectors on Decoder Attention Reduce to First-Order Statistics"* (ICLR submission).
 
-Everything in the paper comes from the `sinktda/` package. `rigor/verify_directed_collapse.py` checks the directed-flag proposition (Appendix A). An earlier, superseded version of this study used a separate set of scripts; none of them produces any number in the current paper, so they are not part of this release.
+Everything in the paper comes from the `sinktda/` package. `rigor/verify_directed_collapse.py` checks the directed-flag proposition (Appendix A).
 
 ## Setup
 
@@ -19,19 +19,23 @@ The 7--8B settings were extracted on an RTX 5080 (16 GB, CUDA) with torch 2.11.0
 
 | step | command | output |
 |---|---|---|
-| features (one forward pass per example) | `python -m sinktda.extract --bench {truthfulqa,halueval,triviaqa} --model {qwen3b,qwen1.5b,phi3,tinyllama,smollm,mistral,qwen7b,llama8b} [--n N]` | `sinktda_out/<bench>_<model>/` |
+| features (one forward pass per example) | `python -m sinktda.extract --bench {truthfulqa,halueval,triviaqa} --model {qwen3b,qwen1.5b,phi3,tinyllama,smollm,mistral,qwen7b,llama8b} [--n N] [--apex-deflation] [--max-len N]` | `sinktda_out/<bench>_<model>/` |
 | evaluation (AUCs, bootstrap/TOST, theory checks) | `python -m sinktda.evaluate [setting ...]` | `sinktda_results/{auc,comp,theory,theory_layers}_*.csv`, `oof/*.npz` |
 | late-fusion incremental tests | `python -m sinktda.late_fusion` | `sinktda_results/late_fusion.csv` |
+| late fusion with nested stacking (first level refit inside each outer fold; needs `perhead.npz`, `hidden.npy`, `toha.npz`) | `python -m sinktda.nested_fusion` | `sinktda_results/nested_fusion.csv` |
 | coning defect as a detector | `python -m sinktda.defect_probe` | `sinktda_results/defect_probe.csv` |
 | TOHA reduction (Prop. 1): per-head MTop-Div and first-order counterparts | `python -m sinktda.toha extract --bench ... --model ... [--n N]` then `python -m sinktda.toha evaluate` | `sinktda_out/<setting>/toha.npz`, `sinktda_results/toha_{checks,auc,comp}.csv` |
 | causal sink-bias probe | `bash sinktda/run_toha_causal.sh` | `sinktda_results/toha_*_causal.csv` |
 | prompt-boundary tokenization check (no GPU) | `python -m sinktda.check_tokenization` | pass/fail per model and template |
 | re-check the paper's claims against the regenerated CSVs | `python -m sinktda.check_claims` | pass/fail per claim (run after `report`) |
 | numerical checks of Prop. 1 and Cor. 2 | `python -m sinktda.check_theory` | `sinktda_results/check_theory.csv` |
+| tightened lower bounds of Thm. 1(b) and Prop. 1 on real graphs | `python -m sinktda.check_tight` | `sinktda_results/check_tight.csv` |
+| share of the bounds' slack used by real graphs | `python -m sinktda.bound_gap` | `sinktda_results/bound_gap.csv` |
 | TOHA vs the authors' released MTop-Div code | `python -m sinktda.toha_native --model mistral --n 8` | `sinktda_results/toha_native.csv` |
 | LLM-judge audit of the on-policy labels | `python -m sinktda.label_audit --n 200` (re-run just the sensitivity table after a re-extraction with `--sensitivity-only`) | `sinktda_results/label_audit{,_sensitivity}.csv` |
 | fp16 vs bf16 sensitivity | `python -m sinktda.dtype_sensitivity` | `sinktda_results/dtype_sensitivity.csv`, `paper/sink_dtype.tex` |
 | label-free layer split | `python -m sinktda.layer_split` | `sinktda_results/layer_split.csv` |
+| wider regularization grid ($C\in\{10^{-4}\dots10^{2}\}$ on every bank; resumable, one write per setting) | `python -m sinktda.c_grid [setting ...]` | `sinktda_results/c_grid.csv` |
 | synthetic checks (Prop. 1, dose-response, planted cycle) | `python -m sinktda.synthetic` | `sinktda_results/synthetic_*.csv` |
 | timing | `python -m sinktda.timing --model tinyllama` | `sinktda_results/timing.csv` |
 | paper tables, figures, number macros | `python -m sinktda.report && python -m sinktda.appendix_extra [--examples]` | `paper/sink_*.tex`, `paper/fig_sink_*.pdf` |
@@ -73,8 +77,8 @@ Prompts are defined in `sinktda/data.py`.
 
 Only part of `sinktda_out/` is released. The per-head (`perhead.npz`, `toha.npz`) and
 hidden-state (`hidden.npy`) dumps are all larger than the 8 MB per-file limit of the
-anonymous host, and the dumps for the other settings were lost with the machine that
-produced them. What ships is every file that clears the limit:
+anonymous host, and the per-example dumps of the other settings are not part of the
+release. What ships is every file that clears the limit:
 
 | file | settings |
 | --- | --- |
@@ -84,8 +88,8 @@ produced them. What ships is every file that clears the limit:
 These are enough to re-derive the per-layer results for those settings -- the coning
 shares and `P_0`/star-weight correlations in Table 1, and the layer-level banks -- and to
 audit the on-policy labels directly. They are **not** enough to rebuild the per-head
-tables, the TOHA results, or the hidden-state probe; those banks need the dumps that
-could not ship.
+tables, the TOHA results, or the hidden-state probe; those banks need dumps that are not
+in the release (`sinktda/extract.py` recreates them).
 
 The numbers themselves do not depend on this. Every table, figure and macro in the paper
 is generated from the CSVs in `sinktda_results/`, which are released in full:

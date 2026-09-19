@@ -89,14 +89,33 @@ def delta_bos_causal(A):
 
 def deflate_sink(A):
     """Remove vertex 0 and renormalize rows over the remaining (causal) support."""
-    B = A[1:, 1:].copy()
+    return deflate_vertex(A, 0)
+
+
+def deflate_vertex(A, k):
+    """Remove vertex k and renormalize rows over the remaining (causal) support.
+
+    Deflating token 0 tests prediction C4 only when token 0 is the apex. Two models here
+    (Qwen2.5-7B, SmolLM-1.7B) put their mass elsewhere, so for them deleting token 0
+    removes an ordinary token and says nothing about removing the sink. Deleting
+    argmin_s delta_s instead is the apex-faithful version of the same intervention.
+    """
+    keep = np.ones(A.shape[0], dtype=bool)
+    keep[int(k)] = False
+    B = A[np.ix_(keep, keep)].copy()
     rs = B.sum(1, keepdims=True)
     rs[rs <= 0] = 1.0
     return B / rs
 
 
-def layer_features(A, prompt_len, with_delta_min=True):
-    """All per-layer scalar features for one head-averaged attention matrix."""
+def layer_features(A, prompt_len, with_delta_min=True, with_apex_deflation=False):
+    """All per-layer scalar features for one head-averaged attention matrix.
+
+    with_apex_deflation adds an `apexdefl_` block: the same deflation as `defl_`, but
+    deleting the layer's best apex argmin_s delta_s instead of token 0. It needs
+    with_delta_min, costs one more ripser call per layer, and is off by default so that
+    existing feature dumps stay byte-identical.
+    """
     A = A.astype(np.float64)
     N = A.shape[0]
     D = distance_from_attention(A)
@@ -124,6 +143,19 @@ def layer_features(A, prompt_len, with_delta_min=True):
     else:
         f.update(ph_features(np.zeros((1, 1)), prefix="defl_"))
         f["defl_delta0"] = 0.0
+    # apex-deflated graph: delete argmin_s delta_s rather than token 0
+    if with_apex_deflation:
+        if not with_delta_min:
+            raise ValueError("with_apex_deflation needs with_delta_min (the apex comes from delta_argmin)")
+        k = int(f["delta_argmin"])
+        if N > 2:
+            Aa = deflate_vertex(A, k)
+            f.update(ph_features(distance_from_attention(Aa), prefix="apexdefl_"))
+            f["apexdefl_delta0"] = delta_bos_causal(Aa)
+        else:
+            f.update(ph_features(np.zeros((1, 1)), prefix="apexdefl_"))
+            f["apexdefl_delta0"] = 0.0
+        f["apexdefl_apex"] = float(k)
     # answer-only induced subgraph (raw distances, no renormalization)
     p = int(prompt_len)
     if N - p >= 2:
@@ -133,11 +165,12 @@ def layer_features(A, prompt_len, with_delta_min=True):
     return f
 
 
-def example_layer_features(A_layers, prompt_len, with_delta_min=True):
+def example_layer_features(A_layers, prompt_len, with_delta_min=True, with_apex_deflation=False):
     """A_layers: (L, N, N) head-averaged attention. Returns flat dict layer_{l}_{k}."""
     out = {}
     for l in range(A_layers.shape[0]):
-        for k, v in layer_features(A_layers[l], prompt_len, with_delta_min).items():
+        for k, v in layer_features(A_layers[l], prompt_len, with_delta_min,
+                                   with_apex_deflation).items():
             out[f"layer_{l}_{k}"] = v
     return out
 
