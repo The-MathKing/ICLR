@@ -79,12 +79,27 @@ def label(s):
 
 
 def load(kind):
+    """Read every per-setting results CSV of one kind, keeping only known settings.
+
+    This globs a directory, so a side study evaluated into it -- a precision re-extraction,
+    an apex-deflation run, anything carrying its own --tag -- would otherwise be concatenated
+    in and counted as another model: NSettings would grow and every range macro would widen
+    to cover rows the paper does not report. Side studies belong in their own SINKTDA_RES;
+    anything here that ORDER does not name is dropped, loudly, rather than absorbed.
+    """
     fs = sorted(glob.glob(f"{RES}/{kind}_*.csv"))
     fs = [f for f in fs if not os.path.basename(f).startswith(f"{kind}_layers_")] if kind == "theory" else fs
     if not fs:
         return pd.DataFrame()
     df = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
-    df["_o"] = df["setting"].map({s: i for i, s in enumerate(ORDER)}).fillna(99)
+    known = set(ORDER)
+    stray = sorted(set(df["setting"]) - known)
+    if stray:
+        print(f"[load] WARNING: ignoring {len(stray)} setting(s) absent from ORDER: "
+              f"{', '.join(stray)}. Add them to ORDER and PRETTY to report them, or "
+              f"evaluate them into their own SINKTDA_RES.")
+        df = df[df["setting"].isin(known)]
+    df["_o"] = df["setting"].map({s: i for i, s in enumerate(ORDER)})
     return df.sort_values("_o").drop(columns="_o")
 
 
