@@ -663,6 +663,7 @@ def write_numbers(th, auc, comp):
     m.update(numbers_audit())
     m.update(numbers_release())
     m.update(numbers_apex())
+    m.update(numbers_ragtruth())
     m.update(table_toha_causal()[1])
     # largest |delta| of any topological bank (0D, deflated, per-head defect, TOHA) beyond
     # NONTOPO, early or late fusion, on TruthfulQA and on-policy TriviaQA
@@ -680,6 +681,66 @@ def write_numbers(th, auc, comp):
 
 
 APEX = "archive/apex/sinktda_results"
+
+
+RAGT = "archive/ragtruth/sinktda_results/ragtruth_checks.csv"
+
+
+def table_ragtruth():
+    """Per length-bucket view of the RAGTruth run. Empty when the run is absent."""
+    if not os.path.exists(RAGT):
+        return ""
+    d = pd.read_csv(RAGT)
+    rows = [r"\begin{tabular}{lrrrrrrr}", r"\toprule",
+            r"Seq.\ len. & examples & head graphs & viol. & coned & "
+            r"median $\defect_P$ & $\rho(d,\bar\pi)$ & $\rho(d,1-\bar a_0)$ \\",
+            r"\midrule"]
+    for _, r in d.iterrows():
+        lab = "all" if r["bucket"] == "all" else \
+            r["bucket"].replace("-inf", "+").replace("-", "--")
+        cells = [lab, f"{int(r['examples']):,}", f"{int(r['head_graphs']):,}",
+                 str(int(r["viol_upper"] + r["viol_lower"])),
+                 f"{100 * r['frac_coned']:.1f}" + r"\%",
+                 f"{r['median_dP']:.3f}", f"{r['rho_maxp']:.3f}", f"{r['rho_sinkr']:.3f}"]
+        rows.append(" & ".join(cells) + r" \\")
+        if r["bucket"] == "all":
+            rows.append(r"\midrule")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+def numbers_ragtruth():
+    """TOHA on RAGTruth: does the reduction survive a long retrieved context?
+
+    The short-form settings put tens of tokens in the prompt. RAGTruth puts a retrieved
+    passage there, which is the setting TOHA was built for and the one case Proposition 1
+    was never checked on. Empty when the run is absent.
+    """
+    if not os.path.exists(RAGT):
+        return {}
+    d = pd.read_csv(RAGT)
+    a = d[d["bucket"] == "all"].iloc[0]
+    b = d[d["bucket"] != "all"].copy()
+    m = {
+        "RagModel": PRETTY.get(f"truthfulqa_{a['model']}", ("", a["model"]))[1],
+        "RagExamples": f"{int(a['examples']):,}",
+        "RagCells": f"{int(a['head_graphs']):,}",
+        "RagViol": str(int(a["viol_upper"] + a["viol_lower"])),
+        "RagConed": f"{100 * a['frac_coned']:.1f}\\%",
+        "RagMedDefect": f"{a['median_dP']:.2f}",
+        "RagRhoMaxp": f"{a['rho_maxp']:.3f}",
+        "RagRhoSink": f"{a['rho_sinkr']:.3f}",
+        "RagMaxGap": f"{a['max_gap_coned']:.0e}".replace("e-08", r"\times10^{-8}"),
+    }
+    if len(b):
+        m["RagConedHi"] = f"{100 * b['frac_coned'].max():.1f}\\%"
+        m["RagConedLo"] = f"{100 * b['frac_coned'].min():.1f}\\%"
+        m["RagDefectLo"] = f"{b['median_dP'].min():.2f}"
+        m["RagDefectHi"] = f"{b['median_dP'].max():.2f}"
+        m["RagRhoRange"] = _rng(b["rho_maxp"], "{:.3f}")
+        m["RagNBuckets"] = str(len(b))
+        m["RagMaxLen"] = f"{int(d[d.bucket != 'all']['examples'].sum()):,}"
+    return m
 
 
 def numbers_apex():
@@ -727,9 +788,9 @@ def numbers_apex():
             v = np.stack([lay[c].values for c in cols])
             rates[b] = 100 * float(np.mean(v == 0))
     if rates:
-        m["ApexIsZeroRange"] = _rng(pd.Series(rates), "{:.0f}\%")
-        m["ApexIsZeroMin"] = f"{min(rates.values()):.0f}\%"
-        m["ApexIsZeroMax"] = f"{max(rates.values()):.0f}\%"
+        m["ApexIsZeroRange"] = _rng(pd.Series(rates), "{:.0f}\\%")
+        m["ApexIsZeroMin"] = f"{min(rates.values()):.0f}\\%"
+        m["ApexIsZeroMax"] = f"{max(rates.values()):.0f}\\%"
     t = d[d["test"] == "I_apexdefl_beyond_nontopo"]
     m["ApexBeyondNTEquiv"] = str(int(t["equiv_0.015"].sum()))
     m["ApexBeyondNTTotal"] = str(len(t))
@@ -1435,6 +1496,7 @@ def main():
         fh.write(f"\\newcommand{{\\SinkTableToha}}{{%\n{table_toha()}\n}}\n")
         fh.write(f"\\newcommand{{\\SinkTableTohaCausal}}{{%\n{table_toha_causal()[0]}\n}}\n")
         for name, body in [("Native", table_native()), ("Audit", table_audit()),
+                           ("Rag", table_ragtruth()),
                            ("TohaDiag", table_toha_diag()), ("LayerSplit", table_layer_split()),
                            ("Defect", table_defect()), ("BoundGap", table_bound_gap()),
                            ("Nested", table_nested()), ("CGrid", table_c_grid())]:

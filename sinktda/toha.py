@@ -119,6 +119,9 @@ def extract(args):
         rows = list(data.truthfulqa_rows(tok, template, args.n or data.FULL_TRUTHFULQA))
     elif args.bench == "halueval":
         rows = list(data.halueval_rows(tok, template, args.n or 2000))
+    elif args.bench == "ragtruth":
+        rows = list(data.ragtruth_rows(tok, template, args.n or 1000,
+                                       task=args.task, source=args.source))
     else:
         # reuse the generations of the base setting so that labels are unchanged
         base = os.path.join(OUT_ROOT, f"{args.bench}_{args.model}")
@@ -136,15 +139,24 @@ def extract(args):
             continue
         with torch.no_grad():
             out = model(**enc, output_attentions=True)
-        # rows of the response tokens only: (L, H, T, N)
-        att = torch.stack([a[0, :, p:, :].float().cpu() for a in out.attentions]).numpy().astype(np.float64)
-        att = np.nan_to_num(att)
-        L, H, T, _ = att.shape
-        if np.abs(np.triu(att[:, :, :, p:], 1)).max() > 1e-6:
-            raise RuntimeError("attention is not causal; refusing to continue")
-        f = toha_head_features(att.reshape(L * H, T, N), p)
-        for k, v in f.items():
-            feats.setdefault(k, []).append(v.reshape(L, H).astype(np.float32))
+        # Response rows only, one layer at a time. Stacking all L layers first builds an
+        # (L, H, T, N) float64 block that is gigabytes on a long retrieved context -- the
+        # RAG setting this is here to test -- and every step after it holds a second copy.
+        # toha_head_features is independent across its batch axis, so evaluating it per
+        # layer gives identical numbers while holding 1/L of the memory.
+        per_layer = []
+        for a in out.attentions:
+            al = a[0, :, p:, :].float().cpu().numpy().astype(np.float64)   # (H, T, N)
+            al = np.nan_to_num(al, copy=False)
+            # the causal guard, unchanged in effect: it still refuses on the first
+            # non-causal layer, it just never sees more than one layer at a time
+            if np.abs(np.triu(al[:, :, p:], 1)).max() > 1e-6:
+                raise RuntimeError("attention is not causal; refusing to continue")
+            per_layer.append(toha_head_features(al, p))
+            del al
+        for k in per_layer[0]:
+            feats.setdefault(k, []).append(
+                np.stack([d[k] for d in per_layer]).astype(np.float32))    # (L, H)
         meta.append((r["example_id"], r["label"], N, p))
         if i % 10 == 0 and device == "mps":
             del out
@@ -292,13 +304,18 @@ def main():
         return evaluate(names)
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["extract"])
-    ap.add_argument("--bench", required=True, choices=["truthfulqa", "halueval", "triviaqa"])
+    ap.add_argument("--bench", required=True,
+                    choices=["truthfulqa", "halueval", "triviaqa", "ragtruth"])
     ap.add_argument("--model", required=True, choices=list(data.MODELS))
     ap.add_argument("--template", default=None)
     ap.add_argument("--tag", default="")
     ap.add_argument("--n", type=int, default=None)
     ap.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"])
     ap.add_argument("--sink-bias", type=float, default=0.0)
+    ap.add_argument("--task", default=None,
+                    help="RAGTruth task_type: Summary, QA or Data2txt (default: all)")
+    ap.add_argument("--source", default=None,
+                    help="RAGTruth response model to keep (default: all)")
     ap.add_argument("--max-len", type=int, default=1024,
                     help="skip rows longer than this. The per-head buffer is the response "
                          "rows only, L*H*T*N float64, so long retrieved contexts are "

@@ -79,7 +79,7 @@ TrQA Qw7B & $+0.046$$^{*}$ & $+0.022$$^{*}$ & $+0.031$$^{*}$ & $+0.020$$^{*}$ & 
 \toprule
 Model & questions & accuracy & rows used & mean answer tokens \\
 \midrule
-Qwen2.5-3B & 2,000 & 42.4\% & 2,000 & 5.5 \\
+Qwen2.5-3B & 2,000 & 42.5\% & 2,000 & 5.5 \\
 Qwen2.5-1.5B & 2,000 & 31.4\% & 2,000 & 5.8 \\
 Phi-3-mini & 2,000 & 56.2\% & 2,000 & 6.0 \\
 TinyLlama-1.1B & 2,000 & 26.4\% & 2,000 & 18.9 \\
@@ -145,8 +145,23 @@ TQA Qw7B & 9,408 & $1.2\times10^{-8}$ & $1.1\times10^{-11}$ & 1.00000000 \\
 \toprule
 Setting & judged & disagree & match$\,$0/judge$\,$1 & match$\,$1/judge$\,$0 & max $|\Delta$AUC$|$ \\
 \midrule
-TrQA Mis7B & 200 & 14.0\% & 8 & 20 & 0.063 \\
-TrQA Qw7B & 200 & 5.5\% & 7 & 4 & 0.027 \\
+TrQA Mis7B & 2,000 & 11.4\% & 95 & 133 & 0.027 \\
+TrQA Qw7B & 2,000 & 5.9\% & 84 & 35 & 0.014 \\
+\bottomrule
+\end{tabular}
+}
+\newcommand{\SinkTableRag}{%
+\begin{tabular}{lrrrrrrr}
+\toprule
+Seq.\ len. & examples & head graphs & viol. & coned & median $\defect_P$ & $\rho(d,\bar\pi)$ & $\rho(d,1-\bar a_0)$ \\
+\midrule
+all & 1,000 & 336,000 & 0 & 11.8\% & 0.338 & 0.955 & 0.917 \\
+\midrule
+0--512 & 254 & 85,344 & 0 & 18.0\% & 0.272 & 0.953 & 0.917 \\
+512--768 & 294 & 98,784 & 0 & 12.1\% & 0.331 & 0.951 & 0.911 \\
+768--1024 & 233 & 78,288 & 0 & 9.0\% & 0.369 & 0.953 & 0.926 \\
+1024--1536 & 181 & 60,816 & 0 & 7.6\% & 0.387 & 0.952 & 0.921 \\
+1536+ & 38 & 12,768 & 0 & 7.1\% & 0.391 & 0.954 & 0.912 \\
 \bottomrule
 \end{tabular}
 }

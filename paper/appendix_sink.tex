@@ -203,6 +203,23 @@ Four regularities that an accuracy-only comparison of attention-graph PH would o
 
 \paragraph{Cost.} \TIMINGPARAGRAPH
 
+\section{TOHA on a long retrieved context}
+\label{app:rag}
+
+Every benchmark in the body puts tens of tokens in the prompt. TOHA was built for retrieval-augmented generation, where the prompt is a retrieved passage, and Proposition~\ref{prop:toha}'s error term is a prompt-level coning defect $\defect_P$: a long prompt gives it more room to grow. We therefore run the per-head extractor on RAGTruth \citep{ragtruth}, which pairs real retrieved contexts with responses annotated for hallucinated spans, using \RagModel{} on \RagExamples{} responses spanning all three task types (prompts up to $2{,}300$ tokens). Only the per-head path is run: $d$, the $\bar\pi$-score, $\defect_P$ and the prompt-coned share are closed forms or dense Prim's, with no Vietoris--Rips filtration to compute at that length.
+
+\paragraph{The bound holds; the equality does not.} On \RagCells{} head graphs the sandwich has \RagViol{} violations, and on the heads where $\defect_P$ vanishes $d$ still equals the $\bar\pi$-score to $\RagMaxGap{}$. But those heads are now the minority: \RagConed{} of head graphs are exactly prompt-coned, against \TohaConedRange{} on the short-form settings, and the median $\defect_P$ is \RagMedDefect{}. Bucketing by sequence length makes it monotone: the coned share falls from \RagConedHi{} on the shortest contexts to \RagConedLo{} on the longest, while the median $\defect_P$ rises from \RagDefectLo{} to \RagDefectHi{} (Table~\ref{tab:rag}). The exact identity is a short-prompt phenomenon.
+
+\paragraph{The ordering survives anyway.} What does not degrade is how tightly $d$ tracks the statistic it reduces to. The median per-head rank correlation between $d$ and the $\bar\pi$-score is \RagRhoMaxp{} overall and \RagRhoRange{} across the \RagNBuckets{} length buckets, flat where the coned share falls by more than half; the same model gives $0.978$ on short-form TruthfulQA. With the response sink score it is \RagRhoSink{}. So on long retrieved contexts TOHA is rarely \emph{equal} to a first-order attention statistic and remains very nearly a monotone function of one. A detector that ranks examples, which is what an AUC measures, is therefore still reproduced by the first-order score; a claim that the two are identical is not. We report this as a boundary on Proposition~\ref{prop:toha}, not as a failure of it: the theorem bounds $d$ by $\defect_P$ and $\defect_P$ is simply larger here.
+
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{TOHA on RAGTruth} (\RagModel{}, \RagExamples{} responses). \emph{viol.}: violations of the Proposition~\ref{prop:toha} sandwich. \emph{coned}: share of head graphs with $\defect_P=0$, on which $d$ equals the $\bar\pi$-score exactly. $\rho$: median over heads of the Spearman correlation across examples. Buckets are by total sequence length in tokens.}
+\label{tab:rag}
+\resizebox{\linewidth}{!}{\SinkTableRag}
+\end{table}
+
 \section{Deflating the apex instead of token 0}
 \label{app:apex}
 

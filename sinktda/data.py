@@ -78,6 +78,41 @@ def halueval_rows(tok, template, n=2000):
 
 
 # ---------------------------------------------------------------------------
+# RAGTruth: retrieval-augmented generation with span-level hallucination labels
+# ---------------------------------------------------------------------------
+RAGTRUTH = "wandb/RAGTruth-processed"
+
+
+def ragtruth_rows(tok, template, n=1000, task=None, source=None, seed=0):
+    """Rows from RAGTruth, the setting TOHA was designed for.
+
+    Each row is a real retrieved context plus a query and a response that some model
+    produced from them, annotated with hallucinated spans. A response is grounded when the
+    span list is empty. Contexts run to roughly 1,750 words, several times longer than the
+    short-form benchmarks, which is the point: Proposition 1's error term is a prompt-level
+    coning defect, and a long prompt gives it more room to grow.
+
+    `task` selects one of Summary, QA, Data2txt; `source` one of the six models whose
+    responses were annotated. Both default to everything, so a sample spans the full range
+    of context lengths.
+    """
+    df = pd.DataFrame(load_dataset(RAGTRUTH, split="train"))
+    if task:
+        df = df[df["task_type"] == task]
+    if source:
+        df = df[df["model"] == source]
+    if n and n < len(df):
+        df = df.sample(n=n, random_state=seed)
+    df = df.reset_index(drop=True)
+    for idx, row in df.iterrows():
+        lab = "grounded" if str(row["hallucination_labels"]).strip() == "[]" else "hallucinated"
+        body = f"{row['context']}\n\n{row['query']}"
+        full, pre = _tqa_strings(template, tok, body, str(row["output"]))
+        yield dict(example_id=int(idx), label=lab, full=full, prefix=pre,
+                   answer=str(row["output"]), question=str(row["query"]))
+
+
+# ---------------------------------------------------------------------------
 # on-policy TriviaQA
 # ---------------------------------------------------------------------------
 ONPOLICY_INSTR = "Answer the following question with a short phrase only, no explanation.\nQuestion: "
