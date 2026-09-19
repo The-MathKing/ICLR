@@ -3,7 +3,7 @@
 \section{Proofs}
 \label{app:proofs}
 
-Throughout, $D$ is a symmetric $N\times N$ matrix with non-negative entries and zero diagonal, $K_\epsilon$ is the Vietoris--Rips complex at scale $\epsilon$, $\mathrm{filt}_D(\sigma)=\max_{u,v\in\sigma}D_{uv}$ (with $\mathrm{filt}_D(\{u\})=0$), and homology is taken over a field. Bars are half-open intervals $[b,d)$.
+Throughout, $D$ is a symmetric $N\times N$ matrix with non-negative entries and zero diagonal, $K_\epsilon$ is the Vietoris--Rips complex at scale $\epsilon$, $\mathrm{filt}_D(\sigma)=\max_{u,v\in\sigma}D_{uv}$ ($\mathrm{filt}_D(\{u\})=0$), and homology is taken over a field. Bars are half-open intervals $[b,d)$.
 
 \subsection{Fact~\ref{fact:mst}}
 All vertices enter at $0$. Processing edges in non-decreasing weight order, an edge either joins two components, in which case (elder rule) one $0$D class dies at its weight and Kruskal's algorithm adds the edge to the spanning forest, or it closes a cycle, in which case no $0$D class dies and Kruskal discards it. Hence the $N-1$ finite death times are the MST edge weights \citep{gower1969,edelsbrunner2010}.
@@ -51,12 +51,12 @@ For $u>v$, $A_{vu}=0$, so $D_{uv}=1-A_{uv}$; in particular $D_{0u}=1-A_{u0}$. Fo
 \end{proof}
 
 \subsection{Linear growth of $1$D persistence under i.i.d.\ weights}
-Length normalization of $1$D features is usually motivated by the growth of cycles with $N$. For i.i.d.\ weights this growth is known: $0$D total persistence converges to $\zeta(3)$ \citep{frieze1985mst}, and $1$D total persistence of the random clique-complex process is $\Theta(N)$ \citep{hiraoka2017msa,hino2019lifetime}. The following elementary bound makes the constant explicit.
+The usual reason for length normalizing $1$D features is that there is growth in cycles with $N$. This is understood if weights are i.i.d.: $0$D total persistence tends to $\zeta(3)$ \citep{frieze1985mst} and $1$D total persistence of the random clique-complex process is $\Theta(N)$ \citep{hiraoka2017msa,hino2019lifetime}. Here is a simple bound that makes explicit the constant.
 
 \begin{proposition}[Linear growth under i.i.d.\ weights]
 \label{prop:morse}
 If $\{D_{uv}\}_{u<v}$ are i.i.d.\ $\mathrm{Uniform}[0,1]$, then
-$\mathbb{E}[P_1(N)]\ \ge\ \int_0^1\big[\tbinom N2p-N-\tbinom N3p^3\big]_+dp\ =\ \tfrac38N-\sqrt{3N}+O(1)$. (A matching $O(N)$ upper bound is Theorem~1.5 of \citealp{hino2019lifetime}.)
+$\mathbb{E}[P_1(N)]\ \ge\ \int_0^1\big[\tbinom N2p-N-\tbinom N3p^3\big]_+dp\ =\ \tfrac38N-\sqrt{3N}+O(1)$. (There is also an $O(N)$ upper bound Theorem~1.5 of \citealp{hino2019lifetime}.)
 \end{proposition}
 \begin{proof}
 With i.i.d.\ uniform weights, the edges with $D_{uv}\le p$ form an Erd\H{o}s--R\'enyi graph $G(N,p)$ and $K_p$ is its clique (flag) complex. Every $1$D bar is contained in $[0,1)$, because $K_1$ is the full simplex. Writing $\beta_1(p)$ for the first Betti number of $K_p$, the number of bars alive at $p$ is $\beta_1(p)$, so $P_1=\int_0^1\beta_1(p)\,dp$.
@@ -64,27 +64,27 @@ For any finite complex with $f_i$ faces of dimension $i$, the strong Morse inequ
 $\int_0^1[\cdot]_+dp=N\int_0^{\sqrt3}\big(\tfrac x2-\tfrac{x^3}{6}\big)dx-\sqrt{3N}+O(1)=\tfrac38N-\sqrt{3N}+O(1).$
 Numerically, $(\tfrac38N-\text{bound})/\sqrt N=1.62,1.67,1.70,1.72$ at $N=2^8,2^{10},2^{12},2^{14}$, approaching $\sqrt3\approx1.73$. The order $\Theta(N)$ itself is known \citep{hiraoka2017msa,hino2019lifetime}; the proposition only makes the constant explicit.
 \end{proof}
-\MorseNumbersText
+For example, the integral is numerically 0.791, 3.92, 11.9, 30.2, 70.1 for $N=16,32,64,128,256$, whereas simulations with i.i.d.\ $\mathrm{Uniform}[0,1]$ weights give means 1.91, 5.83, 15.5, 36.2, 79.3 (Figure~\ref{fig:synthetic}, left). Both functions on $[16,256]$ increase more than linearly (with log-log slopes 1.55 and 1.31), due to the $-\sqrt{3N}$ term in pre-asymptotics. Both are $\Theta(N)$ as $N\to\infty$.
 
 \subsection{Directed flag complexes on causal attention}
 \label{app:directed}
 \begin{proposition}[Directed flag collapse]
 \label{thm:directed}
-Let $A$ be lower-triangular with non-negative entries (self-loops are ignored). Let $\mathrm{DFl}(A)$ be the filtered directed flag complex \citep{flagser2020} of the digraph with an edge $i\to j$ for \emph{every} $j<i$ (a transitive tournament) and weight $1-A_{ij}$, and let $\VR(D)$ be as above with $D=1-\max(A,A^\top)$. Then $\mathrm{DFl}(A)$ and $\VR(D)$ are isomorphic filtered complexes, so $\dgm_k(\mathrm{DFl}(A))=\dgm_k(\VR(D))$ for all $k$. The same holds for any weighting $w(i\to j)=\phi(A_{ij})$ with $D_{ij}=\phi(\max(A_{ij},A_{ji}))$ and $\phi$ non-increasing.
+Let $A$ be lower-triangular with non-negative entries (self-loops are ignored). Let $\mathrm{DFl}(A)$ be the filtered directed flag complex \citep{flagser2020} of the digraph with an edge $i\to j$ for \emph{every} $j<i$ (a transitive tournament) and weight $1-A_{ij}$, and let $\VR(D)$ be as above with $D=1-\max(A,A^\top)$. These filtered complexes are isomorphic, so $\dgm_k(\mathrm{DFl}(A))=\dgm_k(\VR(D))$ for all $k$. This remains true for any weighting $w(i\to j)=\phi(A_{ij})$ with $D_{ij}=\phi(\max(A_{ij},A_{ji}))$ and $\phi$ non-increasing.
 \end{proposition}
 \begin{proof}
 A directed $k$-simplex is an ordered tuple $(v_0,\dots,v_k)$ with an edge $v_a\to v_b$ for all $a<b$. Edges exist only from later to earlier tokens, so a vertex set $S$ supports exactly one directed simplex, its elements in decreasing order; every other ordering uses a missing forward edge. (A missing edge is not a zero-weight edge; encoding it as weight $0$ would admit all orderings, a common implementation error.) This bijection preserves faces. Its filtration value is $\max_{a<b}(1-A_{v_av_b})$, and for $u>v$, $D_{uv}=1-A_{uv}$, so the undirected value $\max_{u,v\in S}D_{uv}$ is the same number.
 \end{proof}
-We verified the bijection and the filtration identity by explicit enumeration on $420$ random causal matrices ($N\le8$, four families including tie-dense and underflowing matrices; $30{,}060$ vertex sets; zero violations), and confirmed that the identity fails for bidirectional attention, where a set of size $n$ supports $n!$ orderings. The collapse is a consequence of causality: for decoders, the directed flag complex adds nothing to its symmetrized counterpart. Directional features that do not come from flag complexes, such as those of \citet{kushnareva2021} for bidirectional encoders, are outside this statement.
+The bijection and the filtration identity We confirm this bijection and the filtration identity explicitly on $420$ random causal matrices ($N\le8$, four families including tie-dense and underflowing matrices; $30{,}060$ vertex sets; zero violations) and check that it does not hold for bidirectional attention, meaning that a set of size $n$ has $n!$ orderings. The collapse comes from causality: for decoders, adding the directed flag complex brings nothing to the symmetrized one. This statement does not cover directional features that are not coming from flag complexes, like \citet{kushnareva2021} for bidirectional encoders.
 
 \section{Implementation and protocol details}
 \label{app:impl}
 
-\paragraph{Extraction.} Every setting runs in bfloat16 with eager attention and no quantization. The settings using the two 7B models (Mistral-7B on both benchmarks, its chat-format variant, and Qwen2.5-7B on both benchmarks) were extracted on an NVIDIA RTX 5080 (CUDA); the remaining settings were extracted on Apple-silicon (MPS), where float16 produced non-finite values and degenerate generations for Qwen models and the extractor refuses non-finite logits. The paragraph on float32 below measures how much the platform itself moves a reported AUC. Model identifiers are in Table~\ref{tab:models} (Hugging Face \texttt{main} revisions as of September 2026). For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; per-head MSTs use a batched dense Prim's algorithm (SciPy's sparse MST drops explicit zero-weight edges, which occur when $A_{u0}\approx1$). $\defect_0$ uses the closed form of Corollary~\ref{cor:causal}; $\min_s\defect_s$ is computed by brute force over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} restricts $D$ to the answer tokens without renormalization. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, with $\bar a$ the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
+\paragraph{Extraction.} Every setting runs in bfloat16 with eager attention and no quantization. The ones using the two 7B models (Mistral-7B on both benchmarks, its chat-format variant, and Qwen2.5-7B on both benchmarks) have been extracted on an NVIDIA RTX 5080 (CUDA), while others were extracted on Apple-silicon (MPS), where float16 produces non-finite values and degenerate generations for Qwen models and the extractor refuses non-finite logits. The paragraph on float32 below measures how much the platform itself moves a reported AUC. Model identifiers are in Table~\ref{tab:models} (Hugging Face main revisions as of September 2026). For each example we run one forward pass with attentions and hidden states, average heads, and form $D$ in float64. Ripser \citep{bauer2021ripser} computes $0$D/$1$D barcodes; SciPy's sparse MST does not make explicit zero-weight edges ($A_{u0}\approx1$). The batched dense Prim's algorithm. $\defect_0$ applies the closed form of Corollary~\ref{cor:causal}; we brute force compute $\min_s\defect_s$ over all apexes. \textsc{Deflated} deletes token 0 and renormalizes each row over the remaining causal support. \textsc{Answer-only} limits $D$ to the answer tokens and does not renormalize. The Lookback ratio of head $h$ is the mean over answer tokens $t$ of $\bar a_{\mathrm{ctx}}/(\bar a_{\mathrm{ctx}}+\bar a_{\mathrm{new}})$, where $\bar a$ is the mean attention from $t$ to prompt tokens and to answer tokens up to $t$. The LLM-Check score of a head is the mean log diagonal attention (the log-determinant of the triangular attention kernel divided by $N$), summed over heads per layer. Log-probability features are the mean, minimum, and sum of answer-token log-probabilities, mean and maximum predictive entropy, and mean maximum softmax probability. Hidden states are mean-pooled over answer tokens at layer $\lfloor L/2\rfloor$.
 
-\paragraph{Prompts.} TruthfulQA uses each model's own format: the Qwen chat template with an explicit system turn ``You are a helpful assistant.'', \texttt{<|user|>\ldots<|end|>} for Phi-3, \texttt{<|user|>\ldots</s>} for TinyLlama, ChatML without system turn for SmolLM, and \texttt{[INST]\ldots[/INST]} for Mistral. HaluEval uses \texttt{Knowledge: \ldots\textbackslash nQuestion: \ldots\textbackslash nAnswer: } without a chat template. The prompt boundary is computed by tokenizing the prefix without its trailing space, which the full string merges into the first answer token. Chat templates that emit the BOS token themselves (Mistral's own template, Llama-3.1) are tokenized without a second one, and the prefix and the full string go through the same routine, so the prefix's token ids are a prefix of the full string's; 	exttt{sinktda/check\_tokenization.py} asserts this for every model and template without a GPU. The on-policy prompt is the model's chat template around ``Answer the following question with a short phrase only, no explanation. Question: \ldots''. Token 0 is whatever token the format places first (BOS for TinyLlama and Mistral, \texttt{<|user|>} for Phi-3, whose tokenizer adds no BOS, \texttt{<|im\_start|>} for Qwen and SmolLM, and ``Knowledge'' for Qwen on HaluEval); the theorem does not require it to be a special token. On-policy answers were generated from the chat-formatted prompt with \texttt{add\_special\_tokens=False}, and features were extracted with the tokenizer's default special tokens; the two differ only for TinyLlama, whose extraction input starts with a BOS token. Mistral is run under both its hand-written \texttt{[INST]} string and its own chat template; after the tokenization fix above the two prefixes are identical, and the settings differ only by the template's end-of-sequence token. Banks that do not depend on the answer window agree to \TwinMaxOther{} AUC; the answer-restricted banks differ more (answer-only PH by \TwinAns{}, deflated PH by \TwinDefl{}), because that token joins the answer subgraph and the deflated graph.
+\paragraph{Prompts.} For TruthfulQA we use the chat template of each model. For Qwen, this is: \texttt{You are a helpful assistant.} Phi-3, TinyLlama, SmolLM, and no system turn at all (ChatML), but we still provide Mistral: \texttt{<|user|> [INST]} TruthfulQA. HaluEval uses \texttt{Knowledge: \ldots\textbackslash nQuestion: \ldots\textbackslash nAnswer: } without a chat template. Boundary is then calculated by tokenizing the prefix (not including the final space), which the full string concatenates to the first answer token. When the chat template itself outputs the BOS token (e.g., Mistral's own template, Llama-3.1), it does not output a second one. Both the prefix and the full string are then tokenized in the same way, meaning the token ids of the prefix are a prefix of the full string's. This is verified for all models and templates without a GPU in \texttt{sinktda/check\_tokenization.py}. The on-policy prompt is the model's chat template around ``Answer the following question with a short phrase only, no explanation. Question: \ldots''. The token at position 0 is the first token of the format (BOS for TinyLlama and Mistral, \texttt{<|user|>} for Phi-3, whose tokenizer adds no BOS, \texttt{<|im\_start|>} for Qwen and SmolLM, and ``Knowledge'' for Qwen on HaluEval). The theorem holds for any value, not necessarily a special token. We generate on-policy answers using the chat-formatted prompt with \texttt{add\_special\_tokens=False} and extract features with the tokenizer's default special tokens. They only differ for TinyLlama, where the input to feature extraction begins with a BOS token. Mistral runs with its hand-written \texttt{[INST]} string and its own chat template. After fixing the tokenization issue above, the two prefixes are the same. The differences lie in the settings (the end-of-sequence token for the template). Banks that do not rely on the answer window agree to \TwinMaxOther{} AUC. The answer-restricted banks disagree more (answer-only PH by \TwinAns{}, deflated PH by \TwinDefl{}), since that token becomes part of the answer subgraph and the deflated graph.
 
-\paragraph{Sensitivity to inference precision.} An earlier run of five settings in float16 lets us measure how much each bank depends on numerical precision (Table~\ref{tab:dtype}). Switching to bfloat16 changes the AUC of head-averaged topological banks by up to \DtypeTopoMax{} (\DtypeTopoWorst{}; at most \DtypeTopoOther{} elsewhere), and of sink features by up to \DtypeSinkMax{}, but that of non-topological banks by at most \DtypeNTMax{}. Short $1$D bars live near the scale of $\defect_0$ and are sensitive to small perturbations of attention, which is one more reason to report the precision alongside any attention-topology result.
+\paragraph{Sensitivity to inference precision.} Comparison of an earlier run of five settings in float16 to measure dependence on precision (Table~\ref{tab:dtype}). We find that switching to bfloat16 alters the AUC of head-averaged topological banks by up to \DtypeTopoMax{} (\DtypeTopoWorst{}; at most \DtypeTopoOther{} elsewhere), of sink features by up to \DtypeSinkMax{}, but of non-topological banks by at most \DtypeNTMax{}. One more reason to report the precision along with any attention-topology result is that short $1$D bars tend to be close to the scale of $\defect_0$ and can be affected by small changes in attention.
 \begin{table}[h]
 \centering
 \small
@@ -93,16 +93,7 @@ We verified the bijection and the filtration identity by explicit enumeration on
 \resizebox{\linewidth}{!}{\SinkTableDtype}
 \end{table}
 
-\paragraph{float32 against bfloat16.} The fp16/bf16 comparison above varies precision at
-fixed hardware. To separate precision from platform we re-extracted \PrecSettings{} settings
-twice on one CUDA machine, in bfloat16 and in float32, and compare both with the bfloat16
-numbers the paper reports, which for these two settings were extracted on
-Apple-silicon MPS. The platform gap
-(bf16 CUDA against bf16 MPS, and so also torch and scikit-learn versions) is at most
-\PrecPlatformMax{} AUC, and the precision gap (float32 against bfloat16 on the same machine)
-at most \PrecFpMax{} (\PrecFpTopoMax{} on the topological banks). Both are well inside the
-$\pm0.015$ equivalence margin, so the reported numbers reproduce on other hardware and
-float32 does not change a conclusion (Table~\ref{tab:precision}).
+\paragraph{float32 against bfloat16.} In the fp16/bf16 comparison above, we vary precision while keeping hardware fixed. Next, to isolate effects of precision versus platform, we repeated our extraction of \PrecSettings{} settings twice, once in bfloat16 and once in float32, on a single CUDA machine, and compared with the bfloat16 numbers the paper reports (which, for these two settings, were extracted on Apple-silicon MPS). The platform gap (bf16 CUDA against bf16 MPS, and so also torch and scikit-learn versions) is at most \PrecPlatformMax{} AUC. The precision gap (float32 against bfloat16 on the same machine) is compared as well. At most \PrecFpMax{} (\PrecFpTopoMax{} on the topological banks). Both are well within the $\pm0.015$ equivalence range, which reveals that the reported numbers transfer to other hardware and float32 does not change a conclusion (Table~\ref{tab:precision}).
 \begin{table}[h]
 \centering
 \small
@@ -111,16 +102,16 @@ float32 does not change a conclusion (Table~\ref{tab:precision}).
 \resizebox{\linewidth}{!}{\SinkTablePrecision}
 \end{table}
 
-\paragraph{On-policy benchmark.} Table~\ref{tab:onpolicy} summarizes the generations each model produced and how they were graded.
+\paragraph{On-policy benchmark.} Table~\ref{tab:onpolicy} presents the model generations produced and how they were evaluated.
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{TriviaQA on-policy benchmark.} $2{,}000$ validation questions sampled with seed 0; greedy decoding, first line of the answer, at most 24 new tokens. An answer is correct if any normalized gold alias (lower-cased, punctuation and articles removed) occurs in the normalized answer as a whole-word span. Empty answers are dropped.}
+\caption{\textbf{TriviaQA on-policy benchmark.} $2{,}000$ validation questions sampled with seed 0; greedy decoding, first line of the answer, at most 24 new tokens. An answer is correct if any normalized gold alias (lower-cased, punctuation and articles removed) is contained as a whole-word span in the normalized answer. Empty answers are dropped.}
 \label{tab:onpolicy}
 \SinkTableOnpolicy
 \end{table}
 
-\paragraph{Statistics.} Bootstrap resamples are drawn over questions (both rows of a pair move together). TOST power at margin $m$ assumes a true difference of $0$ and a normal sampling distribution with the bootstrap SE: $2\Phi(m/\mathrm{SE}-z_{0.95})-1$. Repeated-CV predictions (seeds 42, 43, 44) are averaged before bootstrapping (seed 0), so the intervals reflect sampling of questions for a fixed, split-averaged predictor and omit refitting variance. The seed-to-seed SD of the pooled AUC is reported separately (Appendix~\ref{app:tables}); it is at most \MaxSeedSD{} and exceeds $0.004$ in \NSeedSDAbove{} of the bank--setting cells. The $C$ rule depends on bank width, so the same bank can be fitted with $C{=}1$ for a shallow model and with tuned $C$ for a deeper one. Late fusion fits the second-level model on first-level out-of-fold scores, as in standard stacking; its training rows' first-level scores come from models that saw the corresponding test questions, which is a mild, standard optimism shared by both arms of the comparison.
+\paragraph{Statistics.} Bootstrap resamples are drawn over questions (both rows of a pair move together). TOST power at margin $m$ is under a true difference of 0 and a normal sampling distribution with the bootstrap SE: $2\Phi(m/\mathrm{SE}-z_{0.95})-1$. Average repeated-CV predictions (seeds 42, 43, 44) are used for bootstrapping (seed 0), i.e., the intervals report sampling of questions with a fixed, split-averaged predictor without refitting variance. Seed-to-seed SD of the pooled AUC is given separately (Appendix~\ref{app:tables}). It is at most \MaxSeedSD{}, with \NSeedSDAbove{} out of the bank--setting cells exceeding $0.004$. The $C$ rule is a function of bank width, so $C=1$ fits a shallow model to a given bank and tuned $C$ fits a deep model to the same bank. Late fusion trains the second-level model on first-level out-of-fold scores as in regular stacking. Training rows' first-level scores are obtained by training models which have seen the corresponding test questions, which is a weak, standard optimism that both arms of the comparison share.
 
 \input{sink_appendix_extra.tex}
 
@@ -129,7 +120,7 @@ float32 does not change a conclusion (Table~\ref{tab:precision}).
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{fig_sink_synthetic.pdf}
-\caption{\textbf{Synthetic checks.} \emph{Left:} Proposition~\ref{prop:morse}'s lower bound against the simulated mean total $1$D persistence under i.i.d.\ Uniform$[0,1]$ weights (20 draws per $N\le128$, 8 above). \emph{Middle:} random causal attention ($N{=}40$, 200 draws per point) with a logit bias $b$ on token 0: as the sink strengthens, graphs become exactly coned, $H_1$ empties, and $P_0$ becomes a function of the star weight. \emph{Right:} AUC of $1$D total persistence for detecting a planted 6-cycle of logit strength $\gamma$ (150 draws per class). Without a sink ($b{=}0$) the planted cycle is lost among background cycles; under a strong sink ($b{=}8$) it is invisible unless it is strong enough to break the cone.}
+\caption{\textbf{Synthetic checks.} Left: Lower bound of Proposition~\ref{prop:morse} compared to simulated mean total $1$D persistence under i.i.d.\ Uniform$[0,1]$ weights (20 draws per $N\le128$, 8 above). Middle: random causal attention ($N=40$, 200 draws per point) with a logit bias $b$ on token 0: graphs become exactly coned, $H_1$ empties, and $P_0$ becomes a function of the star weight, growing as the sink becomes stronger. Right: AUC of $1$D total persistence for detecting a planted 6-cycle of logit strength $\gamma$ (150 draws per class). Without a sink ($b=0$) the planted cycle is lost among background cycles; under a strong sink ($b=8$) it is invisible unless it is strong enough to break the cone.}
 \label{fig:synthetic}
 \end{figure}
 
@@ -142,41 +133,20 @@ float32 does not change a conclusion (Table~\ref{tab:precision}).
 \section{Validation of the TOHA implementation and the on-policy labels}
 \label{app:validation}
 
-\paragraph{Against the authors' released code.} Our per-head score $d$ is our own
-implementation, so we check it against the routine the TOHA authors release
-(\citealp{toha}; \texttt{src/methods/mtopdiv/utils.py}), which builds the same distance matrix
-and calls ripser rather than our dense Prim's algorithm. Over \NativeCells{} head graphs from
-\NativeSettings{} settings the two agree to \NativeMaxDiff{} (Table~\ref{tab:native}), so the
-reduction in Proposition~\ref{prop:toha} is not an artefact of how we compute $d$.
+\paragraph{Against the authors' released code.} Our per-head score $d$ is our own implementation, so we check it against the routine the TOHA authors release (\citealp{toha}; \texttt{src/methods/mtopdiv/utils.py}), which builds the same distance matrix and calls ripser rather than our dense Prim's algorithm. Over \NativeCells{} head graphs from \NativeSettings{} settings the two agree to \NativeMaxDiff{} (Table~\ref{tab:native}). So the reduction in Proposition~\ref{prop:toha} is not an artefact of how we compute $d$.
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{Our $d$ against the authors' MTop-Div code.} $\Delta$ is the per-head
-difference; both are divided by $|R|$.}
+\caption{\textbf{Our $d$ against the authors' MTop-Div code.} $\Delta$ is the per-head difference; both are divided by $|R|$.}
 \label{tab:native}
 \SinkTableNative
 \end{table}
 
-\paragraph{LLM-judge audit of the on-policy labels.} The on-policy label is an alias string
-match, which mislabels paraphrases and hedged answers. We sampled \AuditN{} answers per setting
-(seed 0) in \AuditSettings{} settings and had Qwen2.5-7B-Instruct grade them from the question,
-the gold aliases and the answer. Disagreement is \AuditDisagreeRange{} (Table~\ref{tab:audit}),
-and is mostly the string match being too lax. Re-scoring the same out-of-fold predictions on
-those rows under the judge's labels shifts every bank by at most \AuditMaxAucShift{} AUC and
-leaves the dominance orderings the paper relies on intact
-(\textsc{Nontopo}${}\ge{}$\textsc{0D}, \textsc{Nontopo}${}\ge{}$\textsc{Defl},
-\textsc{Hidden}${}\ge{}$\textsc{0D}, \textsc{Nontopo}${}\ge{}$\textsc{PH-0D}), so the conclusions do not
-rest on the labelling. With $n{=}\AuditN{}$ audited rows the standard error of an AUC is near $0.03$,
-so near-ties between other banks can and do reorder; only the four orderings above are claimed. The
-judge is itself a language model, not a human annotator, and one of the audited settings is
-graded by the same model that produced its answers, so \AuditDisagreeMax{} should be read as a
-floor rather than an estimate.
+\paragraph{LLM-judge audit of the on-policy labels.} The on-policy label is an alias string match, which mislabels paraphrases and hedged answers. We sampled \AuditN{} answers per setting (seed 0) in \AuditSettings{} settings and had Qwen2.5-7B-Instruct grade them from the question, the gold aliases and the answer. Disagreement is \AuditDisagreeRange{} (Table~\ref{tab:audit}), and is mostly the string match being too lax. Re-scoring the same out-of-fold predictions on those rows under the judge's labels shifts every bank by at most \AuditMaxAucShift{} AUC and leaves the dominance orderings the paper relies on intact (\textsc{Nontopo}${}\ge{}$\textsc{0D}, \textsc{Nontopo}${}\ge{}$\textsc{Defl}, \textsc{Hidden}${}\ge{}$\textsc{0D}, \textsc{Nontopo}${}\ge{}$\textsc{PH-0D}), so the conclusions do not rest on the labeling. The standard error of an AUC is near $0.03$ with $n=\AuditN{}$ audited rows, so near-ties between other banks can and do reorder. Only the four orderings above are claimed. The judge is itself a language model, not a human annotator. One of the audited settings is graded by the same model that produced its answers, so \AuditDisagreeMax{} should be read as a floor rather than an estimate.
 \begin{table}[h]
 \centering
 \small
-\caption{\textbf{LLM-judge audit of the on-policy labels.} ``match 0/judge 1'': the string
-match calls it hallucinated and the judge does not. Last column: largest change in any bank's
-AUC on the audited rows when the judge's labels replace the string match.}
+\caption{\textbf{LLM-judge audit of the on-policy labels.} ``match 0/judge 1'': the string match calls it hallucinated and the judge does not. Last column: largest change in any bank's AUC on the audited rows when the judge's labels replace the string match.}
 \label{tab:audit}
 \SinkTableAudit
 \end{table}
@@ -219,6 +189,6 @@ AUC on the audited rows when the judge's labels replace the string match.}
 
 \section{Relation to accuracy-level audits, and cost}
 \label{app:legacy}
-Audits of attention-graph PH that stop at classification accuracy observe four facts that the theory now explains: (i) $0$D persistence equals an MST statistic (Fact~\ref{fact:mst}); (ii) $1$D persistence adds little beyond $0$D (Table~\ref{tab:tests}, column ``1D $\mid$ 0D''), which Theorem~\ref{thm:cone} now explains; (iii) an earlier audit reported that the $1$D bank of Mistral-7B under its \texttt{[INST]} format is $99.99\%$ zeros, which is what exact coning would produce (verified directly on the graphs in Appendix~\ref{app:mistral}); (iv) HaluEval answers are separable from text alone.
+These are four facts about audits of attention-graph PH that stop at classification accuracy, now explained by the theory: (i) $0$D persistence is an MST statistic (Fact~\ref{fact:mst}); (ii) $1$D adds little beyond $0$D (Table~\ref{tab:tests}, column ``1D $\mid$ 0D'') (Theorem~\ref{thm:cone}); (iii) An earlier audit revealed that the $1$D bank of Mistral-7B using its \texttt{[INST]} format is $99.99\%$ zeros, as it would be for exact coning (directly verified on the graphs in Appendix~\ref{app:mistral}); (iv) HaluEval answers can be separated from text alone.
 
 \paragraph{Cost.} \TIMINGPARAGRAPH
