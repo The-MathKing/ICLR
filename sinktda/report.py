@@ -50,10 +50,13 @@ ORDER = list(PRETTY)
 
 # Nominal parameter counts (B) for the model labels in PRETTY, used for the
 # model-size range macro so the abstract/limitations never hardcode a range.
+# Parameter counts from the model cards, matching MODEL_SPECS in appendix_extra.py so the
+# range quoted in the abstract is the range of the audited-models table. Nominal family
+# names ("7B") understate Qwen2.5-7B, whose card says 7.62B.
 PARAMS_B = {
-    "TinyLlama-1.1B": 1.1, "Qwen2.5-1.5B": 1.5, "SmolLM-1.7B": 1.7,
-    "Qwen2.5-3B": 3.0, "Phi-3-mini": 3.8,
-    "Mistral-7B": 7.0, "Qwen2.5-7B": 7.0, "Llama-3.1-8B": 8.0,
+    "TinyLlama-1.1B": 1.10, "Qwen2.5-1.5B": 1.54, "SmolLM-1.7B": 1.71,
+    "Qwen2.5-3B": 3.09, "Phi-3-mini": 3.82,
+    "Mistral-7B": 7.24, "Qwen2.5-7B": 7.62, "Llama-3.1-8B": 8.03,
 }
 
 
@@ -582,6 +585,7 @@ def write_numbers(th, auc, comp):
     m.update(numbers_defect())
     m.update(numbers_toha())
     m.update(numbers_mistral())
+    m.update(numbers_format_gap())
     m.update(numbers_native())
     m.update(numbers_audit())
     m.update(numbers_release())
@@ -695,6 +699,34 @@ def numbers_mistral():
             m["MistralTohaConed"] = f"{r['frac_coned_P'] * 100:.0f}\\%"
             m["MistralTohaRho"] = f"{r['median_head_rho_maxp']:.3f}"
             m["MistralTohaViol"] = str(int(r["viol_upper"] + r["viol_lower"]))
+    return m
+
+
+def numbers_format_gap():
+    """How far apart the two Mistral TruthfulQA formats land, bank by bank.
+
+    The hand-written [INST] prompt and the model's own chat template produce the same
+    tokens except for the template's trailing end-of-sequence marker, which falls inside
+    the response. Whole-graph banks therefore barely move, while banks restricted to the
+    response (answer-only PH) see one extra token. Reporting both keeps the "consistency
+    check" claim honest about where the two settings do and do not agree.
+    """
+    fb, fc = f"{RES}/auc_truthfulqa_mistral.csv", f"{RES}/auc_truthfulqa_mistral_chat.csv"
+    if not (os.path.exists(fb) and os.path.exists(fc)):
+        return {}
+    b = pd.read_csv(fb).set_index("bank")["auc"]
+    c = pd.read_csv(fc).set_index("bank")["auc"]
+    shared = [k for k in b.index if k in c.index]
+    if not shared:
+        return {}
+    gap = pd.Series({k: abs(b[k] - c[k]) for k in shared})
+    ans = [k for k in shared if "ANS" in k]
+    rest = [k for k in shared if "ANS" not in k]
+    m = {}
+    if ans:
+        m["MistralFmtAnsGap"] = f"{gap[ans].max():.3f}"
+    if rest:
+        m["MistralFmtOtherGap"] = f"{gap[rest].max():.3f}"
     return m
 
 

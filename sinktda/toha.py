@@ -131,7 +131,7 @@ def extract(args):
     for i, r in enumerate(rows):
         enc = data.encode(tok, r["full"], return_tensors="pt").to(device)
         N = enc["input_ids"].shape[1]
-        p = min(len(tok(r["prefix"].rstrip(" "))["input_ids"]), N - 1)
+        p = min(len(data.encode(tok, r["prefix"].rstrip(" "))["input_ids"]), N - 1)
         if N > 1024:
             continue
         with torch.no_grad():

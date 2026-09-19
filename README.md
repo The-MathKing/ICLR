@@ -25,9 +25,11 @@ The 7--8B settings were extracted on an RTX 5080 (16 GB, CUDA) with torch 2.11.0
 | coning defect as a detector | `python -m sinktda.defect_probe` | `sinktda_results/defect_probe.csv` |
 | TOHA reduction (Prop. 1): per-head MTop-Div and first-order counterparts | `python -m sinktda.toha extract --bench ... --model ... [--n N]` then `python -m sinktda.toha evaluate` | `sinktda_out/<setting>/toha.npz`, `sinktda_results/toha_{checks,auc,comp}.csv` |
 | causal sink-bias probe | `bash sinktda/run_toha_causal.sh` | `sinktda_results/toha_*_causal.csv` |
+| prompt-boundary tokenization check (no GPU) | `python -m sinktda.check_tokenization` | pass/fail per model and template |
+| re-check the paper's claims against the regenerated CSVs | `python -m sinktda.check_claims` | pass/fail per claim (run after `report`) |
 | numerical checks of Prop. 1 and Cor. 2 | `python -m sinktda.check_theory` | `sinktda_results/check_theory.csv` |
 | TOHA vs the authors' released MTop-Div code | `python -m sinktda.toha_native --model mistral --n 8` | `sinktda_results/toha_native.csv` |
-| LLM-judge audit of the on-policy labels | `python -m sinktda.label_audit --n 200` | `sinktda_results/label_audit{,_sensitivity}.csv` |
+| LLM-judge audit of the on-policy labels | `python -m sinktda.label_audit --n 200` (re-run just the sensitivity table after a re-extraction with `--sensitivity-only`) | `sinktda_results/label_audit{,_sensitivity}.csv` |
 | fp16 vs bf16 sensitivity | `python -m sinktda.dtype_sensitivity` | `sinktda_results/dtype_sensitivity.csv`, `paper/sink_dtype.tex` |
 | label-free layer split | `python -m sinktda.layer_split` | `sinktda_results/layer_split.csv` |
 | synthetic checks (Prop. 1, dose-response, planted cycle) | `python -m sinktda.synthetic` | `sinktda_results/synthetic_*.csv` |

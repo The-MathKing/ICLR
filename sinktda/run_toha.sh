@@ -5,6 +5,10 @@ export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
 export TOKENIZERS_PARALLELISM=false TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 export SINKTDA_JOBS=2 OMP_NUM_THREADS=4
 PY=${PY:-.venv/bin/python}
+
+# The prompt/response boundary is only correct when the prefix and the full string are
+# tokenized the same way; a chat template that emits BOS silently shifted it once.
+$PY -m sinktda.check_tokenization || { echo '[abort] tokenization check failed'; exit 1; }
 MINFREE=${MINFREE:-35}
 waitmem() {
   while true; do

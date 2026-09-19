@@ -84,12 +84,56 @@ def sensitivity(df):
     return pd.DataFrame(out)
 
 
+def report_sensitivity(sens):
+    """Print the dominance-claim check for a sensitivity table and say where it went."""
+    # A full ranking flips whenever two near-tied banks swap, which says nothing about
+    # the paper. Check instead the dominance claims the paper actually makes.
+    CLAIMS = [("NONTOPO", "0D"), ("NONTOPO", "DEFL"), ("HIDDEN", "0D"), ("NONTOPO", "PH_0D")]
+    for name, d in sens.groupby("setting"):
+        p = d.set_index("bank")
+        kept, flipped = [], []
+        for hi, lo in CLAIMS:
+            if hi not in p.index or lo not in p.index:
+                continue
+            st = p.loc[hi, "auc_string"] >= p.loc[lo, "auc_string"]
+            ju = p.loc[hi, "auc_judge"] >= p.loc[lo, "auc_judge"]
+            (kept if st == ju else flipped).append(f"{hi}>={lo}")
+        print(f"{name}: max |delta| = {d['delta'].abs().max():.3f}; "
+              f"dominance claims unchanged {len(kept)}/{len(kept) + len(flipped)}"
+              + (f"; FLIPPED: {flipped}" if flipped else ""))
+    print(f"wrote {RES}/label_audit_sensitivity.csv")
+
+
+def sensitivity_only():
+    """Recompute the sensitivity table from the stored judgments and the current OOF scores.
+
+    The judge grades generations.csv, so its labels do not change when features are
+    re-extracted, but the out-of-fold predictions in sinktda_results/oof/ do. After any
+    re-extraction of an audited setting this rebuilds label_audit_sensitivity.csv from the
+    existing label_audit.csv without loading the judge, so it needs no GPU.
+    """
+    f = f"{RES}/label_audit.csv"
+    if not os.path.exists(f):
+        raise SystemExit(f"{f} not found; run the full audit first")
+    sens = sensitivity(pd.read_csv(f, keep_default_na=False))
+    if not len(sens):
+        raise SystemExit("no settings had usable OOF scores; nothing written")
+    sens.to_csv(f"{RES}/label_audit_sensitivity.csv", index=False)
+    report_sensitivity(sens)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=200, help="rows sampled per setting")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--settings", nargs="*", default=None)
+    ap.add_argument("--sensitivity-only", action="store_true",
+                    help="rebuild the sensitivity table from label_audit.csv and the "
+                         "current OOF scores; no judge, no GPU")
     a = ap.parse_args()
+    if a.sensitivity_only:
+        return sensitivity_only()
+
 
     import torch
     from sinktda import data
@@ -144,22 +188,7 @@ def main():
     if len(sens):
         sens.to_csv(f"{RES}/label_audit_sensitivity.csv", index=False)
         print("\n=== AUC on the audited rows under each labelling (same predictions) ===")
-        # A full ranking flips whenever two near-tied banks swap, which says nothing about
-        # the paper. Check instead the dominance claims the paper actually makes.
-        CLAIMS = [("NONTOPO", "0D"), ("NONTOPO", "DEFL"), ("HIDDEN", "0D"), ("NONTOPO", "PH_0D")]
-        for name, d in sens.groupby("setting"):
-            p = d.set_index("bank")
-            kept, flipped = [], []
-            for hi, lo in CLAIMS:
-                if hi not in p.index or lo not in p.index:
-                    continue
-                s = p.loc[hi, "auc_string"] >= p.loc[lo, "auc_string"]
-                j = p.loc[hi, "auc_judge"] >= p.loc[lo, "auc_judge"]
-                (kept if s == j else flipped).append(f"{hi}>={lo}")
-            print(f"{name}: max |delta| = {d['delta'].abs().max():.3f}; "
-                  f"dominance claims unchanged {len(kept)}/{len(kept) + len(flipped)}"
-                  + (f"; FLIPPED: {flipped}" if flipped else ""))
-        print(f"wrote {RES}/label_audit_sensitivity.csv")
+        report_sensitivity(sens)
 
     print(f"\nwrote {RES}/label_audit.csv")
 
