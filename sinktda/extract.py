@@ -101,7 +101,8 @@ def onpolicy_rows(tok, gens):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--bench", required=True, choices=["truthfulqa", "halueval", "triviaqa"])
+    ap.add_argument("--bench", required=True,
+                    choices=["truthfulqa", "halueval", "triviaqa", "ragtruth"])
     ap.add_argument("--model", required=True, choices=list(data.MODELS))
     ap.add_argument("--template", default=None)
     ap.add_argument("--tag", default="")
@@ -110,6 +111,10 @@ def main():
     ap.add_argument("--workers", type=int, default=7)
     ap.add_argument("--dtype", default=None, choices=[None, "float16", "bfloat16", "float32"],
                     help="default: bfloat16 on CUDA and MPS")
+    ap.add_argument("--task", default=None,
+                    help="RAGTruth task_type: Summary, QA or Data2txt (default: all)")
+    ap.add_argument("--source", default=None,
+                    help="RAGTruth response model to keep (default: all)")
     ap.add_argument("--limit", type=int, default=None, help="debug: stop after this many rows")
     ap.add_argument("--apex-deflation", action="store_true",
                     help="also emit apexdefl_* features: deflation at argmin_s delta_s "
@@ -140,6 +145,9 @@ def main():
         rows = list(data.truthfulqa_rows(tok, template, args.n or data.FULL_TRUTHFULQA))
     elif args.bench == "halueval":
         rows = list(data.halueval_rows(tok, template, args.n or 2000))
+    elif args.bench == "ragtruth":
+        rows = list(data.ragtruth_rows(tok, template, args.n or 1000,
+                                       task=args.task, source=args.source))
     else:
         qdf = data.triviaqa_questions(args.n or 2000)
         gens = generate_onpolicy(tok, model, device, qdf, os.path.join(out_dir, "generations.csv"))
@@ -173,14 +181,19 @@ def main():
         # (L,H,N,N) in float32 is L*H*N^2*4 bytes -- 17 GB at N=2048 for a 32x32 model, so
         # when no per-head features are wanted we average over heads on the device and
         # never materialise it. Per-layer .cpu() keeps offloaded models working either way.
+        # nan_to_num runs in place: out-of-place it holds a second copy of an array that
+        # is hundreds of megabytes on a long retrieved context, and the temporaries it
+        # builds are what run the process out of committed memory first.
         if args.no_perhead:
             attn = None
             A_mean = np.nan_to_num(
-                np.stack([a[0].float().mean(0).cpu().numpy() for a in out.attentions]), nan=0.0)
+                np.stack([a[0].float().mean(0).cpu().numpy() for a in out.attentions]),
+                nan=0.0, copy=False)
             L = A_mean.shape[0]
         else:
             attn = np.nan_to_num(
-                torch.stack([a[0].float().cpu() for a in out.attentions]).numpy(), nan=0.0)
+                torch.stack([a[0].float().cpu() for a in out.attentions]).numpy(),
+                nan=0.0, copy=False)
             L = attn.shape[0]
             A_mean = attn.mean(1)
         pending.append(pool.submit(_worker, (i, A_mean, p, args.apex_deflation)))
