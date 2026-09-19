@@ -582,6 +582,7 @@ def write_numbers(th, auc, comp):
         m["PlantModerate"] = f"{pc[(pc.b == 6) & (pc.gamma == 8)]['auc_h1'].iloc[0]:.2f}"
         m["PlantStrong"] = f"{pc[(pc.b == 8) & (pc.gamma <= 4)]['auc_h1'].max():.2f}"
         m["PlantNone"] = f"{pc[pc.b == 0]['auc_h1'].max():.2f}"
+    m.update(numbers_twin())
     m.update(numbers_defect())
     m.update(numbers_toha())
     m.update(numbers_mistral())
@@ -614,11 +615,23 @@ def numbers_release():
     and hidden.npy we still hold, and both Mistral layer dumps. What is left is what these
     macros name, so the reproducibility statement promises exactly what a reviewer can open.
     """
+    # Derive this from the files the repository actually tracks, not from the working
+    # tree: the mirror serves the repository, and a machine that still holds extra
+    # feature dumps locally would otherwise make the paper promise files no reviewer
+    # can open. (This is not hypothetical: regenerating on the extraction machine
+    # turned "4 settings" into "12".)
+    import subprocess
+    try:
+        tracked = set(subprocess.run(["git", "ls-files", OUT], capture_output=True,
+                                     text=True, check=True).stdout.split())
+    except Exception as e:                                  # not a git checkout
+        raise SystemExit(f"report.py: cannot list released files ({e}). Run inside the "
+                         "repository, so the reproducibility statement matches the release.")
     gens, layers = [], []
     for s in ORDER:
         for name, bucket in (("generations.csv", gens), ("layers.parquet", layers)):
             f = f"{OUT}/{s}/{name}"
-            if os.path.exists(f) and os.path.getsize(f) <= MIRROR_LIMIT_MB * 1024 ** 2:
+            if f in tracked and os.path.exists(f) and os.path.getsize(f) <= MIRROR_LIMIT_MB * 1024 ** 2:
                 bucket.append(s)
     return {
         "ReleaseLimitMB": str(MIRROR_LIMIT_MB),
@@ -728,6 +741,25 @@ def numbers_format_gap():
     if rest:
         m["MistralFmtOtherGap"] = f"{gap[rest].max():.3f}"
     return m
+
+
+def numbers_twin():
+    """Agreement between the two Mistral TruthfulQA settings.
+
+    They differ only by the chat template's end-of-sequence token, so the banks that do
+    not depend on the answer window should agree closely. The answer-restricted banks
+    differ more, because that token joins the answer subgraph.
+    """
+    fs = [f"{RES}/auc_truthfulqa_mistral.csv", f"{RES}/auc_truthfulqa_mistral_chat.csv"]
+    if not all(os.path.exists(f) for f in fs):
+        return {}
+    a, b = (pd.read_csv(f).set_index("bank")["auc"] for f in fs)
+    d = (b - a).dropna()
+    ans_like = [k for k in ("ANS", "SINK+ANS", "DEFL", "SINK+DEFL", "LEX+DEFL") if k in d.index]
+    other = d.drop(index=ans_like)
+    return {"TwinMaxOther": f"{np.ceil(other.abs().max() * 1000) / 1000:.3f}",
+            "TwinAns": f"{d['ANS']:+.3f}" if "ANS" in d.index else "--",
+            "TwinDefl": f"{d['DEFL']:+.3f}" if "DEFL" in d.index else "--"}
 
 
 def numbers_defect():

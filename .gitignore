@@ -47,6 +47,8 @@ references/
 # an earlier review's scores, and third-party PDFs, and the anonymous mirror serves
 # whatever is in the repo.
 HANDOFF.md
+PLAN_FOR_5080.md
+paper_text_for_rewrite.txt
 PLAN_v2.md
 PROMPT_5080.md
 PROMPT_REVITALIZE.md

@@ -1,7 +1,7 @@
 setting,questions,accuracy,rows_used,mean_answer_tokens
-triviaqa_qwen3b,2000,42.4,2000,5.5
-triviaqa_qwen1.5b,2000,31.4,2000,5.8
-triviaqa_phi3,2000,56.2,2000,6.0
-triviaqa_tinyllama,2000,26.4,2000,18.9
+triviaqa_qwen3b,2000,42.449999999999996,2000,5.54
+triviaqa_qwen1.5b,2000,31.4,2000,5.7555
+triviaqa_phi3,2000,56.25,2000,5.982
+triviaqa_tinyllama,2000,26.400000000000002,2000,18.8855
 triviaqa_mistral,2000,66.55,2000,13.9825
 triviaqa_qwen7b,2000,51.449999999999996,2000,5.252
