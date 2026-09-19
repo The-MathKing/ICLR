@@ -21,7 +21,29 @@ FP16 = ["truthfulqa_qwen3b", "truthfulqa_phi3", "truthfulqa_tinyllama", "truthfu
 # Settings whose two runs differ in more than precision. halueval_qwen3b was extracted in
 # float16 before the prompt/response boundary fix, so its row mixes precision with a
 # one-token boundary shift; it stays in the table but out of every quoted maximum.
-CONFOUNDED = ["halueval_qwen3b"]
+CONFOUNDED_UNLESS_CLEAN = ["halueval_qwen3b"]
+OLD_CLEAN = "archive/fp16_clean/sinktda_results"
+
+
+def fp16_src(s):
+    """Where this setting's float16 AUCs come from.
+
+    Prefers a re-extraction done after the prompt/response boundary fix. Only the
+    settings in CONFOUNDED_UNLESS_CLEAN need one; the rest were already extracted with
+    a correct boundary, so their original float16 run stands.
+    """
+    clean = f"{OLD_CLEAN}/auc_{s}.csv"
+    return clean if os.path.exists(clean) else f"{OLD}/auc_{s}.csv"
+
+
+def confounded():
+    """Settings whose float16 row still mixes precision with the boundary shift.
+
+    A setting drops off this list as soon as a clean re-extraction exists for it, so
+    the quoted maxima widen to include it without any further edit here.
+    """
+    return [s for s in CONFOUNDED_UNLESS_CLEAN
+            if not os.path.exists(f"{OLD_CLEAN}/auc_{s}.csv")]
 
 
 PREC = "archive/fp32_cuda/sinktda_results"
@@ -82,7 +104,7 @@ def main():
     for s in ORDER:
         if s not in FP16:
             continue
-        fo, fn = f"{OLD}/auc_{s}.csv", f"{NEW}/auc_{s}.csv"
+        fo, fn = fp16_src(s), f"{NEW}/auc_{s}.csv"
         if not (os.path.exists(fo) and os.path.exists(fn)):
             continue
         a = pd.read_csv(fo).set_index("bank")["auc"]
@@ -91,6 +113,10 @@ def main():
             if k in a and k in b:
                 rows.append(dict(setting=s, bank=k, auc_fp16=a[k], auc_bf16=b[k], diff=b[k] - a[k]))
     df = pd.DataFrame(rows)
+    if not len(df):
+        print(f"[dtype] no float16 runs found under {OLD}/ -- nothing to compare. "
+              f"Leaving {NEW}/dtype_sensitivity.csv and paper/sink_dtype.tex as they are.")
+        return df
     df.to_csv(f"{NEW}/dtype_sensitivity.csv", index=False)
     piv = df.pivot(index="setting", columns="bank", values="diff")
     lines = [r"\begin{tabular}{l" + "r" * len(BANKS) + "}", r"\toprule",
@@ -99,7 +125,8 @@ def main():
         cells = ["--" if pd.isna(piv.loc[s].get(k)) else f"${piv.loc[s][k]:+.3f}$".replace("-0.000", "0.000").replace("+0.000", "0.000") for k, _ in BANKS]
         lines.append(f"{short(s)} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
-    clean = df[~df.setting.isin(CONFOUNDED)]
+    conf_settings = confounded()
+    clean = df[~df.setting.isin(conf_settings)]
     topo = clean[clean.bank.isin(["0D", "1D", "DEFL"])]["diff"].abs()
     nt = clean[clean.bank.isin(["LOGPROB", "LOOKBACK", "HIDDEN", "NONTOPO"])]["diff"].abs()
     with open("paper/sink_dtype.tex", "w") as fh:
@@ -110,7 +137,7 @@ def main():
         fh.write(r"\newcommand{\DtypeTopoOther}{" + f"{other:.3f}" + "}\n")
         fh.write(r"\newcommand{\DtypeNTMax}{" + f"{nt.max():.3f}" + "}\n")
         fh.write(r"\newcommand{\DtypeSinkMax}{" + f"{clean[clean.bank == 'SINK']['diff'].abs().max():.3f}" + "}\n")
-        conf = df[df.setting.isin(CONFOUNDED)]["diff"].abs()
+        conf = df[df.setting.isin(conf_settings)]["diff"].abs()
         fh.write(r"\newcommand{\DtypeHEMax}{" + (f"{conf.max():.3f}" if len(conf) else "--") + "}\n")
         fh.write(r"\newcommand{\SinkTableDtype}{%" + "\n" + "\n".join(lines) + "\n}\n")
     print(piv.round(3).to_string())
