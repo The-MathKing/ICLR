@@ -1,2 +1,0 @@
-setting,n_rows,layers,mean_N,cells,bound_violations_h1,bound_violations_p0,frac_cells_coned,frac_cells_coned_any_apex,mean_sink_mass,frac_cells_h1_zero,frac_h1zero_given_coned,median_delta0,median_layer_spearman_P0_star,median_layer_rel_gap,cell_spearman_delta0_h1
-halueval_qwen1.5b,1000,28,128.092,28000,0,0,0.6249642857142857,0.6249642857142857,0.453911582849029,0.7911071428571429,1.0,0.0,0.999998037998038,6.71334735200909e-10,0.7920201961625438

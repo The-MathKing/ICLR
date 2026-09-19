@@ -1,3 +1,0 @@
-run,n_rows,n_1d_cols,pct_1d_cells_exactly_zero,n_rows_with_any_nonzero_1d,pct_rows_with_any_nonzero_1d,mean_seq_len
-int8 (published) [subset],200,128,100.0,0,0.0,32.47
-"native precision, prompt=inst [first 100 q]",200,128,100.0,0,0.0,32.47

@@ -1,8 +1,0 @@
-Setting,svd_components,Benchmark,N_rows,N_groups,dim_0D,dim_lex,tfidf_var_explained,AUC_Lex,AUC_0D,AUC_Lex_0D,Delta_0D_over_Lex,CI95_low,CI95_high,bootstrap_se,survives_lexical_control,Delta_Lex_over_0D,Lex_over_0D_CI95_low,Lex_over_0D_CI95_high
-HaluEval (Qwen2.5-3B),50,halueval,4000,2000,72,53,0.2384,0.9792,0.8218,0.9819,0.0027,0.0012,0.0043,0.00079,True,0.1601,0.1507,0.1693
-HaluEval (Qwen2.5-1.5B),50,halueval,1000,500,56,53,0.2676,0.9735,0.9038,0.9736,0.0001,-0.0063,0.0057,0.00306,False,0.0699,0.0519,0.0886
-TruthfulQA (Qwen2.5-3B),50,truthfulqa,1634,817,72,53,0.3333,0.7569,0.7559,0.8098,0.0529,0.0401,0.0659,0.00661,True,0.054,0.0392,0.0687
-TruthfulQA (SmolLM-1.7B),50,truthfulqa,1634,817,48,53,0.3333,0.7558,0.5803,0.7648,0.009,0.0026,0.0154,0.00331,True,0.1845,0.1626,0.2064
-TruthfulQA (Phi-3-mini-3.8B),50,truthfulqa,1634,817,64,53,0.3333,0.7547,0.6473,0.7758,0.0211,0.0109,0.0317,0.00532,True,0.1285,0.1089,0.1474
-TruthfulQA (Mistral-7B),50,truthfulqa,1634,817,64,53,0.3333,0.7558,0.684,0.7832,0.0274,0.017,0.0384,0.00548,True,0.0992,0.0814,0.1164
-TruthfulQA (TinyLlama-1.1B),50,truthfulqa,1634,817,44,53,0.3333,0.7549,0.6536,0.7795,0.0246,0.0164,0.0331,0.00431,True,0.1259,0.1072,0.1445

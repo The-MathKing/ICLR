@@ -1,7 +1,0 @@
-Probe,AUC,N_features
-Head-averaged 0D (layers 18-27),0.6773,10
-Per-head 0D concatenation,0.8918,160
-Combined (head-avg + per-head 0D + 1D),0.8683,340
-ΔAUC (per-head vs head-avg),0.2145,-
-TOST p-value (ε=0.015),1.0,-
-Equivalent?,False,-

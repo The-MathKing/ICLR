@@ -1,6 +1,0 @@
-Probe,AUC,Dim
-"Hidden State (mean-pool, last layer)",0.903,2048
-"Hidden State (last-token, last layer)",0.998,2048
-"Hidden State (PCA-64, all layers)",0.9965,64
-TDA 0D Only (attention MST),0.8218,72
-TDA 0D+1D Normalized (combined),0.8374,216
