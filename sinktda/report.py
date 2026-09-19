@@ -662,6 +662,7 @@ def write_numbers(th, auc, comp):
     m.update(numbers_native())
     m.update(numbers_audit())
     m.update(numbers_release())
+    m.update(numbers_apex())
     m.update(table_toha_causal()[1])
     # largest |delta| of any topological bank (0D, deflated, per-head defect, TOHA) beyond
     # NONTOPO, early or late fusion, on TruthfulQA and on-policy TriviaQA
@@ -676,6 +677,72 @@ def write_numbers(th, auc, comp):
     with open(f"{PAPER}/sink_numbers.tex", "w") as fh:
         for k, v in m.items():
             fh.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
+
+
+APEX = "archive/apex/sinktda_results"
+
+
+def numbers_apex():
+    """Apex deflation: deleting each layer's own best apex instead of token 0.
+
+    Deflation in the main results always deletes token 0, which is the apex in most layers
+    of a sink-dominated model and in none of a model without a first-token sink. That makes
+    the C4 prediction untested for those models, so the settings were re-extracted with
+    `extract.py --apex-deflation` and evaluated into their own SINKTDA_RES. Empty when that
+    side study is absent, so the macros never invent a run that did not happen.
+    """
+    import glob
+    fs = glob.glob(f"{APEX}/comp_*.csv")
+    if not fs:
+        return {}
+    d = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
+    d["base"] = d["setting"].str.replace("_apex$", "", regex=True)
+
+    def rng(test, col="delta"):
+        x = d[d["test"] == test][col]
+        return _rng(x) if len(x) else "--"
+
+    m = {
+        "ApexSettings": str(d["base"].nunique()),
+        "ApexList": _join_names([short(x) for x in sorted(d["base"].unique())]),
+        # does deflating the true apex differ from deflating token 0?
+        "ApexVsDeflRange": rng("T3c_apexdefl_vs_defl"),
+        # what apex deflation adds over the sink bank, against what token-0 deflation adds
+        "ApexBeyondSinkRange": rng("T3b_apexdeflated_beyond_sink"),
+        "DeflBeyondSinkRange": rng("T3_deflated_beyond_sink"),
+        # and whether the corrected deflation reaches past the cheap probes
+        "ApexBeyondNTRange": rng("I_apexdefl_beyond_nontopo"),
+    }
+    # how often token 0 is the vertex that deflation should have deleted
+    import numpy as np
+    rates = {}
+    for b in sorted(d["base"].unique()):
+        f = f"{OUT}/{b}_apex/layers.parquet"
+        if not os.path.exists(f):
+            continue
+        lay = pd.read_parquet(f)
+        cols = sorted([c for c in lay.columns if c.endswith("_delta_argmin")],
+                      key=lambda c: int(c.split("_")[1]))
+        if cols:
+            v = np.stack([lay[c].values for c in cols])
+            rates[b] = 100 * float(np.mean(v == 0))
+    if rates:
+        m["ApexIsZeroRange"] = _rng(pd.Series(rates), "{:.0f}\%")
+        m["ApexIsZeroMin"] = f"{min(rates.values()):.0f}\%"
+        m["ApexIsZeroMax"] = f"{max(rates.values()):.0f}\%"
+    t = d[d["test"] == "I_apexdefl_beyond_nontopo"]
+    m["ApexBeyondNTEquiv"] = str(int(t["equiv_0.015"].sum()))
+    m["ApexBeyondNTTotal"] = str(len(t))
+    c = d[d["test"] == "T3c_apexdefl_vs_defl"]
+    # the largest gain from deflating the apex rather than token 0; it belongs to the model
+    # whose apex is never token 0, which is the whole point of the comparison
+    if len(c):
+        w = c.loc[c["delta"].idxmax()]
+        m["ApexVsDeflMax"] = f"{w['delta']:+.3f}"
+        m["ApexVsDeflMaxSetting"] = short(str(w["base"]))
+    m["ApexVsDeflEquiv"] = str(int(c["equiv_0.015"].sum()))
+    m["ApexVsDeflTotal"] = str(len(c))
+    return m
 
 
 def numbers_release():
