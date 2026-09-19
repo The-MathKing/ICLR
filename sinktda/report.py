@@ -181,12 +181,14 @@ def short(s):
 
 
 def table_tests_full(comp):
-    lines = [r"\begin{longtable}{llrrrrcc}", r"\toprule",
-             r"Setting & Test (A $\to$ B) & AUC$_A$ & AUC$_B$ & $\Delta$ & 90\% CI & $\equiv_{.015}$ & power \\",
-             r"\midrule\endhead"]
     torder = [t for t, *_ in __import__("sinktda.evaluate", fromlist=["COMPARISONS"]).COMPARISONS]
     comp = comp.assign(_s=comp["setting"].map({x: i for i, x in enumerate(ORDER)}),
                        _t=comp["test"].map(lambda t: torder.index(t) if t in torder else len(torder)))
+    lines = [r"\begin{longtable}{llrrrrcc}",
+             r"\caption{\textbf{Complete paired difference tests and equivalence tests across all settings and comparisons.}}\label{tab:tests_full}\\",
+             r"\toprule",
+             r"Setting & Test (A $\to$ B) & AUC$_A$ & AUC$_B$ & $\Delta$ & 90\% CI & $\equiv_{.015}$ & power \\",
+             r"\midrule\endhead"]
     comp = comp.sort_values(["_s", "_t"])
     for _, r in comp.iterrows():
         t = f"{r['A']}$\\to${r['B']}".replace("_", r"\_")
@@ -198,7 +200,9 @@ def table_tests_full(comp):
 
 
 def table_auc_full(auc):
-    lines = [r"\begin{longtable}{llrrrr}", r"\toprule",
+    lines = [r"\begin{longtable}{llrrrr}",
+             r"\caption{\textbf{Complete out-of-fold ROC-AUC results across all settings and feature banks.}}\label{tab:auc_full}\\",
+             r"\toprule",
              r"Setting & Bank & dim & AUC & seed SD & pair acc. \\", r"\midrule\endhead"]
     order = ["LEN", "LEX", "LOGPROB", "LLMCHECK", "ROWSTAT", "SINK", "0D", "LEGACY_MSTPROXY", "1D", "DEFL", "ANS",
              "PH_SINK", "PH_0DTOT", "PH_0D", "PH_ENT", "LOOKBACK", "HIDDEN", "NONTOPO"]
