@@ -279,7 +279,7 @@ def fig_layers(lay):
         a.set_xlabel("relative layer depth")
     axes[2].set_ylim(-0.1, 1.02)
     fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=3,
-               bbox_to_anchor=(0.5, -0.02), fontsize=7.5, frameon=False)
+               bbox_to_anchor=(0.5, -0.18), fontsize=7.5, frameon=False)
     fig.savefig(f"{PAPER}/fig_sink_layers.pdf", bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
 
