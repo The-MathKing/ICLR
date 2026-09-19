@@ -4,6 +4,10 @@ export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
 export TOKENIZERS_PARALLELISM=false
 export TMPDIR=${TMPDIR:-$PWD/.tmp} JOBLIB_TEMP_FOLDER=${JOBLIB_TEMP_FOLDER:-$PWD/.tmp}
 PY=${PY:-.venv/bin/python}
+
+# The prompt/response boundary is only correct when the prefix and the full string are
+# tokenized the same way; a chat template that emits BOS silently shifted it once.
+$PY -m sinktda.check_tokenization || { echo '[abort] tokenization check failed'; exit 1; }
 run() { echo "=== $* ($(date +%H:%M:%S))"; $PY -m sinktda.extract "$@" 2>&1 | grep --line-buffered -v -i "warn\|Loading weights" ; }
 run --bench truthfulqa --model qwen3b
 run --bench truthfulqa --model phi3

@@ -154,7 +154,7 @@ def main():
         N = enc["input_ids"].shape[1]
         # a trailing space in the prefix ("Answer: ") is merged into the first answer
         # token in the full string, so tokenize the prefix without it
-        p = len(tok(r["prefix"].rstrip(" "))["input_ids"])
+        p = len(data.encode(tok, r["prefix"].rstrip(" "))["input_ids"])
         p = min(p, N - 1)
         if N > 1024:
             continue

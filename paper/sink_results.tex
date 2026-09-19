@@ -42,7 +42,7 @@ A TF-IDF model on the answer text alone reaches \LexTQA{} AUC on TruthfulQA and 
 }
 
 \newcommand{\RESULTSDISCUSSION}{%
-\paragraph{What attention-graph topology measures.} In decoder-only models, Vietoris--Rips persistence of an attention graph, and every stable summary of it, is controlled by one scalar per graph: the coning defect of the first token. The same is true of TOHA's prompt--response divergence, with the prompt playing the role of the apex. Where it is zero, as in most middle-layer graphs of every sink-dominated model we tested, $0$D total persistence equals $(N{-}1)(1-\bar m)$, a function of length and sink attention alone, and higher homology is empty. Where it is positive, Theorem~\ref{thm:cone} bounds how far topology can depart from the sink; in our data this happens mainly in the first layers. Practical recommendations follow from this in Appendix~\ref{app:recs}.
+\paragraph{What attention-graph topology measures.} In decoder-only models, Vietoris--Rips persistence of an attention graph, and every stable summary of it, is controlled by one scalar per graph: the coning defect of the first token. The same is true of TOHA's prompt--response divergence, with the prompt playing the role of the apex. Where it is zero, as in most middle-layer graphs of every sink-dominated model we tested, $0$D total persistence equals $(N{-}1)(1-\bar m)$, a function of length and sink attention alone, and higher homology is empty. Where it is positive, Theorem~\ref{thm:cone} bounds how far topology can depart from the sink; in our data that is mainly the first layers. Practical recommendations follow in Appendix~\ref{app:recs}.
 }
 
 \newcommand{\MISTRALAPPENDIX}{%
