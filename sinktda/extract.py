@@ -239,11 +239,20 @@ def main():
             for k, v in perhead_features(attn, p).items():
                 ph_store.setdefault(k, []).append(v.astype(np.float32))
 
-        if len(pending) >= 4 * args.workers:
-            for f in pending[: 2 * args.workers]:
+        # Cap the queue by bytes in flight, not by a count. Each submission carries a
+        # head-averaged (L, N, N) float64 block, which is 434 KB at the short-form N of 44
+        # and 939 MB at N=2048; a fixed depth of 4*workers is invisible in the first case
+        # and about 7.5 GB of committed memory in the second, doubled again by pickling
+        # into the pool. Depth now falls as sequences grow, with at least one in flight per
+        # worker so throughput is unaffected at short lengths.
+        budget = int(os.environ.get("SINKTDA_QUEUE_MB", "2048")) * 1024 ** 2
+        per_item = max(A_mean.nbytes, 1)
+        depth = max(args.workers, min(4 * args.workers, budget // per_item))
+        if len(pending) >= depth:
+            for f in pending[: max(1, depth // 2)]:
                 j, feats = f.result()
                 layer_feats[j] = feats
-            pending = pending[2 * args.workers:]
+            pending = pending[max(1, depth // 2):]
         if i % 10 == 0 and device == "mps":
             del out, attn, A_mean, logits, lp, tok_lp, ent, hs
             torch.mps.empty_cache()
