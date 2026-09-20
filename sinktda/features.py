@@ -26,14 +26,28 @@ def distance_from_attention(A):
     return D
 
 
-def ph_features(D, prefix=""):
-    """0D/1D summary statistics. Matches the legacy extract_features()."""
+H1_KEYS = ("h1_max_lifetime", "h1_total_persistence", "h1_max_birth",
+           "h1_max_death", "h1_count")
+
+
+def ph_features(D, prefix="", maxdim=1):
+    """0D/1D summary statistics. Matches the legacy extract_features().
+
+    maxdim=0 computes the 0D barcode only. A dense Vietoris-Rips filtration to maxdim=1 is
+    what makes long sequences unaffordable, and the 0D quantities the theory is about --
+    total persistence, the star weight, the coning defect -- do not need the 1D pass. The
+    1D keys are then absent rather than zero: zero would assert an empty H_1 we did not
+    compute, which is only implied on coned graphs (Theorem 1(c)).
+    """
     out = {}
     if D.shape[0] < 2:
-        for k in LEGACY_KEYS + ("h1_count",):
+        keys = LEGACY_KEYS + ("h1_count",)
+        if maxdim < 1:
+            keys = tuple(k for k in keys if not k.startswith("h1_"))
+        for k in keys:
             out[prefix + k] = 0.0
         return out
-    dgms = ripser.ripser(D, distance_matrix=True, maxdim=1)["dgms"]
+    dgms = ripser.ripser(D, distance_matrix=True, maxdim=maxdim)["dgms"]
     h0 = dgms[0]
     h0 = h0[np.isfinite(h0[:, 1])]
     if len(h0):
@@ -42,6 +56,8 @@ def ph_features(D, prefix=""):
         out[prefix + "h0_total_persistence"] = float(life.sum())
     else:
         out[prefix + "h0_max_lifetime"] = out[prefix + "h0_total_persistence"] = 0.0
+    if maxdim < 1:
+        return out
     h1 = dgms[1]
     h1 = h1[np.isfinite(h1[:, 1])] if len(h1) else h1
     if len(h1):
@@ -108,7 +124,8 @@ def deflate_vertex(A, k):
     return B / rs
 
 
-def layer_features(A, prompt_len, with_delta_min=True, with_apex_deflation=False):
+def layer_features(A, prompt_len, with_delta_min=True, with_apex_deflation=False,
+                   maxdim=1):
     """All per-layer scalar features for one head-averaged attention matrix.
 
     with_apex_deflation adds an `apexdefl_` block: the same deflation as `defl_`, but
@@ -119,7 +136,7 @@ def layer_features(A, prompt_len, with_delta_min=True, with_apex_deflation=False
     A = A.astype(np.float64)
     N = A.shape[0]
     D = distance_from_attention(A)
-    f = ph_features(D)
+    f = ph_features(D, maxdim=maxdim)
     f["star_tot"] = float(D[0, 1:].sum()) if N > 1 else 0.0
     f["star_max"] = float(D[0, 1:].max()) if N > 1 else 0.0
     f["sink_mass"] = float(A[1:, 0].mean()) if N > 1 else 0.0
@@ -138,10 +155,10 @@ def layer_features(A, prompt_len, with_delta_min=True, with_apex_deflation=False
     if N > 2:
         Ad = deflate_sink(A)
         Dd = distance_from_attention(Ad)
-        f.update(ph_features(Dd, prefix="defl_"))
+        f.update(ph_features(Dd, prefix="defl_", maxdim=maxdim))
         f["defl_delta0"] = delta_bos_causal(Ad)
     else:
-        f.update(ph_features(np.zeros((1, 1)), prefix="defl_"))
+        f.update(ph_features(np.zeros((1, 1)), prefix="defl_", maxdim=maxdim))
         f["defl_delta0"] = 0.0
     # apex-deflated graph: delete argmin_s delta_s rather than token 0
     if with_apex_deflation:
@@ -150,27 +167,28 @@ def layer_features(A, prompt_len, with_delta_min=True, with_apex_deflation=False
         k = int(f["delta_argmin"])
         if N > 2:
             Aa = deflate_vertex(A, k)
-            f.update(ph_features(distance_from_attention(Aa), prefix="apexdefl_"))
+            f.update(ph_features(distance_from_attention(Aa), prefix="apexdefl_", maxdim=maxdim))
             f["apexdefl_delta0"] = delta_bos_causal(Aa)
         else:
-            f.update(ph_features(np.zeros((1, 1)), prefix="apexdefl_"))
+            f.update(ph_features(np.zeros((1, 1)), prefix="apexdefl_", maxdim=maxdim))
             f["apexdefl_delta0"] = 0.0
         f["apexdefl_apex"] = float(k)
     # answer-only induced subgraph (raw distances, no renormalization)
     p = int(prompt_len)
     if N - p >= 2:
-        f.update(ph_features(D[p:, p:].copy(), prefix="ans_"))
+        f.update(ph_features(D[p:, p:].copy(), prefix="ans_", maxdim=maxdim))
     else:
-        f.update(ph_features(np.zeros((1, 1)), prefix="ans_"))
+        f.update(ph_features(np.zeros((1, 1)), prefix="ans_", maxdim=maxdim))
     return f
 
 
-def example_layer_features(A_layers, prompt_len, with_delta_min=True, with_apex_deflation=False):
+def example_layer_features(A_layers, prompt_len, with_delta_min=True,
+                           with_apex_deflation=False, maxdim=1):
     """A_layers: (L, N, N) head-averaged attention. Returns flat dict layer_{l}_{k}."""
     out = {}
     for l in range(A_layers.shape[0]):
         for k, v in layer_features(A_layers[l], prompt_len, with_delta_min,
-                                   with_apex_deflation).items():
+                                   with_apex_deflation, maxdim).items():
             out[f"layer_{l}_{k}"] = v
     return out
 

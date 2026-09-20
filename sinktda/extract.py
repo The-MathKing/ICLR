@@ -28,8 +28,9 @@ OUT_ROOT = os.environ.get("SINKTDA_OUT", "sinktda_out")
 
 
 def _worker(args):
-    i, A_layers, p, apex = args
-    return i, example_layer_features(A_layers, p, with_apex_deflation=apex)
+    i, A_layers, p, apex, maxdim = args
+    return i, example_layer_features(A_layers, p, with_apex_deflation=apex,
+                                     maxdim=maxdim)
 
 
 def pick_device():
@@ -119,6 +120,10 @@ def main():
     ap.add_argument("--apex-deflation", action="store_true",
                     help="also emit apexdefl_* features: deflation at argmin_s delta_s "
                          "instead of token 0 (for models whose sink is not the first token)")
+    ap.add_argument("--maxdim", type=int, default=1, choices=[0, 1],
+                    help="Vietoris-Rips maximum homology dimension. 0 skips the 1D pass, "
+                         "which is what makes long sequences affordable; the 1D feature "
+                         "columns are then absent rather than zero.")
     ap.add_argument("--max-len", type=int, default=1024,
                     help="skip rows longer than this many tokens (attention is O(L*H*N^2))")
     args = ap.parse_args()
@@ -196,7 +201,7 @@ def main():
                 nan=0.0, copy=False)
             L = attn.shape[0]
             A_mean = attn.mean(1)
-        pending.append(pool.submit(_worker, (i, A_mean, p, args.apex_deflation)))
+        pending.append(pool.submit(_worker, (i, A_mean, p, args.apex_deflation, args.maxdim)))
 
         # log-prob statistics over answer tokens
         logits = out.logits[0].float()
