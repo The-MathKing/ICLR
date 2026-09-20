@@ -664,6 +664,7 @@ def write_numbers(th, auc, comp):
     m.update(numbers_release())
     m.update(numbers_apex())
     m.update(numbers_ragtruth())
+    m.update(numbers_longform())
     m.update(table_toha_causal()[1])
     # largest |delta| of any topological bank (0D, deflated, per-head defect, TOHA) beyond
     # NONTOPO, early or late fusion, on TruthfulQA and on-policy TriviaQA
@@ -702,6 +703,64 @@ def table_ragtruth():
                  str(int(r["viol_upper"] + r["viol_lower"])),
                  f"{100 * r['frac_coned']:.1f}" + r"\%",
                  f"{r['median_dP']:.3f}", f"{r['rho_maxp']:.3f}", f"{r['rho_sinkr']:.3f}"]
+        rows.append(" & ".join(cells) + r" \\")
+        if r["bucket"] == "all":
+            rows.append(r"\midrule")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(rows)
+
+
+LONGF = "archive/longform/sinktda_results/longform_checks.csv"
+
+
+def numbers_longform():
+    """Theorem 1 on long, context-grounded input.
+
+    Appendix J asks the same question of the prompt-level defect that governs TOHA; this
+    asks it of the whole-graph defect that governs Theorem 1. Empty when the run is absent,
+    so nothing here invents a run that did not happen.
+    """
+    if not os.path.exists(LONGF):
+        return {}
+    d = pd.read_csv(LONGF)
+    a = d[d["bucket"] == "all"].iloc[0]
+    b = d[d["bucket"] != "all"]
+    m = {
+        "LongExamples": f"{int(a['examples']):,}",
+        "LongCells": f"{int(a['layer_graphs']):,}",
+        "LongConed": f"{100 * a['frac_coned']:.1f}\\%",
+        "LongMedDefect": f"{a['median_delta0']:.3f}",
+        "LongSink": f"{a['mean_sink_mass']:.3f}",
+        "LongRho": f"{a['median_layer_rho_norm']:.3f}",
+        "LongRhoMin": f"{a['min_layer_rho_norm']:.3f}",
+    }
+    if len(b):
+        m["LongNBuckets"] = str(len(b))
+        m["LongConedHi"] = f"{100 * b['frac_coned'].max():.1f}\\%"
+        m["LongConedLo"] = f"{100 * b['frac_coned'].min():.1f}\\%"
+        m["LongDefectLo"] = f"{b['median_delta0'].min():.3f}"
+        m["LongDefectHi"] = f"{b['median_delta0'].max():.3f}"
+        m["LongSinkLo"] = f"{b['mean_sink_mass'].min():.3f}"
+        m["LongSinkHi"] = f"{b['mean_sink_mass'].max():.3f}"
+        m["LongRhoRange"] = _rng(b["median_layer_rho_norm"], "{:.3f}")
+    return m
+
+
+def table_longform():
+    """Per length-bucket view of the long-context run. Empty when the run is absent."""
+    if not os.path.exists(LONGF):
+        return ""
+    d = pd.read_csv(LONGF)
+    rows = [r"\begin{tabular}{lrrrrrr}", r"\toprule",
+            r"Seq.\ len. & examples & layer graphs & coned & median $\defect_0$ & "
+            r"sink attn. & $\rho_{/N}$ \\", r"\midrule"]
+    for _, r in d.iterrows():
+        lab = "all" if r["bucket"] == "all" else \
+            r["bucket"].replace("-inf", "+").replace("-", "--")
+        cells = [lab, f"{int(r['examples']):,}", f"{int(r['layer_graphs']):,}",
+                 f"{100 * r['frac_coned']:.1f}" + r"\%",
+                 f"{r['median_delta0']:.3f}", f"{r['mean_sink_mass']:.3f}",
+                 f"{r['median_layer_rho_norm']:.3f}"]
         rows.append(" & ".join(cells) + r" \\")
         if r["bucket"] == "all":
             rows.append(r"\midrule")
@@ -1497,6 +1556,7 @@ def main():
         fh.write(f"\\newcommand{{\\SinkTableTohaCausal}}{{%\n{table_toha_causal()[0]}\n}}\n")
         for name, body in [("Native", table_native()), ("Audit", table_audit()),
                            ("Rag", table_ragtruth()),
+                           ("Longform", table_longform()),
                            ("TohaDiag", table_toha_diag()), ("LayerSplit", table_layer_split()),
                            ("Defect", table_defect()), ("BoundGap", table_bound_gap()),
                            ("Nested", table_nested()), ("CGrid", table_c_grid())]:
