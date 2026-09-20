@@ -51,14 +51,21 @@ $p = Start-Process -FilePath "python" `
         -RedirectStandardError "$log.err" `
         -NoNewWindow -PassThru
 
+# Touching .Handle before waiting is what makes .ExitCode readable afterwards: without
+# it PowerShell disposes the underlying handle and ExitCode comes back empty, which is
+# why the first overnight run reported FAILED after finishing perfectly well.
+$null = $p.Handle
 $p.WaitForExit()
 $mins = ((Get-Date) - $t0).TotalMinutes
 
 $last = if (Test-Path $log) { (Get-Content $log -Tail 1) } else { "" }
 $done = Test-Path "sinktda_out\ragtruth_${Model}_long\layers.parquet"
 
-$verdict = if ($p.ExitCode -eq 0 -and $done) { "OK" } else { "FAILED" }
-$line = "$verdict exit=$($p.ExitCode) after {0:N0} min | last: $last" -f $mins
+# The parquet existing is the real evidence the run worked; the exit code is a
+# secondary check, and an unreadable one must not by itself condemn a good run.
+$code = $p.ExitCode
+$verdict = if ($done -and ($code -eq 0 -or $null -eq $code)) { "OK" } else { "FAILED" }
+$line = "$verdict exit=$code after {0:N0} min | last: $last" -f $mins
 $line | Tee-Object -FilePath $status | Write-Output
 
 if ($verdict -ne "OK" -and (Test-Path "$log.err")) {
