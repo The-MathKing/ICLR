@@ -90,3 +90,4 @@ paper/related_work*.tex
 paper/latex_improvements/
 paper/sink_tables_appendix.tex
 paper/*.png
+logs/
