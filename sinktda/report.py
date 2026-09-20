@@ -731,7 +731,7 @@ def numbers_longform():
         "LongConed": f"{100 * a['frac_coned']:.1f}\\%",
         "LongMedDefect": f"{a['median_delta0']:.3f}",
         "LongSink": f"{a['mean_sink_mass']:.3f}",
-        "LongRho": f"{a['median_layer_rho_norm']:.3f}",
+        "LongRho": f"{a['median_layer_rho_norm']:.4f}",
         "LongRhoMin": f"{a['min_layer_rho_norm']:.3f}",
     }
     if len(b):
@@ -742,7 +742,8 @@ def numbers_longform():
         m["LongDefectHi"] = f"{b['median_delta0'].max():.3f}"
         m["LongSinkLo"] = f"{b['mean_sink_mass'].min():.3f}"
         m["LongSinkHi"] = f"{b['mean_sink_mass'].max():.3f}"
-        m["LongRhoRange"] = _rng(b["median_layer_rho_norm"], "{:.3f}")
+        m["LongRhoRange"] = _rng(b["median_layer_rho_norm"], "{:.4f}")
+        m["LongRhoWorstLayer"] = f"{b['min_layer_rho_norm'].min():.2f}"
     return m
 
 
@@ -760,7 +761,7 @@ def table_longform():
         cells = [lab, f"{int(r['examples']):,}", f"{int(r['layer_graphs']):,}",
                  f"{100 * r['frac_coned']:.1f}" + r"\%",
                  f"{r['median_delta0']:.3f}", f"{r['mean_sink_mass']:.3f}",
-                 f"{r['median_layer_rho_norm']:.3f}"]
+                 f"{r['median_layer_rho_norm']:.4f}"]
         rows.append(" & ".join(cells) + r" \\")
         if r["bucket"] == "all":
             rows.append(r"\midrule")

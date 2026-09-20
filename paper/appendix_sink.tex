@@ -203,6 +203,25 @@ Four regularities that an accuracy-only comparison of attention-graph PH would o
 
 \paragraph{Cost.} \TIMINGPARAGRAPH
 
+\section{Theorem~\ref{thm:cone} on a long retrieved context}
+\label{app:long}
+
+Appendix~\ref{app:rag} asks what a retrieved passage does to the \emph{prompt-level} defect that governs TOHA. This asks the same of the whole-graph defect $\defect_0$ that governs Theorem~\ref{thm:cone}. It needs no hallucination labels, because the theorem is a statement about the attention graph: we run the per-layer path on \LongExamples{} RAGTruth responses with \RagModel{} at sequence lengths up to about $2{,}000$ tokens and report the coned share, $\defect_0$ and the length-normalized rank correlation, exactly as Table~\ref{tab:theory} does for the short-form settings. Only $0$D persistence is computed (\texttt{-{}-maxdim 0}); a dense Vietoris--Rips filtration to maximum homology dimension $1$ at that length is not affordable, so this appendix makes no claim about $H_1$.
+
+\paragraph{Coning thins out, and much less than the prompt-level defect did.} Across \LongCells{} layer graphs, \LongConed{} are exactly coned, against \mbox{50.6--64.5\%} for the same model on the three short-form benchmarks. The decline is monotone in length, from \LongConedHi{} on the shortest contexts to \LongConedLo{} on the longest, and the median $\defect_0$ rises from \LongDefectLo{} to \LongDefectHi{} (Table~\ref{tab:longform}). Mean attention to token~0 falls to \LongSink{}, against $0.45$--$0.53$ on short-form: attention does spread over a retrieved passage, as one would expect. But the defect stays small in absolute terms, a median of \LongMedDefect{} against the \RagMedDefect{} that the prompt-level defect reaches on the same corpus.
+
+\paragraph{The reduction itself barely moves.} The median per-layer rank correlation between $P_0/(N{-}1)$ and $1-\bar m$ is \LongRho{} overall and \LongRhoRange{} across the \LongNBuckets{} length buckets, against $0.9997$--$1.0000$ on short-form. Length-normalized $0$D total persistence is therefore still, up to rank, one minus the mean attention paid to the first token, on contexts an order of magnitude longer than anything in the body. The median hides a tail: individual layers fall as low as \LongRhoWorstLayer{} in the longest bucket, so the statement is about the typical layer and not about every one of them.
+
+\paragraph{Read together with Appendix~\ref{app:rag}.} The two defects behave differently on the same corpus. $\defect_P$, which sits between TOHA and its first-order counterpart, grows until the exact case is rare (\RagConed{} of head graphs prompt-coned). $\defect_0$, which sits between the whole barcode and the star, grows far less, and the correlation the reduction actually rests on is essentially unchanged. A long prompt dilutes the prompt--response interface that TOHA measures more than it dilutes the sink itself.
+
+\begin{table}[h]
+\centering
+\small
+\caption{\textbf{Theorem~\ref{thm:cone} on RAGTruth} (\RagModel{}, \LongExamples{} responses, $0$D only). \emph{coned}: share of layer graphs with $\defect_0=0$. $\rho_{/N}$: median over layers of the Spearman correlation across examples between $P_0/(N{-}1)$ and $1-\bar m$. Buckets are by sequence length in tokens; buckets with fewer than 20 examples are omitted.}
+\label{tab:longform}
+\resizebox{\linewidth}{!}{\SinkTableLongform}
+\end{table}
+
 \section{TOHA on a long retrieved context}
 \label{app:rag}
 
