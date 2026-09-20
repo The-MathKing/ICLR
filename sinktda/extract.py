@@ -205,11 +205,22 @@ def main():
 
         # log-prob statistics over answer tokens
         logits = out.logits[0].float()
-        lp = torch.log_softmax(logits[:-1], -1)
         ids = enc["input_ids"][0, 1:]
+        # Chunked over positions. The full (N, vocab) log-prob matrix is over a gigabyte at
+        # a few thousand tokens with a 150k vocabulary, and lp.exp() * lp holds a second
+        # one; taking a few hundred positions at a time keeps the transient small without
+        # changing any value. lp is still materialised once because the reported log-prob
+        # statistics need it.
+        lp = torch.log_softmax(logits[:-1], -1)
         tok_lp = lp.gather(1, ids[:, None])[:, 0]
-        ent = -(lp.exp() * lp).sum(-1)
-        msp = torch.softmax(logits[:-1], -1).max(-1).values.mean().item()
+        ent_parts, msp_parts = [], []
+        for a in range(0, lp.shape[0], 256):
+            blk = lp[a:a + 256]
+            ent_parts.append(-(blk.exp() * blk).sum(-1))
+            msp_parts.append(blk.exp().max(-1).values)
+        ent = torch.cat(ent_parts)
+        msp = torch.cat(msp_parts).mean().item()
+        del ent_parts, msp_parts
         a0 = max(p - 1, 0)
         seg = tok_lp[a0:] if N - 1 > a0 else tok_lp[-1:]
         eseg = ent[a0:] if N - 1 > a0 else ent[-1:]
